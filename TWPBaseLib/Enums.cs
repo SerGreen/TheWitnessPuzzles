@@ -6,10 +6,7 @@ using System.Threading.Tasks;
 
 namespace TheWitnessPuzzleGenerator
 {
-    class Program
-    {
-        static void Main(string[] args)
-        {
-        }
-    }
+    public enum EdgeState { Normal, Broken, Marked }
+    public enum NodeState { Normal, Start, Exit, Marked }
+    
 }
