@@ -35,6 +35,8 @@ namespace TWPVisualizer
             }
 
             picCanvas.Image = bmp;
+
+            panel.GetSectors();
         }
 
         private void RenderPuzzle(Puzzle panel, Graphics g)
@@ -82,7 +84,32 @@ namespace TWPVisualizer
                 g.DrawLine(solutionEdges.Contains(edge) ? penLine : pen, xA, yA, xB, yB);
             }
 
+            List<Sector> sectors = panel.GetSectors();
+            List<Brush> sectorBrushes = new List<Brush>
+            {
+                new SolidBrush(Color.Blue),
+                new SolidBrush(Color.Magenta),
+                new SolidBrush(Color.Green),
+                new SolidBrush(Color.OrangeRed),
+                new SolidBrush(Color.Cyan),
+                new SolidBrush(Color.Yellow),
+                new SolidBrush(Color.Gray),
+                new SolidBrush(Color.Violet)
+            };
 
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                foreach (Block block in sectors[i].Blocks)
+                {
+                    int row = block.Id / panel.Width;
+                    int col = block.Id - row * panel.Width;
+
+                    int x = margin + col * nodeSpan + nodeSpan / 2;
+                    int y = margin + row * nodeSpan + nodeSpan / 2;
+
+                    g.FillRectangle(sectorBrushes[i], x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                }
+            }
         }
     }
 }

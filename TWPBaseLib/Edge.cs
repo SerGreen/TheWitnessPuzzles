@@ -24,6 +24,8 @@ namespace TheWitnessPuzzleGenerator
         public Node NodeA => _nodes[0];
         public Node NodeB => _nodes[1];
 
+        public bool IsVertical => Math.Abs(NodeA.Id - NodeB.Id) != 1;
+
         public override string ToString() => $"[{_nodes[0].Id} - {_nodes[1].Id}]";
 
         public Edge(Node nodeA, Node nodeB, EdgeState state = EdgeState.Normal, Color? color = null)

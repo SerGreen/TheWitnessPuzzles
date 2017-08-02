@@ -9,5 +9,12 @@ namespace TheWitnessPuzzleGenerator
     public class Sector
     {
         public List<Block> Blocks { get; set; }
+
+        public Sector(List<Block> blocks)
+        {
+            Blocks = blocks;
+        }
+
+        public override string ToString() => string.Join(" ", Blocks);
     }
 }
