@@ -8,9 +8,10 @@
     <OutputType>Library</OutputType>
     <RootNamespace>TheWitnessPuzzleGenerator</RootNamespace>
     <AssemblyName>TheWitnessPuzzleGenerator</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -51,8 +52,9 @@
     <Compile Include="Edge.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Node.cs" />
-    <Compile Include="Panel.cs" />
+    <Compile Include="Puzzle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Sector.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

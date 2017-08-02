@@ -24,6 +24,10 @@ namespace TWPVisualizer
             panel.nodes[0].SetState(NodeState.Start);
             panel.nodes.Last().SetState(NodeState.Exit);
 
+            panel.Solution = new List<int> { 0, 5, 6, 11, 10, 15, 20, 21, 22, 17, 12, 13, 8, 7, 2, 3, 4, 9, 14, 19, 18, 23, 24 };
+
+
+
             Bitmap bmp = new Bitmap(picCanvas.Width, picCanvas.Height);
             using (Graphics g = Graphics.FromImage(bmp))
             {
@@ -42,6 +46,7 @@ namespace TWPVisualizer
 
             Brush brush = new SolidBrush(Color.Black);
             Pen pen = new Pen(brush);
+            Pen penLine = new Pen(Color.Red, 3);
 
             int width = panel.Width + 1;
             int height = panel.Height + 1;
@@ -61,6 +66,7 @@ namespace TWPVisualizer
                     g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
             }
 
+            var solutionEdges = panel.SolutionEdges;
             for (int i = 0; i < panel.edges.Count; i++)
             {
                 Edge edge = panel.edges[i];
@@ -72,9 +78,11 @@ namespace TWPVisualizer
                 int rowB = edge.NodeB.Id / width;
                 int xB = margin + (edge.NodeB.Id - rowB * width) * nodeSpan;
                 int yB = margin + rowB * nodeSpan;
-
-                g.DrawLine(pen, xA, yA, xB, yB);
+                
+                g.DrawLine(solutionEdges.Contains(edge) ? penLine : pen, xA, yA, xB, yB);
             }
+
+
         }
     }
 }

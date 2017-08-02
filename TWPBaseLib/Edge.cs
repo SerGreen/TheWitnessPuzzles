@@ -28,12 +28,26 @@ namespace TheWitnessPuzzleGenerator
 
         public Edge(Node nodeA, Node nodeB, EdgeState state = EdgeState.Normal, Color? color = null)
         {
-            // Edge ID for nodes 2 and 9 is 209; for nodes 19 and 13 is 1319
-            Id = nodeA.Id < nodeB.Id ? nodeA.Id * 100 + nodeB.Id : nodeB.Id * 100 + nodeA.Id;
+            Id = GetEdgeId(nodeA, nodeB);
             _nodes = new List<Node>(2) { nodeA, nodeB };
             Nodes = _nodes.AsReadOnly();
             State = state;
             Color = color ?? Color.Black;
         }
+
+        public static bool operator ==((Node a, Node b) nodes, Edge edge) => GetEdgeId(nodes.a, nodes.b) == edge.Id;
+        public static bool operator !=((Node a, Node b) nodes, Edge edge) => !(nodes == edge);
+
+        public static bool operator ==((int a, int b) nodesIds, Edge edge) => GetEdgeId(nodesIds.a, nodesIds.b) == edge.Id;
+        public static bool operator !=((int a, int b) nodesIds, Edge edge) => !(nodesIds == edge);
+
+        // Edge ID for nodes 2 and 9 is 209; for nodes 19 and 13 is 1319
+        public static int GetEdgeId(Node a, Node b) => a.Id < b.Id ?
+                                                       a.Id * 100 + b.Id :
+                                                       b.Id * 100 + a.Id;
+
+        public static int GetEdgeId(int idNodeA, int idNodeB) => idNodeA < idNodeB ?
+                                                                 idNodeA * 100 + idNodeB :
+                                                                 idNodeB * 100 + idNodeA;
     }
 }

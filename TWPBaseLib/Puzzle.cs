@@ -15,6 +15,11 @@ namespace TheWitnessPuzzleGenerator
         public Node[] nodes;
         public List<Edge> edges;
 
+        public List<int> Solution { get; set; } = null;
+        public IEnumerable<Node> SolutionNodes => Solution.Select(x => nodes.First(z => z.Id == x));
+        // Zip creates sequence from the pair of elements of original and second collection; Skip(1) forms the second collection
+        public IEnumerable<Edge> SolutionEdges => Solution.Zip(Solution.Skip(1), (idA, idB) => edges.First(x => (idA, idB) == x));
+
         public IEnumerable<Node> BorderNodes => nodes.Where(x => x.Edges.Count < 4);
 
         public Puzzle(int width, int height)
@@ -41,6 +46,12 @@ namespace TheWitnessPuzzleGenerator
             }
 
             edges = nodes.SelectMany(x => x.Edges).Distinct().ToList();
+        }
+
+        public List<Sector> GetSectors()
+        {
+            bool[,] usedBlocks = new bool[Width, Height];
+            
         }
     }
 }
