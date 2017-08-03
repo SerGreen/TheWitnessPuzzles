@@ -48,9 +48,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Block.cs" />
+    <Compile Include="BlockRule.cs" />
     <Compile Include="Colorable.cs" />
     <Compile Include="Edge.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="Error.cs" />
+    <Compile Include="IErrorable.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Puzzle.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

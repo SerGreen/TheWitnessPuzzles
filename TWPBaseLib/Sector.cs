@@ -13,6 +13,8 @@ namespace TheWitnessPuzzleGenerator
         public Sector(List<Block> blocks)
         {
             Blocks = blocks;
+            foreach (var block in Blocks)
+                block.CurrentSector = this;
         }
 
         public override string ToString() => string.Join(" ", Blocks);

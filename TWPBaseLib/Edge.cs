@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TheWitnessPuzzleGenerator
 {
-    public class Edge : IColorable
+    public class Edge : IColorable,  IErrorable
     {
         // Serial number
         public int Id { get; }

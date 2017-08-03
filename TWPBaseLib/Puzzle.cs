@@ -43,7 +43,8 @@ namespace TheWitnessPuzzleGenerator
                                            nodes[(j + 1) * (width + 1) + i],
                                            nodes[j * (width + 1) + i],
                                            nodes[j * (width + 1) + i + 1],
-                                           nodes[(j + 1) * (width + 1) + i + 1]);
+                                           nodes[(j + 1) * (width + 1) + i + 1],
+                                           this);
                 }
             }
 

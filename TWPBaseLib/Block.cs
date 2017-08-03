@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TheWitnessPuzzleGenerator
 {
-    public class Block : IColorable
+    public class Block : IErrorable
     {
         // Serial number
         public int Id { get; }
@@ -18,18 +18,22 @@ namespace TheWitnessPuzzleGenerator
         private List<Edge> _edges;
         public IReadOnlyList<Edge> Edges { get; }
 
+        public BlockRule Rule { get; private set; }
+
         public Edge LeftEdge => _edges[0];
         public Edge TopEdge => _edges[1];
         public Edge RightEdge => _edges[2];
         public Edge BottomEdge => _edges[3];
 
+        public Sector CurrentSector { get; set; }
+        public Puzzle ParentPanel { get; }
+
         public override string ToString() => $"[{Id}]";
-
-        public Color Color { get; private set; }
-
-        public Block(int id, Node botLeft, Node topLeft, Node topRight, Node botRight)
+        
+        public Block(int id, Node botLeft, Node topLeft, Node topRight, Node botRight, Puzzle parent)
         {
             Id = id;
+            ParentPanel = parent;
             _nodes = new List<Node>(4) { botLeft, topLeft, topRight, botRight };
             _edges = new List<Edge>(4)
             {
