@@ -71,11 +71,11 @@ namespace TheWitnessPuzzleGenerator
         }
     }
 
-    public class DoritoRule : BlockRule, ISelfCheckableRule
+    public class TriangleRule : BlockRule, ISelfCheckableRule
     {
         public int Power { get; }
 
-        public DoritoRule(Block parentBlock, int power) : base(parentBlock)
+        public TriangleRule(Block parentBlock, int power) : base(parentBlock)
         {
             // Power can be between 1 and 3
             Power = power < 1 ? 1 : power > 3 ? 3 : power;

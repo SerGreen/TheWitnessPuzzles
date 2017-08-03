@@ -18,7 +18,7 @@ namespace TheWitnessPuzzleGenerator
         private List<Edge> _edges;
         public IReadOnlyList<Edge> Edges { get; }
 
-        public BlockRule Rule { get; private set; }
+        public BlockRule Rule { get;  set; }
 
         public Edge LeftEdge => _edges[0];
         public Edge TopEdge => _edges[1];

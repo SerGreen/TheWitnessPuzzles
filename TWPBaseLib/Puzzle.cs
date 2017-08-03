@@ -60,6 +60,19 @@ namespace TheWitnessPuzzleGenerator
                 }
         }
 
+        public List<Error> CheckForErrors()
+        {
+            List<Error> errors = new List<Error>();
+
+            var solutionEdges = SolutionEdges;
+            var solutionNodes = SolutionNodes;
+
+            foreach (Sector sector in GetSectors())
+                errors.AddRange(sector.CheckSectorErrors(solutionNodes, solutionEdges));
+
+            return errors;
+        }
+
         /// <summary>
         /// Splits panel's blocks into sectors using current Solution line
         /// </summary>

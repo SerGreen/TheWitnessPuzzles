@@ -18,13 +18,29 @@ namespace TWPVisualizer
             InitializeComponent();
         }
 
+        private Puzzle panel = null;
+
         private void btnDisplay_Click(object sender, EventArgs e)
         {
-            Puzzle panel = new Puzzle(4, 4);
+            panel = new Puzzle(4, 4);
             panel.nodes[0].SetState(NodeState.Start);
             panel.nodes.Last().SetState(NodeState.Exit);
 
-            panel.Solution = new List<int> { 0, 5, 6, 11, 10, 15, 20, 21, 22, 17, 12, 13, 8, 7, 2, 3, 4, 9, 14, 19, 18, 23, 24 };
+            panel.nodes[11].SetState(NodeState.Marked);
+            panel.nodes[16].SetState(NodeState.Marked);
+
+            panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
+            panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
+            panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
+
+            panel.grid[2, 0].Rule = new SunPairRule(panel.grid[2, 0], Color.Green);
+            panel.grid[2, 3].Rule = new SunPairRule(panel.grid[2, 3], Color.Green);
+            panel.grid[2, 1].Rule = new SunPairRule(panel.grid[2, 1], Color.Black);
+            panel.grid[3, 0].Rule = new ColoredSquareRule(panel.grid[3, 0], Color.Magenta);
+            panel.grid[0, 1].Rule = new ColoredSquareRule(panel.grid[0, 1], Color.Black);
+            panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
+
+            panel.Solution = new List<int>();
 
 
 
@@ -35,8 +51,21 @@ namespace TWPVisualizer
             }
 
             picCanvas.Image = bmp;
+        }
 
-            panel.GetSectors();
+
+        private void btnSolve_Click(object sender, EventArgs e)
+        {
+            List<int> solution = Array.ConvertAll(txtSolution.Text.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), int.Parse).ToList();
+            panel.Solution = solution;
+
+            Bitmap bmp = new Bitmap(picCanvas.Width, picCanvas.Height);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                RenderPuzzle(panel, g);
+            }
+
+            picCanvas.Image = bmp;
         }
 
         private void RenderPuzzle(Puzzle panel, Graphics g)
@@ -47,11 +76,18 @@ namespace TWPVisualizer
             int nodeRadius = 10;
 
             Brush brush = new SolidBrush(Color.Black);
+            Brush errBrush = new SolidBrush(Color.Red);
+            Brush errBrushA = new SolidBrush(Color.FromArgb(120, Color.Red));
             Pen pen = new Pen(brush);
-            Pen penLine = new Pen(Color.Red, 3);
+            Pen penLine = new Pen(Color.Black, 5);
 
             int width = panel.Width + 1;
             int height = panel.Height + 1;
+
+            var errors = panel.CheckForErrors();
+            var errNodes = errors.Where(x => x.Subject is Node).Select(x => x.Subject as Node);
+            var errEdges = errors.Where(x => x.Subject is Edge).Select(x => x.Subject as Edge);
+            var errBlocks = errors.Where(x => x.Subject is Block).Select(x => x.Subject as Block);
 
             for (int i = 0; i < panel.nodes.Length; i++)
             {
@@ -59,13 +95,18 @@ namespace TWPVisualizer
                 int x = margin + (i - row * width) * nodeSpan;
                 int y = margin + row * nodeSpan;
 
-                if (panel.nodes[i].State == NodeState.Start)
-                    g.FillEllipse(brush, x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
-                else
-                    g.DrawEllipse(pen, x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                //if (panel.nodes[i].State == NodeState.Start)
+                //    g.FillEllipse(brush, x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                //else
+                //    g.DrawEllipse(pen, x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
 
-                if (panel.nodes[i].State == NodeState.Exit)
-                    g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
+                //if (panel.nodes[i].State == NodeState.Exit)
+                //    g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
+
+                if (panel.nodes[i].State == NodeState.Marked)
+                    g.FillEllipse(errNodes.Contains(panel.nodes[i]) ? errBrush : brush, x - 3, y - 3, 6, 6);
+
+                g.DrawString(i.ToString(), Font, brush, x, y);
             }
 
             var solutionEdges = panel.SolutionEdges;
@@ -80,8 +121,12 @@ namespace TWPVisualizer
                 int rowB = edge.NodeB.Id / width;
                 int xB = margin + (edge.NodeB.Id - rowB * width) * nodeSpan;
                 int yB = margin + rowB * nodeSpan;
-                
-                g.DrawLine(solutionEdges.Contains(edge) ? penLine : pen, xA, yA, xB, yB);
+
+                if (edge.State != EdgeState.Broken)
+                    g.DrawLine(solutionEdges.Contains(edge) ? penLine : pen, xA, yA, xB, yB);
+
+                if (edge.State == EdgeState.Marked)
+                    g.FillEllipse(errEdges.Contains(edge) ? errBrush : brush, (xA + xB) / 2 - 3, (yA + yB) / 2 - 3, 6, 6);
             }
 
             List<Sector> sectors = panel.GetSectors();
@@ -97,6 +142,18 @@ namespace TWPVisualizer
                 new SolidBrush(Color.Violet)
             };
 
+            List<Pen> sectorPens = new List<Pen>
+            {
+                new Pen(Color.Blue, 3),
+                new Pen(Color.Magenta, 3),
+                new Pen(Color.Green, 3),
+                new Pen(Color.OrangeRed, 3),
+                new Pen(Color.Cyan, 3),
+                new Pen(Color.Yellow, 3),
+                new Pen(Color.Gray, 3),
+                new Pen(Color.Violet, 3)
+            };
+
             for (int i = 0; i < sectors.Count; i++)
             {
                 foreach (Block block in sectors[i].Blocks)
@@ -107,7 +164,24 @@ namespace TWPVisualizer
                     int x = margin + col * nodeSpan + nodeSpan / 2;
                     int y = margin + row * nodeSpan + nodeSpan / 2;
 
-                    g.FillRectangle(sectorBrushes[i], x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                    g.DrawRectangle(sectorPens[i], x - nodeSpan / 2 + 10, y - nodeSpan / 2 + 10, nodeSpan - 20, nodeSpan - 20);
+
+                    if (block.Rule is ColoredSquareRule sqareRule)
+                        g.FillRectangle(new SolidBrush(sqareRule.Color), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                    else if (block.Rule is SunPairRule sunRule)
+                        g.FillEllipse(new SolidBrush(sunRule.Color), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                    else if (block.Rule is TriangleRule triRule)
+                    {
+                        g.FillPolygon(new SolidBrush(Color.Orange), new PointF[] {
+                            new PointF(x -10, y +10),
+                            new PointF(x, y -16),
+                            new PointF(x +10, y +10)
+                        });
+                        g.DrawString(triRule.Power.ToString(), Font, brush, x - 5, y - 5);
+                    }
+
+                    if(errBlocks.Contains(block))
+                        g.FillRectangle(errBrushA, x - nodeSpan / 2 + 4, y - nodeSpan / 2 + 4, nodeSpan - 8, nodeSpan - 8);
                 }
             }
         }
