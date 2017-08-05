@@ -27,6 +27,7 @@ namespace TheWitnessPuzzleGenerator
         }
     }
 
+    // In sector can only be one color of squares
     public class ColoredSquareRule : BlockRule, ISelfCheckableRule, IColorable
     {
         public ColoredSquareRule(Block parentBlock, Color color) : base(parentBlock)
@@ -49,6 +50,8 @@ namespace TheWitnessPuzzleGenerator
         }
     }
 
+    // In sector must be exactly one more object of the same color (it may be other sun or different block of same color)
+    // Blocks colored in different color do not matter
     public class SunPairRule : BlockRule, ISelfCheckableRule, IColorable
     {
         public SunPairRule(Block parentBlock, Color color) : base(parentBlock)
@@ -71,6 +74,7 @@ namespace TheWitnessPuzzleGenerator
         }
     }
 
+    // Solution line must pass by triangle block exactly <Power> times (1 to 3)
     public class TriangleRule : BlockRule, ISelfCheckableRule
     {
         public int Power { get; }
@@ -87,6 +91,54 @@ namespace TheWitnessPuzzleGenerator
                 return null;
             else
                 return new Error(block, null);
+        }
+    }
+
+    public class TetrisRule : BlockRule
+    {
+        public bool[,] Shape { get; protected set; }
+        public bool IsSubtracting { get; }
+
+        public int Width => Shape.GetLength(0);
+        public int Height => Shape.GetLength(1);
+        public int TotalBlocks { get; }
+
+        public (int X, int Y) TopLeftMost { get
+            {
+                for (int j = 0; j < Height; j++)
+                    for (int i = 0; i < Width; i++)
+                        if (Shape[i, j])
+                            return (i, j);
+
+                return (-1, -1);
+            } }
+
+        public TetrisRule(Block parentBlock, bool[,] shape, bool subtracting = false) : base(parentBlock)
+        {
+            IsSubtracting = subtracting;
+            Shape = shape;
+
+            TotalBlocks = 0;
+            for (int i = 0; i < Width; i++)
+                for (int j = 0; j < Height; j++)
+                    if (shape[i, j])
+                        TotalBlocks++;
+        }
+    }
+
+    public class TetrisRotatableRule : TetrisRule
+    {
+        public TetrisRotatableRule(Block parentBlock, bool[,] shape, bool subtracting = false) 
+            : base(parentBlock, shape, subtracting)
+        { }
+
+        public void RotateCW()
+        {
+            bool[,] newShape = new bool[Height, Width];
+            for (int i = 0; i < Width; i++)
+                for (int j = Height - 1; j >= 0; j--)
+                    newShape[j, i] = Shape[i, j];
+            Shape = newShape;
         }
     }
 }

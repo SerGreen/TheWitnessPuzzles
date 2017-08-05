@@ -53,7 +53,6 @@ namespace TWPVisualizer
             picCanvas.Image = bmp;
         }
 
-
         private void btnSolve_Click(object sender, EventArgs e)
         {
             List<int> solution = Array.ConvertAll(txtSolution.Text.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), int.Parse).ToList();
