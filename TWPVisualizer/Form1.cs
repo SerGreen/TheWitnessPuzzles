@@ -40,6 +40,11 @@ namespace TWPVisualizer
             panel.grid[0, 1].Rule = new ColoredSquareRule(panel.grid[0, 1], Color.Black);
             panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
 
+            panel.grid[3, 1].Rule = new TetrisRule(panel.grid[3, 1], new bool[,] { { true, true }, { false, true }, { true, true },{ true, true } }, false);
+            panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true, true }, { true, true } }, false);
+            panel.grid[3, 2].Rule = new TetrisRotatableRule(panel.grid[3, 2], new bool[,] { { false, true }, { true, true } }, true);
+            panel.grid[3, 3].Rule = new TetrisRule(panel.grid[3, 3], new bool[,] { { true } }, true);
+
             panel.Solution = new List<int>();
 
 
@@ -51,6 +56,56 @@ namespace TWPVisualizer
             }
 
             picCanvas.Image = bmp;
+            
+        }
+
+        private IEnumerable<List<int>> GetPermutationsWithRepetitions(int places)
+        {
+            int n = places;
+            int numericMax = (int) Math.Pow(n, places);
+
+            for (int i = 0; i < numericMax; i++)
+            {
+                List<int> li = new List<int>(places);
+                for (int digit = 0; digit < places; digit++)
+                {
+                    var a = (int) (i / Math.Pow(n, digit)) % n;
+                    li.Add(a);
+                }
+                yield return li;
+            }
+        }
+
+        int[] list = { 0, 1, 2, 3 };
+        List<List<int>> ggg = new List<List<int>>();
+        private void HeapPermute(int n)
+        {
+            if (n == 1)
+                ggg.Add(new List<int>(list));
+            else
+                for (int i = 0; i < n; i++)
+                {
+                    HeapPermute(n - 1);
+                    if (n % 2 == 1)  // if n is odd
+                    {
+                        int temp = list[0];
+                        list[0] = list[n - 1];
+                        list[n - 1] = temp;
+                    }
+                    else            // if n is even
+                    {
+                        int temp = list[i];
+                        list[i] = list[n - 1];
+                        list[n - 1] = temp;
+                    }
+                }
+        }
+
+            private IEnumerable<List<int>> GetPermutations(int places)
+        {
+            var list = Enumerable.Range(0, places);
+            return list.SelectMany(mainItem => list.Where(otherItem => !otherItem.Equals(mainItem))
+                                      .Select(otherItem => new List<int> { mainItem, otherItem }));
         }
 
         private void btnSolve_Click(object sender, EventArgs e)

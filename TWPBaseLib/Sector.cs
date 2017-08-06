@@ -10,11 +10,16 @@ namespace TheWitnessPuzzleGenerator
     {
         public List<Block> Blocks { get; set; }
 
+        public int TotalBlocks => Blocks.Count;
+        public Puzzle Panel { get; }
+
         public Sector(List<Block> blocks)
         {
             Blocks = blocks;
             foreach (var block in Blocks)
                 block.CurrentSector = this;
+
+            Panel = Blocks.FirstOrDefault()?.ParentPanel;
         }
 
         public override string ToString() => string.Join(" ", Blocks);
@@ -35,9 +40,93 @@ namespace TheWitnessPuzzleGenerator
         {
             List<Error> errorsList = new List<Error>();
 
+            int[,] baseBoard = new int[Panel.Width, Panel.Height];
+            for (int j = 0; j < Panel.Height; j++)
+                for (int i = 0; i < Panel.Width; i++)
+                    if (Blocks.Contains(Panel.grid[i, j]))
+                        baseBoard[i, j] = 0;
+                    else
+                        baseBoard[i, j] = 1;
+            List<int[,]> allBoards = new List<int[,]>();
+
+
             var tetrises = Blocks.Where(x => x.Rule is TetrisRule).Select(x => x.Rule as TetrisRule);
+
+            // If net sum of all tetris blocks is not equal to total blocks of sector, then it's an error outright
+            if (tetrises.Sum(x => x.TotalBlocks) != TotalBlocks)
+            {
+                foreach (var tetrino in tetrises)
+                    errorsList.Add(new Error(tetrino.OwnerBlock, null));
+                return errorsList;
+            }
+
             var rotatableTetrises = tetrises.Where(x => x is TetrisRotatableRule).Select(x => x as TetrisRotatableRule).ToList();
             var stationaryTetrises = tetrises.Except(rotatableTetrises);
+
+            // If there are no subtracting tetrominos, then we are lucky to deal with only one version of board
+            if (!tetrises.Any(x => x.IsSubtractive))
+                allBoards.Add(baseBoard);
+            // Otherwise we have to create variations of base board, where all subtractive tetrominos are placed in every possible combination
+            else
+            {
+                var rotatableSubtractive = rotatableTetrises.Where(x => x.IsSubtractive);
+                var stationarySubtractive = stationaryTetrises.Where(x => x.IsSubtractive);
+
+                // Rotatable Subtractive Shapes Configurations - list of array of 4 rotations for every rotatable shape
+                List<TetrisRotatableRule[]> rSubConfigurations = new List<TetrisRotatableRule[]>();
+                foreach (var shape in rotatableSubtractive)
+                {
+                    TetrisRotatableRule[] shapes = new TetrisRotatableRule[4];
+                    shapes[0] = shape;
+                    for (int i = 1; i < 4; i++)
+                    {
+                        shapes[i] = shapes[i-1].RotateCW();
+                    }
+                    rSubConfigurations.Add(shapes);
+                }
+
+                // Get all combinations of rotations of every rotatable (and add non-rotatables to every combination)
+                List<List<TetrisRule>> allSubtractiveRotations = new List<List<TetrisRule>>();
+                foreach (var permut in GetPermutationsWithRepetitions(rSubConfigurations.Count, 4))
+                {
+                    List<TetrisRule> combination = new List<TetrisRule>();
+                    for (int i = 0; i < rSubConfigurations.Count; i++)
+                        combination.Add(rSubConfigurations[i][permut[i]]);
+                    combination.AddRange(stationarySubtractive);
+
+                    allSubtractiveRotations.Add(combination);
+                }
+
+                // Now for every combination of rotations create all combinations of positions of every shape on board
+                // Create a board version from every combination and add it to all boards
+                foreach (var rotatCombination in allSubtractiveRotations)
+                {
+                    foreach (var permut in GetPermutationsWithRepetitions(rotatCombination.Count, Panel.Width*Panel.Height))
+                    {
+                        int[,] boardCopy = baseBoard.Clone() as int[,];
+                        bool failedCombination = false;
+
+                        for (int i = 0; i < rotatCombination.Count; i++)
+                        {
+                            int y = permut[i] / Panel.Width;
+                            int x = permut[i] - y * Panel.Width;
+
+                            if (!ApplyShapeToBoard(boardCopy, rotatCombination[i].Shape, (x, y), true))
+                            {
+                                failedCombination = true;
+                                break;
+                            }
+                        }
+
+                        if (failedCombination)
+                            continue;
+
+                        allBoards.Add(boardCopy);
+                    }
+                }
+
+                // TO DO
+            }
 
             List<TetrisRotatableRule[]> rotatableShapesConfigurations = new List<TetrisRotatableRule[]>();
             foreach (var shape in rotatableTetrises)
@@ -58,9 +147,23 @@ namespace TheWitnessPuzzleGenerator
             }
 
             return errorsList;
+
+            bool ApplyShapeToBoard(int[,] board, bool[,] shape, (int x, int y) point, bool isSubtractive = false)
+            {
+                if (point.x + shape.GetLength(0) - 1 >= board.GetLength(0) ||
+                   point.y + shape.GetLength(1) - 1 >= board.GetLength(1))
+                    return false;
+
+                for (int i = 0; i < shape.GetLength(0); i++)
+                    for (int j = 0; j < shape.GetLength(1); j++)
+                        if (shape[i, j])
+                            board[point.x + i, point.y + j] += isSubtractive ? -1 : 1;
+
+                return true;
+            }
         }
 
-        private IEnumerable<List<int>> GetPermutations(int places, int options = 4)
+        private IEnumerable<List<int>> GetPermutationsWithRepetitions(int places, int options = 4)
         {
             int n = options;
             int numericMax = (int) Math.Pow(n, places);
@@ -75,7 +178,7 @@ namespace TheWitnessPuzzleGenerator
                 yield return li;
             }
         }
-
+        
         private List<Error> CheckSectorBlockErrors()
         {
             List<Error> errorsList = new List<Error>();

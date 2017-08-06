@@ -19,11 +19,11 @@ namespace TheWitnessPuzzleGenerator
 
     public abstract class BlockRule
     {
-        protected Block block;
+        public Block OwnerBlock { get; }
 
         public BlockRule(Block parentBlock)
         {
-            block = parentBlock;
+            OwnerBlock = parentBlock;
         }
     }
 
@@ -39,11 +39,11 @@ namespace TheWitnessPuzzleGenerator
 
         public Error CheckRule()
         {
-            var blocksWithDifferentColor = block.CurrentSector.Blocks.Where(x => x.Rule is ColoredSquareRule xx && xx.Color != Color);
+            var blocksWithDifferentColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is ColoredSquareRule xx && xx.Color != Color);
 
             if (blocksWithDifferentColor.Count() > 0)
             {
-                return new Error(block, blocksWithDifferentColor.Select(x => x as IErrorable).ToList());
+                return new Error(OwnerBlock, blocksWithDifferentColor.Select(x => x as IErrorable).ToList());
             }
             else
                 return null;
@@ -63,13 +63,13 @@ namespace TheWitnessPuzzleGenerator
 
         public Error CheckRule()
         {
-            var blocksWithSameColor = block.CurrentSector.Blocks.Where(x => x.Rule is IColorable xx && xx.Color == Color);
+            var blocksWithSameColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is IColorable xx && xx.Color == Color);
 
             if (blocksWithSameColor.Count() == 2)
                 return null;
             else
             {
-                return new Error(block, blocksWithSameColor.Select(x => x as IErrorable).ToList());
+                return new Error(OwnerBlock, blocksWithSameColor.Select(x => x as IErrorable).ToList());
             }
         }
     }
@@ -87,21 +87,22 @@ namespace TheWitnessPuzzleGenerator
 
         public Error CheckRule()
         {
-            if (block.Edges.Intersect(block.ParentPanel.SolutionEdges).Count() == Power)
+            if (OwnerBlock.Edges.Intersect(OwnerBlock.ParentPanel.SolutionEdges).Count() == Power)
                 return null;
             else
-                return new Error(block, null);
+                return new Error(OwnerBlock, null);
         }
     }
 
     public class TetrisRule : BlockRule
     {
         public bool[,] Shape { get; protected set; }
-        public bool IsSubtracting { get; }
+        public bool IsSubtractive { get; }
 
         public int Width => Shape.GetLength(0);
         public int Height => Shape.GetLength(1);
-        public int TotalBlocks { get; }
+        private int _totalBlocks;
+        public int TotalBlocks { get => IsSubtractive ? -_totalBlocks : _totalBlocks; }
 
         public (int X, int Y) TopLeftMost { get
             {
@@ -115,14 +116,14 @@ namespace TheWitnessPuzzleGenerator
 
         public TetrisRule(Block parentBlock, bool[,] shape, bool subtracting = false) : base(parentBlock)
         {
-            IsSubtracting = subtracting;
+            IsSubtractive = subtracting;
             Shape = shape;
 
-            TotalBlocks = 0;
+            _totalBlocks = 0;
             for (int i = 0; i < Width; i++)
                 for (int j = 0; j < Height; j++)
                     if (shape[i, j])
-                        TotalBlocks++;
+                        _totalBlocks++;
         }
     }
 
@@ -132,13 +133,16 @@ namespace TheWitnessPuzzleGenerator
             : base(parentBlock, shape, subtracting)
         { }
 
-        public void RotateCW()
+        public TetrisRotatableRule RotateCW()
         {
             bool[,] newShape = new bool[Height, Width];
             for (int i = 0; i < Width; i++)
                 for (int j = Height - 1; j >= 0; j--)
-                    newShape[j, i] = Shape[i, j];
-            Shape = newShape;
+                    newShape[Width - j - 1, i] = Shape[i, j];
+
+            var clone = this.MemberwiseClone() as TetrisRotatableRule;
+            clone.Shape = newShape;
+            return clone;
         }
     }
 }
