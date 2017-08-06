@@ -47,8 +47,9 @@ namespace TheWitnessPuzzleGenerator
                         baseBoard[i, j] = 0;
                     else
                         baseBoard[i, j] = 1;
-            List<int[,]> allBoards = new List<int[,]>();
 
+            // All variations of board, created by different placement of subtractive shapes
+            IEnumerable<int[,]> allBoards = new List<int[,]>();
 
             var tetrises = Blocks.Where(x => x.Rule is TetrisRule).Select(x => x.Rule as TetrisRule);
 
@@ -65,7 +66,7 @@ namespace TheWitnessPuzzleGenerator
 
             // If there are no subtracting tetrominos, then we are lucky to deal with only one version of board
             if (!tetrises.Any(x => x.IsSubtractive))
-                allBoards.Add(baseBoard);
+                allBoards = new List<int[,]> { baseBoard };
             // Otherwise we have to create variations of base board, where all subtractive tetrominos are placed in every possible combination
             else
             {
@@ -84,49 +85,58 @@ namespace TheWitnessPuzzleGenerator
                     }
                     rSubConfigurations.Add(shapes);
                 }
-
-                // Get all combinations of rotations of every rotatable (and add non-rotatables to every combination)
+                
                 List<List<TetrisRule>> allSubtractiveRotations = new List<List<TetrisRule>>();
-                foreach (var permut in GetPermutationsWithRepetitions(rSubConfigurations.Count, 4))
-                {
-                    List<TetrisRule> combination = new List<TetrisRule>();
-                    for (int i = 0; i < rSubConfigurations.Count; i++)
-                        combination.Add(rSubConfigurations[i][permut[i]]);
-                    combination.AddRange(stationarySubtractive);
+                // If there're no rotatable shapes, then there's only one combination of shape rotations
+                if (rSubConfigurations.Count == 0)
+                    allSubtractiveRotations.Add(new List<TetrisRule>(stationarySubtractive));
+                // Otherwise get all combinations of rotations of every rotatable (and add non-rotatables to every combination)
+                else
+                    foreach (var permut in GetPermutationsWithRepetitions(rSubConfigurations.Count, 4))
+                    {
+                        List<TetrisRule> combination = new List<TetrisRule>();
+                        for (int i = 0; i < rSubConfigurations.Count; i++)
+                            combination.Add(rSubConfigurations[i][permut[i]]);
+                        combination.AddRange(stationarySubtractive);
 
-                    allSubtractiveRotations.Add(combination);
-                }
+                        allSubtractiveRotations.Add(combination);
+                    }
 
                 // Now for every combination of rotations create all combinations of positions of every shape on board
                 // Create a board version from every combination and add it to all boards
-                foreach (var rotatCombination in allSubtractiveRotations)
+                allBoards = GetAllBoards();
+                
+                IEnumerable<int[,]> GetAllBoards()
                 {
-                    foreach (var permut in GetPermutationsWithRepetitions(rotatCombination.Count, Panel.Width*Panel.Height))
+                    foreach (var rotatCombination in allSubtractiveRotations)
                     {
-                        int[,] boardCopy = baseBoard.Clone() as int[,];
-                        bool failedCombination = false;
-
-                        for (int i = 0; i < rotatCombination.Count; i++)
+                        foreach (var permut in GetPermutationsWithRepetitions(rotatCombination.Count, Panel.Width * Panel.Height))
                         {
-                            int y = permut[i] / Panel.Width;
-                            int x = permut[i] - y * Panel.Width;
+                            int[,] boardCopy = baseBoard.Clone() as int[,];
+                            bool failedCombination = false;
 
-                            if (!ApplyShapeToBoard(boardCopy, rotatCombination[i].Shape, (x, y), true))
+                            for (int i = 0; i < rotatCombination.Count; i++)
                             {
-                                failedCombination = true;
-                                break;
+                                int y = permut[i] / Panel.Width;
+                                int x = permut[i] - y * Panel.Width;
+
+                                if (!ApplyShapeToBoard(boardCopy, rotatCombination[i].Shape, (x, y), true))
+                                {
+                                    failedCombination = true;
+                                    break;
+                                }
                             }
+
+                            if (failedCombination)
+                                continue;
+
+                            yield return boardCopy;
                         }
-
-                        if (failedCombination)
-                            continue;
-
-                        allBoards.Add(boardCopy);
                     }
                 }
-
-                // TO DO
             }
+
+            // TO DO
 
             List<TetrisRotatableRule[]> rotatableShapesConfigurations = new List<TetrisRotatableRule[]>();
             foreach (var shape in rotatableTetrises)
@@ -148,6 +158,7 @@ namespace TheWitnessPuzzleGenerator
 
             return errorsList;
 
+            // == Local methods ==
             bool ApplyShapeToBoard(int[,] board, bool[,] shape, (int x, int y) point, bool isSubtractive = false)
             {
                 if (point.x + shape.GetLength(0) - 1 >= board.GetLength(0) ||
@@ -161,22 +172,23 @@ namespace TheWitnessPuzzleGenerator
 
                 return true;
             }
-        }
 
-        private IEnumerable<List<int>> GetPermutationsWithRepetitions(int places, int options = 4)
-        {
-            int n = options;
-            int numericMax = (int) Math.Pow(n, places);
-
-            for (int i = 0; i < numericMax; i++)
+            IEnumerable<List<int>> GetPermutationsWithRepetitions(int places, int options = 4)
             {
-                List<int> li = new List<int>(places);
-                for (int digit = 0; digit < places; digit++)
+                int numericMax = (int) Math.Pow(options, places);
+
+                for (int i = 0; i < numericMax; i++)
                 {
-                    li.Add((int) (i / Math.Pow(n, digit)) % n);
+                    List<int> li = new List<int>(places);
+                    for (int digit = 0; digit < places; digit++)
+                    {
+                        li.Add((int) (i / Math.Pow(options, digit)) % options);
+                    }
+                    yield return li;
                 }
-                yield return li;
             }
+
+            IEnumerable<IEnumerable<int>> GetPermutations(int places) => Enumerable.Range(0, places).Permute();
         }
         
         private List<Error> CheckSectorBlockErrors()

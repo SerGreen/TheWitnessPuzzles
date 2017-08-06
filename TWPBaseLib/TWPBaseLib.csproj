@@ -53,6 +53,7 @@
     <Compile Include="Edge.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Error.cs" />
+    <Compile Include="ExtensionMethods.cs" />
     <Compile Include="IErrorable.cs" />
     <Compile Include="Node.cs" />
     <Compile Include="Puzzle.cs" />
