@@ -32,18 +32,13 @@ namespace TWPVisualizer
             panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
             panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
             panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
-
-            panel.grid[2, 0].Rule = new SunPairRule(panel.grid[2, 0], Color.Green);
-            panel.grid[2, 3].Rule = new SunPairRule(panel.grid[2, 3], Color.Green);
-            panel.grid[2, 1].Rule = new SunPairRule(panel.grid[2, 1], Color.Black);
+            
             panel.grid[3, 0].Rule = new ColoredSquareRule(panel.grid[3, 0], Color.Magenta);
             panel.grid[0, 1].Rule = new ColoredSquareRule(panel.grid[0, 1], Color.Black);
             panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
 
-            panel.grid[3, 1].Rule = new TetrisRule(panel.grid[3, 1], new bool[,] { { true, true }, { false, true }, { true, true },{ true, true } }, false);
-            panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true, true }, { true, true } }, false);
-            panel.grid[3, 2].Rule = new TetrisRotatableRule(panel.grid[3, 2], new bool[,] { { false, true }, { true, true } }, true);
-            panel.grid[3, 3].Rule = new TetrisRule(panel.grid[3, 3], new bool[,] { { true } }, true);
+            panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
+            panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true } });
 
             panel.Solution = new List<int>();
 

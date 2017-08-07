@@ -104,7 +104,9 @@ namespace TheWitnessPuzzleGenerator
         private int _totalBlocks;
         public int TotalBlocks { get => IsSubtractive ? -_totalBlocks : _totalBlocks; }
 
-        public (int X, int Y) TopLeftMost { get
+        public (int X, int Y) TopLeftMost
+        {
+            get
             {
                 for (int j = 0; j < Height; j++)
                     for (int i = 0; i < Width; i++)
@@ -112,17 +114,21 @@ namespace TheWitnessPuzzleGenerator
                             return (i, j);
 
                 return (-1, -1);
-            } }
+            }
+        }
 
         public TetrisRule(Block parentBlock, bool[,] shape, bool subtracting = false) : base(parentBlock)
         {
             IsSubtractive = subtracting;
-            Shape = shape;
+            Shape = new bool[shape.GetLength(1), shape.GetLength(0)];
+            for (int i = 0; i < Width; i++)
+                for (int j = 0; j < Height; j++)
+                    Shape[i, j] = shape[j, i];
 
             _totalBlocks = 0;
             for (int i = 0; i < Width; i++)
                 for (int j = 0; j < Height; j++)
-                    if (shape[i, j])
+                    if (Shape[i, j])
                         _totalBlocks++;
         }
     }
@@ -138,7 +144,7 @@ namespace TheWitnessPuzzleGenerator
             bool[,] newShape = new bool[Height, Width];
             for (int i = 0; i < Width; i++)
                 for (int j = Height - 1; j >= 0; j--)
-                    newShape[Width - j - 1, i] = Shape[i, j];
+                    newShape[Height - j - 1, i] = Shape[i, j];
 
             var clone = this.MemberwiseClone() as TetrisRotatableRule;
             clone.Shape = newShape;
