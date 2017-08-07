@@ -27,7 +27,7 @@ namespace TheWitnessPuzzleGenerator
         }
     }
 
-    // In sector can only be one color of squares
+    // Thre're can be squares of only one color in sector
     public class ColoredSquareRule : BlockRule, ISelfCheckableRule, IColorable
     {
         public ColoredSquareRule(Block parentBlock, Color color) : base(parentBlock)
@@ -39,7 +39,10 @@ namespace TheWitnessPuzzleGenerator
 
         public Error CheckRule()
         {
-            var blocksWithDifferentColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is ColoredSquareRule xx && xx.Color != Color);
+            // Retrieve eliminated blocks in sector, they must not interfere with check
+            var eliminatedBlocks = OwnerBlock.CurrentSector.EliminatedParts.OfType<Block>();
+
+            var blocksWithDifferentColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is ColoredSquareRule xx && xx.Color != Color).Except(eliminatedBlocks);
 
             if (blocksWithDifferentColor.Count() > 0)
             {
@@ -63,7 +66,10 @@ namespace TheWitnessPuzzleGenerator
 
         public Error CheckRule()
         {
-            var blocksWithSameColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is IColorable xx && xx.Color == Color);
+            // Retrieve eliminated blocks in sector, they must not interfere with check
+            var eliminatedBlocks = OwnerBlock.CurrentSector.EliminatedParts.OfType<Block>();
+
+            var blocksWithSameColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is IColorable xx && xx.Color == Color).Except(eliminatedBlocks);
 
             if (blocksWithSameColor.Count() == 2)
                 return null;
@@ -150,5 +156,11 @@ namespace TheWitnessPuzzleGenerator
             clone.Shape = newShape;
             return clone;
         }
+    }
+
+    public class EliminationRule : BlockRule
+    {
+        public EliminationRule(Block parentBlock) : base(parentBlock)
+        { }
     }
 }

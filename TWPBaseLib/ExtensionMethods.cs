@@ -8,6 +8,8 @@ namespace TheWitnessPuzzleGenerator
 {
     public static class ExtensionMethods
     {
+        /// Previous iteration on GetPermutations method
+        /*
         public static IEnumerable<IEnumerable<T>> Permute<T>(this IEnumerable<T> sequence)
         {
             if (sequence == null)
@@ -66,6 +68,23 @@ namespace TheWitnessPuzzleGenerator
             {
                 yield return item;
             }
+        }
+        //*/
+
+        public static IEnumerable<IEnumerable<T>> GetKCombs<T>(this IEnumerable<T> list, int length) where T : IComparable
+        {
+            if (length == 1) return list.Select(t => new T[] { t });
+            return list.GetKCombs(length - 1)
+                       .SelectMany(t => list.Where(o => o.CompareTo(t.Last()) > 0), 
+                                    (t1, t2) => t1.Concat(new T[] { t2 }));
+        }
+
+        public static IEnumerable<IEnumerable<T>> GetPermutations<T>(this IEnumerable<T> list, int length)
+        {
+            if (length == 1) return list.Select(t => new T[] { t });
+            return list.GetPermutations(length - 1)
+                       .SelectMany(t => list.Where(o => !t.Contains(o)),
+                                    (t1, t2) => t1.Concat(new T[] { t2 }));
         }
     }
 }

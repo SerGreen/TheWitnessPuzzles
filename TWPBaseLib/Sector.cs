@@ -13,6 +13,10 @@ namespace TheWitnessPuzzleGenerator
         public int TotalBlocks => Blocks.Count;
         public Puzzle Panel { get; }
 
+        // Blocks, Nodes and Edges eliminated by Elimination rule blocks
+        private List<IErrorable> eliminatedParts = new List<IErrorable>();
+        public IReadOnlyList<IErrorable> EliminatedParts { get; }
+
         public Sector(List<Block> blocks)
         {
             Blocks = blocks;
@@ -20,25 +24,115 @@ namespace TheWitnessPuzzleGenerator
                 block.CurrentSector = this;
 
             Panel = Blocks.FirstOrDefault()?.ParentPanel;
+            EliminatedParts = eliminatedParts.AsReadOnly();
         }
 
         public override string ToString() => string.Join(" ", Blocks);
-
+        
         public List<Error> CheckSectorErrors(IEnumerable<Node> solutionNodes, IEnumerable<Edge> solutionEdges)
         {
             List<Error> errorsList = new List<Error>();
-            errorsList.AddRange(CheckSectorSelfCheckableBlockErrors());
-            errorsList.AddRange(CheckSectorNodeErrors(solutionNodes));
-            errorsList.AddRange(CheckSectorEdgeErrors(solutionEdges));
 
-            errorsList.AddRange(CheckTetrisErrors());
+            // Do first round of checking
+            errorsList = CheckErrors();
+
+            // Get all blocks with Elimination rule
+            var eliminationBlocks = Blocks.Where(x => x.Rule is EliminationRule).ToList();
+
+            // If there're no elimination blocks, then we're done
+            if (eliminationBlocks.Count == 0)
+                return errorsList;
+
+            // If we have equal or less errors than we have elimination blocks,
+            // then satisfy elimination rules as far as we can, create new errors for unsatisfied eliminations and return
+            // Pair of unsatisfied eliminators can eliminate each other, so if we have even number of unsatisfied eliminators, then we're fine
+            if (errorsList.Count <= eliminationBlocks.Count)
+            {
+                for (int i = 0; i < eliminationBlocks.Count; i++)
+                {
+                    if (i < errorsList.Count)
+                        errorsList[i].Eliminate();
+                    else
+                        errorsList.Add(new Error(eliminationBlocks[i], null));
+                }
+
+                // If we have even number of spare eliminators, then eliminate all of them
+                foreach (var error in errorsList)
+                    error.Eliminate();
+
+                // If odd number, then all but last one
+                if ((eliminationBlocks.Count - errorsList.Count) % 2 == 1)
+                    errorsList.Last().IsEliminated = false;
+
+                return errorsList;
+            }
+
+            // If we have more errors, than we have elimination blocks, then we might be able
+            // to eliminate specific blocks and resolve all errors by that
+            // So we have to generate all k-combinations of possible error eliminations and try them all
+            List<Error> eliminatedErrorsList;
+
+            foreach (IEnumerable<int> kcomb in Enumerable.Range(0, errorsList.Count).GetKCombs(eliminationBlocks.Count))
+            {
+                // Eliminate chosen parts of sector
+                eliminatedParts.Clear();
+                foreach (int index in kcomb)
+                    eliminatedParts.Add(errorsList[index].Subject);
+
+                // Re-check for errors
+                eliminatedErrorsList = CheckErrors();
+
+                // If we've got no errors => success
+                if (eliminatedErrorsList.Count == 0)
+                {
+                    // Add eliminated errors to the list and return
+                    foreach (var part in eliminatedParts)
+                        eliminatedErrorsList.Add(new Error(part, null, true));
+                    return eliminatedErrorsList;
+                }
+
+                // Otherwise try different combination of eliminations
+            }
+
+            // If none of the eliminations succeeded => fail
+            // Eliminate as many as possible and return
+            for (int i = 0; i < eliminationBlocks.Count; i++)
+                errorsList[i].Eliminate();
 
             return errorsList;
+
+            // Local method for doing check cycle
+            List<Error> CheckErrors()
+            {
+                List<Error> errors = new List<Error>();
+
+                errorsList.AddRange(CheckSectorSelfCheckableBlockErrors());
+                errorsList.AddRange(CheckSectorNodeErrors(solutionNodes));
+                errorsList.AddRange(CheckSectorEdgeErrors(solutionEdges));
+                errorsList.AddRange(CheckTetrisErrors());
+
+                return errors;
+            }
         }
 
         private IEnumerable<Error> CheckTetrisErrors()
         {
             List<Error> errorsList = new List<Error>();
+
+            // Retrieve all eliminated Tetris rules
+            var eliminatedTetrises = eliminatedParts.Where(x => x is Block block && block.Rule is TetrisRule)
+                                                    .Select(x => (x as Block).Rule as TetrisRule);
+
+            // Retrieve all Tetris rules from sector blocks, excluding eliminated ones
+            var tetrisRules = Blocks.Where(x => x.Rule is TetrisRule).Select(x => x.Rule as TetrisRule).Except(eliminatedTetrises);
+            
+            // If net sum of all tetris blocks is not equal to total blocks of sector, then it's an error outright
+            if (tetrisRules.Sum(x => x.TotalBlocks) != TotalBlocks)
+            {
+                foreach (var tetromino in tetrisRules)
+                    errorsList.Add(new Error(tetromino.OwnerBlock, null));
+                return errorsList;
+            }
 
             // Create board where sector blocks are 0 and other blocks are 1
             // Complete board should have only Ones and no Zeroes
@@ -53,18 +147,7 @@ namespace TheWitnessPuzzleGenerator
             // All variations of board, created by different placement of subtractive shapes
             IEnumerable<int[,]> allBoards;
 
-            // Retrieve all Tetris rules from sector blocks
-            var tetrisRules = Blocks.Where(x => x.Rule is TetrisRule).Select(x => x.Rule as TetrisRule);
-
-            // If net sum of all tetris blocks is not equal to total blocks of sector, then it's an error outright
-            if (tetrisRules.Sum(x => x.TotalBlocks) != TotalBlocks)
-            {
-                foreach (var tetromino in tetrisRules)
-                    errorsList.Add(new Error(tetromino.OwnerBlock, null));
-                return errorsList;
-            }
-
-            var rotatableTetrominos = tetrisRules.Where(x => x is TetrisRotatableRule).Select(x => x as TetrisRotatableRule);
+            var rotatableTetrominos = tetrisRules.OfType<TetrisRotatableRule>();
             var stationaryTetrominos = tetrisRules.Except(rotatableTetrominos);
 
             // If there are no subtracting tetrominos, then we are lucky to deal with only one version of board
@@ -261,7 +344,7 @@ namespace TheWitnessPuzzleGenerator
                     yield return li;
                 }
             }
-
+            
             // Rotate every rotatable shape and create every possible combination of rotations of each shape
             // Combined with non-rotatable shapes
             List<List<TetrisRule>> GetAllTetrominoCombinations(IEnumerable<TetrisRule> stationary, IEnumerable<TetrisRotatableRule> rotatable)
@@ -296,13 +379,17 @@ namespace TheWitnessPuzzleGenerator
                 return allCombinations;
             }
 
-            IEnumerable<IEnumerable<int>> GetPermutations(int places) => Enumerable.Range(0, places).Permute();
+            IEnumerable<IEnumerable<int>> GetPermutations(int places) => Enumerable.Range(0, places).GetPermutations(places);
         }
 
         private List<Error> CheckSectorSelfCheckableBlockErrors()
         {
             List<Error> errorsList = new List<Error>();
-            foreach (Block block in Blocks)
+
+            // Retrieve eliminated blocks, we don't need to check them
+            var eliminatedBlocks = eliminatedParts.OfType<Block>();
+            
+            foreach (Block block in Blocks.Except(eliminatedBlocks))
             {
                 if (block.Rule is ISelfCheckableRule rule)
                 {
@@ -319,7 +406,10 @@ namespace TheWitnessPuzzleGenerator
         {
             List<Error> errorsList = new List<Error>();
 
-            var markedNodes = Blocks.SelectMany(x => x.Nodes).Distinct().Where(x => x.State == NodeState.Marked);
+            // Retrieve eliminated nodes, we don't need to check them
+            var eliminatedNodes = eliminatedParts.OfType<Node>();
+
+            var markedNodes = Blocks.SelectMany(x => x.Nodes).Distinct().Where(x => x.State == NodeState.Marked).Except(eliminatedNodes);
 
             // Each marked node without solution going through it is an error
             foreach (var node in markedNodes.Except(solutionNodes))
@@ -332,7 +422,10 @@ namespace TheWitnessPuzzleGenerator
         {
             List<Error> errorsList = new List<Error>();
 
-            var markedEdges = Blocks.SelectMany(x => x.Edges).Distinct().Where(x => x.State == EdgeState.Marked);
+            // Retrieve eliminated edges, we don't need to check them
+            var eliminatedEdges = eliminatedParts.OfType<Edge>();
+
+            var markedEdges = Blocks.SelectMany(x => x.Edges).Distinct().Where(x => x.State == EdgeState.Marked).Except(eliminatedEdges);
             
             // Each marked edge without solution going through it is an error
             foreach (var edge in markedEdges.Except(solutionEdges))
