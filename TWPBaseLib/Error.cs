@@ -11,11 +11,7 @@ namespace TheWitnessPuzzleGenerator
         /// <summary>
         /// Who has an error
         /// </summary>
-        public IErrorable Subject { get; }
-        /// <summary>
-        /// Because of who this error arised
-        /// </summary>
-        public List<IErrorable> Sources { get; }
+        public IErrorable Source { get; }
         /// <summary>
         /// If this error is neutralized by Elimination rule
         /// </summary>
@@ -23,10 +19,9 @@ namespace TheWitnessPuzzleGenerator
 
         public void Eliminate() => IsEliminated = true;
 
-        public Error(IErrorable subject, List<IErrorable> sources, bool isEliminated = false)
+        public Error(IErrorable source, bool isEliminated = false)
         {
-            Subject = subject;
-            Sources = sources;
+            Source = source;
             IsEliminated = isEliminated;
         }
     }

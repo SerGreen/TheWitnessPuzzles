@@ -32,6 +32,7 @@ namespace TheWitnessPuzzleGenerator
         public List<Error> CheckSectorErrors(IEnumerable<Node> solutionNodes, IEnumerable<Edge> solutionEdges)
         {
             List<Error> errorsList = new List<Error>();
+            eliminatedParts.Clear();
 
             // Do first round of checking
             errorsList = CheckErrors();
@@ -43,26 +44,29 @@ namespace TheWitnessPuzzleGenerator
             if (eliminationBlocks.Count == 0)
                 return errorsList;
 
-            // If we have equal or less errors than we have elimination blocks,
-            // then satisfy elimination rules as far as we can, create new errors for unsatisfied eliminations and return
-            // Pair of unsatisfied eliminators can eliminate each other, so if we have even number of unsatisfied eliminators, then we're fine
+            // If we have equal amount or more of elimination blocks than errors,
+            // then eliminate all blocks with an error and corresponding amount of eliminators
             if (errorsList.Count <= eliminationBlocks.Count)
             {
-                for (int i = 0; i < eliminationBlocks.Count; i++)
+                // Also eliminate spare eliminators by pairs, because they can eliminate each other
+                // If the number is odd, then don't eliminate last one for it has no pair
+                int spareEliminators = eliminationBlocks.Count - errorsList.Count;
+                for (int i = 0; i < eliminationBlocks.Count - (spareEliminators % 2); i++)
                 {
                     if (i < errorsList.Count)
-                        errorsList[i].Eliminate();
-                    else
-                        errorsList.Add(new Error(eliminationBlocks[i], null));
+                        eliminatedParts.Add(errorsList[i].Source);
+
+                    eliminatedParts.Add(eliminationBlocks[i]);
                 }
 
-                // If we have even number of spare eliminators, then eliminate all of them
-                foreach (var error in errorsList)
-                    error.Eliminate();
-
-                // If odd number, then all but last one
-                if ((eliminationBlocks.Count - errorsList.Count) % 2 == 1)
-                    errorsList.Last().IsEliminated = false;
+                // Now we have to re-check for errors, because self-eliminated colored eliminators may bring new errors for sun-blocks
+                errorsList = CheckErrors();
+                //Add error for spare eliminator if number was odd
+                if (spareEliminators % 2 == 1)
+                    errorsList.Add(new Error(eliminationBlocks.Last()));
+                // Add eliminated errors for eliminated parts and return
+                foreach (var part in eliminatedParts)
+                    errorsList.Add(new Error(part, true));
 
                 return errorsList;
             }
@@ -70,14 +74,14 @@ namespace TheWitnessPuzzleGenerator
             // If we have more errors, than we have elimination blocks, then we might be able
             // to eliminate specific blocks and resolve all errors by that
             // So we have to generate all k-combinations of possible error eliminations and try them all
-            List<Error> eliminatedErrorsList;
+            List<Error> eliminatedErrorsList = null;
 
             foreach (IEnumerable<int> kcomb in Enumerable.Range(0, errorsList.Count).GetKCombs(eliminationBlocks.Count))
             {
                 // Eliminate chosen parts of sector
                 eliminatedParts.Clear();
                 foreach (int index in kcomb)
-                    eliminatedParts.Add(errorsList[index].Subject);
+                    eliminatedParts.Add(errorsList[index].Source);
 
                 // Re-check for errors
                 eliminatedErrorsList = CheckErrors();
@@ -87,7 +91,10 @@ namespace TheWitnessPuzzleGenerator
                 {
                     // Add eliminated errors to the list and return
                     foreach (var part in eliminatedParts)
-                        eliminatedErrorsList.Add(new Error(part, null, true));
+                        eliminatedErrorsList.Add(new Error(part, true));
+                    // Also add eliminated eliminators
+                    foreach (var elim in eliminationBlocks)
+                        eliminatedErrorsList.Add(new Error(elim, true));
                     return eliminatedErrorsList;
                 }
 
@@ -95,21 +102,23 @@ namespace TheWitnessPuzzleGenerator
             }
 
             // If none of the eliminations succeeded => fail
-            // Eliminate as many as possible and return
-            for (int i = 0; i < eliminationBlocks.Count; i++)
-                errorsList[i].Eliminate();
+            // Add eliminated parts (including eliminators themseves)
+            foreach (var part in eliminatedParts)
+                eliminatedErrorsList.Add(new Error(part, true));
+            foreach (var elim in eliminationBlocks)
+                eliminatedErrorsList.Add(new Error(elim, true));
 
-            return errorsList;
+            return eliminatedErrorsList;
 
             // Local method for doing check cycle
             List<Error> CheckErrors()
             {
                 List<Error> errors = new List<Error>();
 
-                errorsList.AddRange(CheckSectorSelfCheckableBlockErrors());
-                errorsList.AddRange(CheckSectorNodeErrors(solutionNodes));
-                errorsList.AddRange(CheckSectorEdgeErrors(solutionEdges));
-                errorsList.AddRange(CheckTetrisErrors());
+                errors.AddRange(CheckSectorSelfCheckableBlockErrors());
+                errors.AddRange(CheckSectorNodeErrors(solutionNodes));
+                errors.AddRange(CheckSectorEdgeErrors(solutionEdges));
+                errors.AddRange(CheckTetrisErrors());
 
                 return errors;
             }
@@ -130,7 +139,7 @@ namespace TheWitnessPuzzleGenerator
             if (tetrisRules.Sum(x => x.TotalBlocks) != TotalBlocks)
             {
                 foreach (var tetromino in tetrisRules)
-                    errorsList.Add(new Error(tetromino.OwnerBlock, null));
+                    errorsList.Add(new Error(tetromino.OwnerBlock));
                 return errorsList;
             }
 
@@ -298,7 +307,7 @@ namespace TheWitnessPuzzleGenerator
             // Then create errors for each Tetris rule block and finally return
             if (!success)
                 foreach (var tetrisRule in tetrisRules)
-                    errorsList.Add(new Error(tetrisRule.OwnerBlock, null));
+                    errorsList.Add(new Error(tetrisRule.OwnerBlock));
             
             return errorsList;
 
@@ -413,7 +422,7 @@ namespace TheWitnessPuzzleGenerator
 
             // Each marked node without solution going through it is an error
             foreach (var node in markedNodes.Except(solutionNodes))
-                errorsList.Add(new Error(node, null));
+                errorsList.Add(new Error(node));
 
             return errorsList;
         }
@@ -429,7 +438,7 @@ namespace TheWitnessPuzzleGenerator
             
             // Each marked edge without solution going through it is an error
             foreach (var edge in markedEdges.Except(solutionEdges))
-                errorsList.Add(new Error(edge, null));
+                errorsList.Add(new Error(edge));
 
             return errorsList;
         }

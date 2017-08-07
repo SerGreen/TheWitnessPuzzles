@@ -35,7 +35,8 @@ namespace TheWitnessPuzzleGenerator
             Color = color;
         }
 
-        public Color Color { get; }
+        public Color? Color { get; }
+        public bool HasColor => Color.HasValue;
 
         public Error CheckRule()
         {
@@ -46,7 +47,7 @@ namespace TheWitnessPuzzleGenerator
 
             if (blocksWithDifferentColor.Count() > 0)
             {
-                return new Error(OwnerBlock, blocksWithDifferentColor.Select(x => x as IErrorable).ToList());
+                return new Error(OwnerBlock);
             }
             else
                 return null;
@@ -62,20 +63,21 @@ namespace TheWitnessPuzzleGenerator
             Color = color;
         }
 
-        public Color Color { get; }
+        public Color? Color { get; }
+        public bool HasColor => Color.HasValue;
 
         public Error CheckRule()
         {
             // Retrieve eliminated blocks in sector, they must not interfere with check
             var eliminatedBlocks = OwnerBlock.CurrentSector.EliminatedParts.OfType<Block>();
 
-            var blocksWithSameColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is IColorable xx && xx.Color == Color).Except(eliminatedBlocks);
+            var blocksWithSameColor = OwnerBlock.CurrentSector.Blocks.Where(x => x.Rule is IColorable xx && xx.HasColor && xx.Color == Color).Except(eliminatedBlocks);
 
             if (blocksWithSameColor.Count() == 2)
                 return null;
             else
             {
-                return new Error(OwnerBlock, blocksWithSameColor.Select(x => x as IErrorable).ToList());
+                return new Error(OwnerBlock);
             }
         }
     }
@@ -96,11 +98,11 @@ namespace TheWitnessPuzzleGenerator
             if (OwnerBlock.Edges.Intersect(OwnerBlock.ParentPanel.SolutionEdges).Count() == Power)
                 return null;
             else
-                return new Error(OwnerBlock, null);
+                return new Error(OwnerBlock);
         }
     }
 
-    public class TetrisRule : BlockRule
+    public class TetrisRule : BlockRule, IColorable
     {
         public bool[,] Shape { get; protected set; }
         public bool IsSubtractive { get; }
@@ -123,9 +125,13 @@ namespace TheWitnessPuzzleGenerator
             }
         }
 
-        public TetrisRule(Block parentBlock, bool[,] shape, bool subtracting = false) : base(parentBlock)
+        public Color? Color { get; }
+        public bool HasColor => Color.HasValue;
+
+        public TetrisRule(Block parentBlock, bool[,] shape, bool subtractive = false, Color? color = null) : base(parentBlock)
         {
-            IsSubtractive = subtracting;
+            IsSubtractive = subtractive;
+            Color = color;
             Shape = new bool[shape.GetLength(1), shape.GetLength(0)];
             for (int i = 0; i < Width; i++)
                 for (int j = 0; j < Height; j++)
@@ -141,8 +147,8 @@ namespace TheWitnessPuzzleGenerator
 
     public class TetrisRotatableRule : TetrisRule
     {
-        public TetrisRotatableRule(Block parentBlock, bool[,] shape, bool subtracting = false) 
-            : base(parentBlock, shape, subtracting)
+        public TetrisRotatableRule(Block parentBlock, bool[,] shape, bool subtractive = false, Color? color = null) 
+            : base(parentBlock, shape, subtractive, color)
         { }
 
         public TetrisRotatableRule RotateCW()
@@ -158,9 +164,14 @@ namespace TheWitnessPuzzleGenerator
         }
     }
 
-    public class EliminationRule : BlockRule
+    public class EliminationRule : BlockRule, IColorable
     {
-        public EliminationRule(Block parentBlock) : base(parentBlock)
-        { }
+        public EliminationRule(Block parentBlock, Color? color = null) : base(parentBlock)
+        {
+            Color = color;
+        }
+
+        public Color? Color { get; }
+        public bool HasColor => Color.HasValue;
     }
 }

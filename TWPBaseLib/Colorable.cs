@@ -9,6 +9,7 @@ namespace TheWitnessPuzzleGenerator
 {
     interface IColorable
     {
-        Color Color { get; }
+        Color? Color { get; }
+        bool HasColor { get; }
     }
 }

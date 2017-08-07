@@ -12,8 +12,8 @@ namespace TheWitnessPuzzleGenerator
         // Serial number
         public int Id { get; }
         // Color of dot if present
-        public Color Color { get; private set; }
-        public void SetColor(Color? color) => Color = color ?? Color.Black;
+        public Color? Color { get; }
+        public bool HasColor => Color.HasValue;
         // List of two nodes, which are connected by this edge
         private List<Node> _nodes;
         public IReadOnlyList<Node> Nodes { get; }
@@ -34,7 +34,7 @@ namespace TheWitnessPuzzleGenerator
             _nodes = new List<Node>(2) { nodeA, nodeB };
             Nodes = _nodes.AsReadOnly();
             State = state;
-            Color = color ?? Color.Black;
+            Color = color;
         }
 
         public static bool operator ==((Node a, Node b) nodes, Edge edge) => GetEdgeId(nodes.a, nodes.b) == edge.Id;

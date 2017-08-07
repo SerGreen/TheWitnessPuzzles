@@ -40,6 +40,8 @@ namespace TWPVisualizer
             panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
             panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true } });
 
+            panel.grid[0, 3].Rule = new EliminationRule(panel.grid[0, 3]);
+
             panel.Solution = new List<int>();
 
 
@@ -77,6 +79,8 @@ namespace TWPVisualizer
             Brush brush = new SolidBrush(Color.Black);
             Brush errBrush = new SolidBrush(Color.Red);
             Brush errBrushA = new SolidBrush(Color.FromArgb(120, Color.Red));
+            Brush errBrushE = new SolidBrush(Color.Lime);
+            Brush errBrushAE = new SolidBrush(Color.FromArgb(120, Color.Lime));
             Pen pen = new Pen(brush);
             Pen penLine = new Pen(Color.Black, 5);
 
@@ -84,9 +88,12 @@ namespace TWPVisualizer
             int height = panel.Height + 1;
 
             var errors = panel.CheckForErrors();
-            var errNodes = errors.Where(x => x.Subject is Node).Select(x => x.Subject as Node);
-            var errEdges = errors.Where(x => x.Subject is Edge).Select(x => x.Subject as Edge);
-            var errBlocks = errors.Where(x => x.Subject is Block).Select(x => x.Subject as Block);
+            var errorParts = errors.Where(x => !x.IsEliminated).Select(x => x.Source);
+            var eliminatedParts = errors.Where(x => x.IsEliminated).Select(x => x.Source);
+
+            //var errNodes = errors.Where(x => x.Source is Node && !x.IsEliminated).Select(x => x.Source as Node);
+            //var errEdges = errors.Where(x => x.Source is Edge && !x.IsEliminated).Select(x => x.Source as Edge);
+            //var errBlocks = errors.Where(x => x.Source is Block && !x.IsEliminated).Select(x => x.Source as Block);
 
             for (int i = 0; i < panel.nodes.Length; i++)
             {
@@ -103,7 +110,16 @@ namespace TWPVisualizer
                 //    g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
 
                 if (panel.nodes[i].State == NodeState.Marked)
-                    g.FillEllipse(errNodes.Contains(panel.nodes[i]) ? errBrush : brush, x - 3, y - 3, 6, 6);
+                {
+                    Brush br;
+                    if (errorParts.Contains(panel.nodes[i]))
+                        br = errBrush;
+                    else if (eliminatedParts.Contains(panel.nodes[i]))
+                        br = errBrushE;
+                    else
+                        br = brush;
+                    g.FillEllipse(br, x - 3, y - 3, 6, 6);
+                }
 
                 g.DrawString(i.ToString(), Font, brush, x, y);
             }
@@ -125,7 +141,17 @@ namespace TWPVisualizer
                     g.DrawLine(solutionEdges.Contains(edge) ? penLine : pen, xA, yA, xB, yB);
 
                 if (edge.State == EdgeState.Marked)
-                    g.FillEllipse(errEdges.Contains(edge) ? errBrush : brush, (xA + xB) / 2 - 3, (yA + yB) / 2 - 3, 6, 6);
+                {
+                    Brush br;
+                    if (errorParts.Contains(edge))
+                        br = errBrush;
+                    else if (eliminatedParts.Contains(edge))
+                        br = errBrushE;
+                    else
+                        br = brush;
+
+                    g.FillEllipse(br, (xA + xB) / 2 - 3, (yA + yB) / 2 - 3, 6, 6);
+                }
             }
 
             List<Sector> sectors = panel.GetSectors();
@@ -166,9 +192,9 @@ namespace TWPVisualizer
                     g.DrawRectangle(sectorPens[i], x - nodeSpan / 2 + 10, y - nodeSpan / 2 + 10, nodeSpan - 20, nodeSpan - 20);
 
                     if (block.Rule is ColoredSquareRule sqareRule)
-                        g.FillRectangle(new SolidBrush(sqareRule.Color), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                        g.FillRectangle(new SolidBrush(sqareRule.Color.Value), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
                     else if (block.Rule is SunPairRule sunRule)
-                        g.FillEllipse(new SolidBrush(sunRule.Color), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                        g.FillEllipse(new SolidBrush(sunRule.Color.Value), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
                     else if (block.Rule is TriangleRule triRule)
                     {
                         g.FillPolygon(new SolidBrush(Color.Orange), new PointF[] {
@@ -179,8 +205,10 @@ namespace TWPVisualizer
                         g.DrawString(triRule.Power.ToString(), Font, brush, x - 5, y - 5);
                     }
 
-                    if(errBlocks.Contains(block))
+                    if(errorParts.Contains(block))
                         g.FillRectangle(errBrushA, x - nodeSpan / 2 + 4, y - nodeSpan / 2 + 4, nodeSpan - 8, nodeSpan - 8);
+                    else if (eliminatedParts.Contains(block))
+                        g.FillRectangle(errBrushAE, x - nodeSpan / 2 + 4, y - nodeSpan / 2 + 4, nodeSpan - 8, nodeSpan - 8);
                 }
             }
         }
