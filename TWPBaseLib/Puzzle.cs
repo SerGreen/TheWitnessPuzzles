@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TheWitnessPuzzleGenerator
+namespace TheWitnessPuzzles
 {
     public class Puzzle
     {
@@ -15,14 +15,14 @@ namespace TheWitnessPuzzleGenerator
         public Node[] nodes;
         public List<Edge> edges;
         // Auxilary array for sector splitting. It contains only vertical edges in a grid fashion
-        private Edge[,] edgesAlignment;
+        protected Edge[,] edgesAlignment;
 
         public List<int> Solution { get; set; } = null;
-        public IEnumerable<Node> SolutionNodes => Solution.Select(x => nodes.First(z => z.Id == x));
+        public virtual IEnumerable<Node> SolutionNodes => Solution.Select(x => nodes.First(z => z.Id == x));
         // Zip creates sequence from the pair of elements of original and second collection; Skip(1) forms the second collection
-        public IEnumerable<Edge> SolutionEdges => Solution.Zip(Solution.Skip(1), (idA, idB) => edges.First(x => (idA, idB) == x));
+        public virtual IEnumerable<Edge> SolutionEdges => Solution.Zip(Solution.Skip(1), (idA, idB) => edges.First(x => (idA, idB) == x));
 
-        public IEnumerable<Node> BorderNodes => nodes.Where(x => x.Edges.Count < 4);
+        public virtual IEnumerable<Node> BorderNodes => nodes.Where(x => x.Edges.Count < 4);
 
         public Puzzle(int width, int height)
         {
@@ -77,7 +77,7 @@ namespace TheWitnessPuzzleGenerator
         /// Splits panel's blocks into sectors using current Solution line
         /// </summary>
         /// <returns>List of sectors</returns>
-        public List<Sector> GetSectors()
+        protected virtual List<Sector> GetSectors()
         {
             List<Sector> sectors = new List<Sector>();
             // All unused blocks in the end will form another sector
@@ -131,7 +131,7 @@ namespace TheWitnessPuzzleGenerator
         /// It just works. Don't try to touch it. I mean it.
         /// </summary>
         /// <returns>List if sectors represented by list of nodes of sector outline</returns>
-        private List<List<Node>> GetSectorLines()
+        protected virtual List<List<Node>> GetSectorLines()
         {
             List<List<Node>> sectorLines = new List<List<Node>>();
 
