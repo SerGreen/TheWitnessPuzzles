@@ -1,51 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace TheWitnessPuzzles
 {
-    class SymmetryPuzzle : Puzzle
+    public class SymmetryPuzzle : Puzzle
     {
         public bool Y_Mirror { get; }
+        public Color MainColor { get; }
+        public Color MirrorColor { get; }
 
-        public SymmetryPuzzle(int width, int height, bool y_mirrored) : base(width, height)
+        public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null) : base(width, height)
         {
             Y_Mirror = y_mirrored;
+            MainColor = mainColor ?? Color.Black;
+            MirrorColor = mirrorColor ?? Color.Black;
         }
 
-        public override IEnumerable<Node> SolutionNodes
+        public IEnumerable<Node> MainSolutionNodes => base.SolutionNodes;
+        public IEnumerable<Node> MirrorSolutionNodes
         {
             get
             {
-                IEnumerable<Node> mainNodes = base.SolutionNodes;
-                IEnumerable<Node> mirrorNodes;
-
                 if (Y_Mirror)
                 {
+                    // Both axes mirroring
                     int maxNodeId = nodes.Max(x => x.Id);
-                    mirrorNodes = mainNodes.Select(x => nodes.First(n => n.Id == maxNodeId - x.Id));
+                    return MainSolutionNodes.Select(x => nodes.First(n => n.Id == maxNodeId - x.Id));
                 }
                 else
                 {
-                    mirrorNodes = mainNodes.Select(x => nodes.First(n => n.Id == x.Id + (((x.Id / (Width+1)) * (Width + 1) + (Width+1)/2) -x.Id) * 2));
+                    // Only X-axis mirroring
+                    int width1 = Width + 1;
+                    return MainSolutionNodes.Select(x => nodes.First(n => n.Id == (x.Id / width1 * width1) * 2 + Width - x.Id));
                 }
-
-                return mainNodes.Concat(mirrorNodes);
             }
-
-            //  0  1  2  3  4
-            //  5  6  7  8  9
-            // 10 11 12 13 14
-            // 15 16 17 18 19
-
-            // 1 3
-            // 6 8
-            // 5 9
-            // 10 14
-            // 15 19
-            // 16 18
         }
+
+        public override IEnumerable<Node> SolutionNodes => MainSolutionNodes.Concat(MirrorSolutionNodes);
+
+        public IEnumerable<Edge> MainSolutionEdges => base.SolutionEdges;
+        public IEnumerable<Edge> MirrorSolutionEdges => MirrorSolutionNodes.Zip(MirrorSolutionNodes.Skip(1), (idA, idB) => edges.First(x => (idA, idB) == x));
+
+        public override IEnumerable<Edge> SolutionEdges => MainSolutionEdges.Concat(MirrorSolutionEdges);
+
+        protected override IEnumerable<Node> GetNodesForSectorLinesCalculation() => MainSolutionNodes;
+
+        protected override void ModifySectorLinesBefore(List<List<Node>> sectorLines) => sectorLines.Insert(0, MirrorSolutionNodes.ToList());
+        protected override void ModifySectorLinesAfter(List<List<Node>> sectorLines) => sectorLines.RemoveAt(0);
     }
 }

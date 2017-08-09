@@ -77,7 +77,7 @@ namespace TheWitnessPuzzles
         /// Splits panel's blocks into sectors using current Solution line
         /// </summary>
         /// <returns>List of sectors</returns>
-        protected virtual List<Sector> GetSectors()
+        public virtual List<Sector> GetSectors()
         {
             List<Sector> sectors = new List<Sector>();
             // All unused blocks in the end will form another sector
@@ -117,7 +117,7 @@ namespace TheWitnessPuzzles
             // Compiling the last sector from unused blocks
             sectorBlocks = new List<Block>();
             for (int x = 0; x < usedBlocks.GetLength(0); x++)
-                for (int y = 0; y < usedBlocks.GetLength(0); y++)
+                for (int y = 0; y < usedBlocks.GetLength(1); y++)
                     if (!usedBlocks[x, y])
                         sectorBlocks.Add(grid[x, y]);
 
@@ -127,19 +127,20 @@ namespace TheWitnessPuzzles
         }
 
         /// <summary>
-        /// Fucking abomination that is not meant to be neither readable, nor understandable.
+        /// Fucking abomination that is not meant to be either readable, or understandable.
         /// It just works. Don't try to touch it. I mean it.
         /// </summary>
         /// <returns>List if sectors represented by list of nodes of sector outline</returns>
         protected virtual List<List<Node>> GetSectorLines()
         {
             List<List<Node>> sectorLines = new List<List<Node>>();
+            ModifySectorLinesBefore(sectorLines);
 
             if (Solution != null)
             {
                 bool sectorStarted = false;
                 List<Node> currentSector = new List<Node>();
-                var nodes = SolutionNodes.ToArray();
+                var nodes = GetNodesForSectorLinesCalculation().ToArray();
 
                 for (int i = 0; i < nodes.Length - 1; i++)
                 {
@@ -172,6 +173,7 @@ namespace TheWitnessPuzzles
                             int otherSectorDirection = 0;
                             int indexInOtherSector = -1;
 
+                            // Until we finish full circle
                             while (backNext?.Id != currentSector[0].Id)
                             {
                                 currentSector.Add(backNow);
@@ -185,9 +187,12 @@ namespace TheWitnessPuzzles
                                         {
                                             followSectorLine = true;
                                             otherSectorIndex = j;
-                                            // If backNow is the beginning of the other sector, then we will loop it forward, otherwise - backwards
-                                            otherSectorDirection = sectorLines[j][0].Id == backNow.Id ? 1 : -1;
                                             indexInOtherSector = sectorLines[j].FindIndex(x => x.Id == backNow.Id);
+                                            // If the next node in other sector line is the one not on border, then we are going to move forward
+                                            // Otherwise we should move along other sector line backwards
+                                            int indexForwardDirection = (indexInOtherSector + 1) % sectorLines[j].Count;
+                                            otherSectorDirection = sectorLines[j][indexForwardDirection].Edges.Count > 3 ? 1 : -1;
+                                            
                                             break;
                                         }
                                 }
@@ -201,6 +206,8 @@ namespace TheWitnessPuzzles
                                         backPrev = sectorLines[otherSectorIndex][0].Id == backNow.Id
                                             ? sectorLines[otherSectorIndex].Last()
                                             : sectorLines[otherSectorIndex][(indexInOtherSector + otherSectorDirection) % sectorLines[otherSectorIndex].Count];
+
+                                        
                                     }
                                 }
 
@@ -228,7 +235,16 @@ namespace TheWitnessPuzzles
                 }
             }
 
+            ModifySectorLinesAfter(sectorLines);
             return sectorLines;
         }
+
+        protected virtual IEnumerable<Node> GetNodesForSectorLinesCalculation() => SolutionNodes;
+
+        // Two methods override are used by Symmetry Puzzle
+        // Mirrored solution line is used as another sector line for the time of sector line calculation and should be removed from list in After method
+        // Returns true if sectorLines was modified 
+        protected virtual void ModifySectorLinesBefore(List<List<Node>> sectorLines) { }
+        protected virtual void ModifySectorLinesAfter(List<List<Node>> sectorLines) { }
     }
 }

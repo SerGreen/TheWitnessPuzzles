@@ -22,25 +22,29 @@ namespace TWPVisualizer
 
         private void btnDisplay_Click(object sender, EventArgs e)
         {
-            panel = new Puzzle(4, 4);
-            panel.nodes[0].SetState(NodeState.Start);
-            panel.nodes.Last().SetState(NodeState.Exit);
+            panel = new SymmetryPuzzle(5, 4, false, Color.Cyan, Color.Yellow);
+            //panel = new Puzzle(5, 4);
+            panel.nodes[24].SetState(NodeState.Start);
+            panel.nodes[29].SetState(NodeState.Start);
+            panel.nodes[0].SetState(NodeState.Exit);
+            panel.nodes[5].SetState(NodeState.Exit);
+            //panel.nodes.Last().SetState(NodeState.Exit);
 
-            panel.nodes[11].SetState(NodeState.Marked);
-            panel.nodes[16].SetState(NodeState.Marked);
+            //panel.nodes[11].SetState(NodeState.Marked);
+            //panel.nodes[16].SetState(NodeState.Marked);
 
-            panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
-            panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
-            panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
+            //panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
+            //panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
+            //panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
             
             panel.grid[3, 0].Rule = new ColoredSquareRule(panel.grid[3, 0], Color.Magenta);
             panel.grid[0, 1].Rule = new ColoredSquareRule(panel.grid[0, 1], Color.Black);
-            panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
+            //panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
 
-            panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
-            panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true } });
+            //panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
+            //panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true } });
 
-            panel.grid[0, 3].Rule = new EliminationRule(panel.grid[0, 3]);
+            //panel.grid[0, 3].Rule = new EliminationRule(panel.grid[0, 3]);
 
             panel.Solution = new List<int>();
 
@@ -82,7 +86,8 @@ namespace TWPVisualizer
             Brush errBrushE = new SolidBrush(Color.Lime);
             Brush errBrushAE = new SolidBrush(Color.FromArgb(120, Color.Lime));
             Pen pen = new Pen(brush);
-            Pen penLine = new Pen(Color.Black, 5);
+            Pen penLine = new Pen(panel is SymmetryPuzzle sym ? sym.MainColor : Color.Black, 5);
+            Pen penLineMirr = new Pen(panel is SymmetryPuzzle sym2 ? sym2.MirrorColor : Color.Black, 5);
 
             int width = panel.Width + 1;
             int height = panel.Height + 1;
@@ -90,24 +95,17 @@ namespace TWPVisualizer
             var errors = panel.CheckForErrors();
             var errorParts = errors.Where(x => !x.IsEliminated).Select(x => x.Source);
             var eliminatedParts = errors.Where(x => x.IsEliminated).Select(x => x.Source);
-
-            //var errNodes = errors.Where(x => x.Source is Node && !x.IsEliminated).Select(x => x.Source as Node);
-            //var errEdges = errors.Where(x => x.Source is Edge && !x.IsEliminated).Select(x => x.Source as Edge);
-            //var errBlocks = errors.Where(x => x.Source is Block && !x.IsEliminated).Select(x => x.Source as Block);
-
+            
             for (int i = 0; i < panel.nodes.Length; i++)
             {
                 int row = i / width;
                 int x = margin + (i - row * width) * nodeSpan;
                 int y = margin + row * nodeSpan;
 
-                //if (panel.nodes[i].State == NodeState.Start)
-                //    g.FillEllipse(brush, x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
-                //else
-                //    g.DrawEllipse(pen, x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
-
-                //if (panel.nodes[i].State == NodeState.Exit)
-                //    g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
+               if (panel.nodes[i].State == NodeState.Start)
+                   g.FillEllipse(brush, x - nodeRadius/2, y - nodeRadius/2, nodeRadius, nodeRadius);
+                if (panel.nodes[i].State == NodeState.Exit)
+                    g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
 
                 if (panel.nodes[i].State == NodeState.Marked)
                 {
@@ -125,6 +123,7 @@ namespace TWPVisualizer
             }
 
             var solutionEdges = panel.SolutionEdges;
+            var mirrorEdges = panel is SymmetryPuzzle sym3 ? sym3.MirrorSolutionEdges : null;
             for (int i = 0; i < panel.edges.Count; i++)
             {
                 Edge edge = panel.edges[i];
@@ -138,7 +137,7 @@ namespace TWPVisualizer
                 int yB = margin + rowB * nodeSpan;
 
                 if (edge.State != EdgeState.Broken)
-                    g.DrawLine(solutionEdges.Contains(edge) ? penLine : pen, xA, yA, xB, yB);
+                    g.DrawLine(solutionEdges.Contains(edge) ? (mirrorEdges != null && mirrorEdges.Contains(edge) ? penLineMirr : penLine) : pen, xA, yA, xB, yB);
 
                 if (edge.State == EdgeState.Marked)
                 {
