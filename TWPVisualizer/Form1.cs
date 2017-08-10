@@ -22,12 +22,12 @@ namespace TWPVisualizer
 
         private void btnDisplay_Click(object sender, EventArgs e)
         {
-            panel = new SymmetryPuzzle(5, 4, false, Color.Cyan, Color.Yellow);
+            panel = new SymmetryPuzzle(5, 4, true, Color.Cyan, Color.Yellow);
             //panel = new Puzzle(5, 4);
             panel.nodes[24].SetState(NodeState.Start);
-            panel.nodes[29].SetState(NodeState.Start);
+            panel.nodes[29].SetState(NodeState.Exit);
             panel.nodes[0].SetState(NodeState.Exit);
-            panel.nodes[5].SetState(NodeState.Exit);
+            panel.nodes[5].SetState(NodeState.Start);
             //panel.nodes.Last().SetState(NodeState.Exit);
 
             //panel.nodes[11].SetState(NodeState.Marked);
@@ -163,7 +163,9 @@ namespace TWPVisualizer
                 new SolidBrush(Color.Cyan),
                 new SolidBrush(Color.Yellow),
                 new SolidBrush(Color.Gray),
-                new SolidBrush(Color.Violet)
+                new SolidBrush(Color.Violet),
+                new SolidBrush(Color.Beige),
+                new SolidBrush(Color.Brown)
             };
 
             List<Pen> sectorPens = new List<Pen>
@@ -175,7 +177,9 @@ namespace TWPVisualizer
                 new Pen(Color.Cyan, 3),
                 new Pen(Color.Yellow, 3),
                 new Pen(Color.Gray, 3),
-                new Pen(Color.Violet, 3)
+                new Pen(Color.Violet, 3),
+                new Pen(Color.Beige, 3),
+                new Pen(Color.Brown, 3)
             };
 
             for (int i = 0; i < sectors.Count; i++)

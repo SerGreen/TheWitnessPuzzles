@@ -25,14 +25,19 @@ namespace TheWitnessPuzzles
         public Edge RightEdge => _edges[2];
         public Edge BottomEdge => _edges[3];
 
+        public int X { get; }
+        public int Y { get; }
+
         public Sector CurrentSector { get; set; }
         public Puzzle ParentPanel { get; }
 
         public override string ToString() => $"[{Id}]";
         
-        public Block(int id, Node botLeft, Node topLeft, Node topRight, Node botRight, Puzzle parent)
+        public Block(int id, Node botLeft, Node topLeft, Node topRight, Node botRight, Puzzle parent, int x, int y)
         {
             Id = id;
+            X = x;
+            Y = y;
             ParentPanel = parent;
             _nodes = new List<Node>(4) { botLeft, topLeft, topRight, botRight };
             _edges = new List<Edge>(4)

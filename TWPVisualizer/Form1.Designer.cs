@@ -66,7 +66,7 @@
             this.txtSolution.Name = "txtSolution";
             this.txtSolution.Size = new System.Drawing.Size(443, 20);
             this.txtSolution.TabIndex = 2;
-            this.txtSolution.Text = "0 5 6 11 10 15 20 21 22 17 12 13 8 7 2 3 4 9 14 19 18 23 24";
+            this.txtSolution.Text = "24 18 19 25 26 20 14 13 12 6 7 8 2 1 0";
             // 
             // btnSolve
             // 

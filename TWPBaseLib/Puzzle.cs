@@ -44,7 +44,8 @@ namespace TheWitnessPuzzles
                                            nodes[j * (width + 1) + i],
                                            nodes[j * (width + 1) + i + 1],
                                            nodes[(j + 1) * (width + 1) + i + 1],
-                                           this);
+                                           this,
+                                           i, j);
                 }
             }
 
@@ -115,15 +116,20 @@ namespace TheWitnessPuzzles
             }
 
             // Compiling the last sector from unused blocks
-            sectorBlocks = new List<Block>();
+            DistributeUnusedBlocksToSectors(sectors, usedBlocks);
+
+            return sectors;
+        }
+
+        protected virtual void DistributeUnusedBlocksToSectors(List<Sector> sectors, bool[,] usedBlocks)
+        {
+            List<Block> sectorBlocks = new List<Block>();
             for (int x = 0; x < usedBlocks.GetLength(0); x++)
                 for (int y = 0; y < usedBlocks.GetLength(1); y++)
                     if (!usedBlocks[x, y])
                         sectorBlocks.Add(grid[x, y]);
 
             sectors.Add(new Sector(sectorBlocks));
-
-            return sectors;
         }
 
         /// <summary>
@@ -138,19 +144,25 @@ namespace TheWitnessPuzzles
 
             if (Solution != null)
             {
+                // Flag, means that we started recording new secor line
                 bool sectorStarted = false;
+                // List that stores line of new sector, that is being parsed
                 List<Node> currentSector = new List<Node>();
-                var nodes = GetNodesForSectorLinesCalculation().ToArray();
+                // Temp line from sector line start to end along the border, used to determine the direction of completion of sector line
+                List<Node> theRightWay = new List<Node>();
+                // Solution line nodes
+                var nodes = GetSolutionNodesForSectorLinesCalculation().ToArray();
 
                 for (int i = 0; i < nodes.Length - 1; i++)
                 {
+                    // Current and next position of solution line parser
                     Node nodeNow = nodes[i];
                     Node nodeNext = nodes[i + 1];
 
                     if (!sectorStarted)
                     {
                         // Lift off from border, start recording line
-                        if (nodeNext.Edges.Count > 3)
+                        if (nodeNow.Edges.Count < 4 && nodeNext.Edges.Count > 3)
                         {
                             sectorStarted = true;
                             currentSector.Add(nodeNow);
@@ -159,7 +171,7 @@ namespace TheWitnessPuzzles
                     // If sector is started
                     else
                     {
-                        // Drawing the line
+                        // While we are not on border => record the line
                         if(nodeNow.Edges.Count > 3)
                             currentSector.Add(nodeNow);
                         // Back to border, need to complete the line back to it's start along the border
@@ -168,6 +180,21 @@ namespace TheWitnessPuzzles
                             Node backPrev = nodeNext;
                             Node backNow = nodeNow;
                             Node backNext = null;
+
+                            // Firstly, build Right Way Line
+                            theRightWay.Clear();
+                            while (backNext?.Id != currentSector[0].Id)
+                            {
+                                theRightWay.Add(backNow);
+                                backNext = backNow.Edges.SelectMany(x => x.Nodes).Where(x => x.Id != backPrev.Id && x.Id != backNow.Id && x.Edges.Count < 4).First();
+                                backPrev = backNow;
+                                backNow = backNext;
+                            }
+
+                            backPrev = nodeNext;
+                            backNow = nodeNow;
+                            backNext = null;
+
                             bool followSectorLine = false;
                             int otherSectorIndex = -1;
                             int otherSectorDirection = 0;
@@ -185,29 +212,31 @@ namespace TheWitnessPuzzles
                                     for (int j = 0; j < sectorLines.Count; j++)
                                         if (sectorLines[j].Contains(backNow))
                                         {
-                                            followSectorLine = true;
-                                            otherSectorIndex = j;
                                             indexInOtherSector = sectorLines[j].FindIndex(x => x.Id == backNow.Id);
-                                            // If the next node in other sector line is the one not on border, then we are going to move forward
-                                            // Otherwise we should move along other sector line backwards
-                                            int indexForwardDirection = (indexInOtherSector + 1) % sectorLines[j].Count;
-                                            otherSectorDirection = sectorLines[j][indexForwardDirection].Edges.Count > 3 ? 1 : -1;
-                                            
-                                            break;
+                                            if ((indexInOtherSector > 0 && sectorLines[j][indexInOtherSector - 1].Edges.Count > 3) ||
+                                                (indexInOtherSector < sectorLines[j].Count - 1 && sectorLines[j][indexInOtherSector + 1].Edges.Count > 3))
+                                            {
+                                                followSectorLine = true;
+                                                otherSectorIndex = j;
+                                                // If the next node in other sector line is the one not on border, then we are going to move forward
+                                                // Otherwise we should move along other sector line backwards
+                                                int indexForwardDirection = (indexInOtherSector + 1) % sectorLines[j].Count;
+                                                otherSectorDirection = sectorLines[j][indexForwardDirection].Edges.Count > 3 ? 1 : -1;
+
+                                                break;
+                                            }
                                         }
                                 }
                                 // If we do follow other sector line, check if we are finished doing so
                                 else
                                 {
-                                    if (backNow.Edges.Count < 4)
+                                    if (backNow.Edges.Count < 4 ||
+                                        (indexInOtherSector == 0 && otherSectorDirection == -1) ||
+                                        (indexInOtherSector == sectorLines[otherSectorIndex].Count - 1 && otherSectorDirection == 1))
                                     {
                                         followSectorLine = false;
                                         // Change backPrev to the node as if we were following the border
-                                        backPrev = sectorLines[otherSectorIndex][0].Id == backNow.Id
-                                            ? sectorLines[otherSectorIndex].Last()
-                                            : sectorLines[otherSectorIndex][(indexInOtherSector + otherSectorDirection) % sectorLines[otherSectorIndex].Count];
-
-                                        
+                                        backPrev = theRightWay[theRightWay.FindIndex(x => x.Id == backNow.Id) - 1];
                                     }
                                 }
 
@@ -239,7 +268,7 @@ namespace TheWitnessPuzzles
             return sectorLines;
         }
 
-        protected virtual IEnumerable<Node> GetNodesForSectorLinesCalculation() => SolutionNodes;
+        protected virtual IEnumerable<Node> GetSolutionNodesForSectorLinesCalculation() => SolutionNodes;
 
         // Two methods override are used by Symmetry Puzzle
         // Mirrored solution line is used as another sector line for the time of sector line calculation and should be removed from list in After method
