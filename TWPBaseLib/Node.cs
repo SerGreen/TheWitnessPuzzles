@@ -12,7 +12,7 @@ namespace TheWitnessPuzzles
         // Serial number
         public int Id { get; }
         // Color of dot if present
-        public Color? Color { get; }
+        public Color? Color { get; set; }
         public bool HasColor => Color.HasValue;
         // List of connected edges
         private List<Edge> _edges = new List<Edge>();

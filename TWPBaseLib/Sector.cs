@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -29,7 +30,7 @@ namespace TheWitnessPuzzles
 
         public override string ToString() => string.Join(" ", Blocks);
         
-        public List<Error> CheckSectorErrors(IEnumerable<Node> solutionNodes, IEnumerable<Edge> solutionEdges)
+        public List<Error> CheckSectorErrors()
         {
             List<Error> errorsList = new List<Error>();
             eliminatedParts.Clear();
@@ -116,8 +117,8 @@ namespace TheWitnessPuzzles
                 List<Error> errors = new List<Error>();
 
                 errors.AddRange(CheckSectorSelfCheckableBlockErrors());
-                errors.AddRange(CheckSectorNodeErrors(solutionNodes));
-                errors.AddRange(CheckSectorEdgeErrors(solutionEdges));
+                errors.AddRange(CheckSectorNodeErrors());
+                errors.AddRange(CheckSectorEdgeErrors());
                 errors.AddRange(CheckTetrisErrors());
 
                 return errors;
@@ -411,7 +412,7 @@ namespace TheWitnessPuzzles
             return errorsList;
         }
 
-        private List<Error> CheckSectorNodeErrors(IEnumerable<Node> solutionNodes)
+        private List<Error> CheckSectorNodeErrors()
         {
             List<Error> errorsList = new List<Error>();
 
@@ -420,14 +421,40 @@ namespace TheWitnessPuzzles
 
             var markedNodes = Blocks.SelectMany(x => x.Nodes).Distinct().Where(x => x.State == NodeState.Marked).Except(eliminatedNodes);
 
-            // Each marked node without solution going through it is an error
-            foreach (var node in markedNodes.Except(solutionNodes))
-                errorsList.Add(new Error(node));
+            // Two lines panel, we should take colored dots into account
+            if (Panel is SymmetryPuzzle symPanel)
+            {
+                IEnumerable<Node> coloredNodes;
+
+                // Get nodes of main color
+                coloredNodes = markedNodes.Where(x => x.Color == symPanel.MainColor);
+                // Each marked node without main solution line going through it is an error
+                foreach (var node in coloredNodes.Except(symPanel.MainSolutionNodes))
+                    errorsList.Add(new Error(node));
+
+                // Now the same for second color
+                coloredNodes = markedNodes.Where(x => x.Color == symPanel.MirrorColor);
+                foreach (var node in coloredNodes.Except(symPanel.MirrorSolutionNodes))
+                    errorsList.Add(new Error(node));
+
+                // And the same for colorless nodes with both lines
+                coloredNodes = markedNodes.Where(x => !x.HasColor);
+                foreach (var node in coloredNodes.Except(symPanel.SolutionNodes))
+                    errorsList.Add(new Error(node));
+
+            }
+            // Single line panel
+            else
+            {
+                // Each marked node without solution going through it is an error
+                foreach (var node in markedNodes.Except(Panel.SolutionNodes))
+                    errorsList.Add(new Error(node));
+            }
 
             return errorsList;
         }
 
-        private List<Error> CheckSectorEdgeErrors(IEnumerable<Edge> solutionEdges)
+        private List<Error> CheckSectorEdgeErrors()
         {
             List<Error> errorsList = new List<Error>();
 
@@ -435,10 +462,36 @@ namespace TheWitnessPuzzles
             var eliminatedEdges = eliminatedParts.OfType<Edge>();
 
             var markedEdges = Blocks.SelectMany(x => x.Edges).Distinct().Where(x => x.State == EdgeState.Marked).Except(eliminatedEdges);
-            
-            // Each marked edge without solution going through it is an error
-            foreach (var edge in markedEdges.Except(solutionEdges))
-                errorsList.Add(new Error(edge));
+
+            // Two lines panel, we should take colored dots into account
+            if (Panel is SymmetryPuzzle symPanel)
+            {
+                IEnumerable<Edge> coloredEdges;
+
+                // Get edges of main color
+                coloredEdges = markedEdges.Where(x => x.Color == symPanel.MainColor);
+                // Each marked edge without main solution line going through it is an error
+                foreach (var edge in coloredEdges.Except(symPanel.MainSolutionEdges))
+                    errorsList.Add(new Error(edge));
+
+                // Now the same for second color
+                coloredEdges = markedEdges.Where(x => x.Color == symPanel.MirrorColor);
+                foreach (var edge in coloredEdges.Except(symPanel.MirrorSolutionEdges))
+                    errorsList.Add(new Error(edge));
+
+                // And the same for colorless edges with both lines
+                coloredEdges = markedEdges.Where(x => !x.HasColor);
+                foreach (var edge in coloredEdges.Except(symPanel.SolutionEdges))
+                    errorsList.Add(new Error(edge));
+
+            }
+            // Single line panel
+            else
+            {
+                // Each marked edge without solution going through it is an error
+                foreach (var edge in markedEdges.Except(Panel.SolutionEdges))
+                    errorsList.Add(new Error(edge));
+            }
 
             return errorsList;
         }
