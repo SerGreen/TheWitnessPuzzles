@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -56,5 +57,8 @@ namespace TheWitnessPuzzles
         public static int GetEdgeId(int idNodeA, int idNodeB) => idNodeA < idNodeB ?
                                                                  idNodeA * 100 + idNodeB :
                                                                  idNodeB * 100 + idNodeA;
+
+        public override bool Equals(object obj) => base.Equals(obj);
+        public override int GetHashCode() => base.GetHashCode();
     }
 }

@@ -7,6 +7,5 @@ using System.Threading.Tasks;
 namespace TheWitnessPuzzles
 {
     public interface IErrorable
-    {
-    }
+    { }
 }

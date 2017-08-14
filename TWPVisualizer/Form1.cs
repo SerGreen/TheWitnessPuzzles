@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using XnaColor = Microsoft.Xna.Framework.Color;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,7 +23,7 @@ namespace TWPVisualizer
 
         private void btnDisplay_Click(object sender, EventArgs e)
         {
-            panel = new SymmetryPuzzle(5, 4, true, Color.Cyan, Color.Yellow);
+            panel = new SymmetryPuzzle(5, 4, true, XnaColor.Cyan, XnaColor.Yellow);
             //panel = new Puzzle(5, 4);
             panel.nodes[24].SetState(NodeState.Start);
             panel.nodes[29].SetState(NodeState.Exit);
@@ -30,17 +31,17 @@ namespace TWPVisualizer
             panel.nodes[5].SetState(NodeState.Start);
             //panel.nodes.Last().SetState(NodeState.Exit);
 
-            panel.nodes[20].SetStateAndColor(NodeState.Marked, Color.Cyan);
-            panel.edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, Color.Yellow);
-            panel.nodes[21].SetStateAndColor(NodeState.Marked, Color.Yellow);
+            panel.nodes[20].SetStateAndColor(NodeState.Marked, XnaColor.Cyan);
+            panel.edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, XnaColor.Yellow);
+            panel.nodes[21].SetStateAndColor(NodeState.Marked, XnaColor.Yellow);
             panel.nodes[7].SetState(NodeState.Marked);
 
             //panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
             //panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
             //panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
             
-            panel.grid[3, 0].Rule = new ColoredSquareRule(Color.Magenta);
-            panel.grid[0, 1].Rule = new ColoredSquareRule(Color.Black);
+            panel.grid[3, 0].Rule = new ColoredSquareRule(XnaColor.Magenta);
+            panel.grid[0, 1].Rule = new ColoredSquareRule(XnaColor.Black);
             //panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
 
             //panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
@@ -75,6 +76,8 @@ namespace TWPVisualizer
             picCanvas.Image = bmp;
         }
 
+        private Color ConvertXnaColor(XnaColor color) => Color.FromArgb(color.A, color.R, color.G, color.B);
+
         private void RenderPuzzle(Puzzle panel, Graphics g)
         {
             // In pixels
@@ -88,8 +91,8 @@ namespace TWPVisualizer
             Brush errBrushE = new SolidBrush(Color.Lime);
             Brush errBrushAE = new SolidBrush(Color.FromArgb(120, Color.Lime));
             Pen pen = new Pen(brush);
-            Pen penLine = new Pen(panel is SymmetryPuzzle sym ? sym.MainColor : Color.Black, 5);
-            Pen penLineMirr = new Pen(panel is SymmetryPuzzle sym2 ? sym2.MirrorColor : Color.Black, 5);
+            Pen penLine = new Pen(panel is SymmetryPuzzle sym ? ConvertXnaColor(sym.MainColor) : Color.Black, 5);
+            Pen penLineMirr = new Pen(panel is SymmetryPuzzle sym2 ? ConvertXnaColor(sym2.MirrorColor) : Color.Black, 5);
 
             int width = panel.Width + 1;
             int height = panel.Height + 1;
@@ -172,7 +175,7 @@ namespace TWPVisualizer
                     if(br != null)
                         g.FillEllipse(br, x - 5, y - 5, 10, 10);
 
-                    br = panel.nodes[i].HasColor ? new SolidBrush(panel.nodes[i].Color.Value) : brush;
+                    br = panel.nodes[i].HasColor ? new SolidBrush(ConvertXnaColor(panel.nodes[i].Color.Value)) : brush;
                     g.FillEllipse(br, x - 3, y - 3, 6, 6);
                 }
 
@@ -204,7 +207,7 @@ namespace TWPVisualizer
                     if (br != null)
                         g.FillEllipse(br, x - 5, y - 5, 10, 10);
 
-                    br = edge.HasColor ? new SolidBrush(edge.Color.Value) : brush;
+                    br = edge.HasColor ? new SolidBrush(ConvertXnaColor(edge.Color.Value)) : brush;
 
                     g.FillEllipse(br, x - 3, y - 3, 6, 6);
                 }
@@ -252,9 +255,9 @@ namespace TWPVisualizer
                     g.DrawRectangle(sectorPens[i], x - nodeSpan / 2 + 10, y - nodeSpan / 2 + 10, nodeSpan - 20, nodeSpan - 20);
 
                     if (block.Rule is ColoredSquareRule sqareRule)
-                        g.FillRectangle(new SolidBrush(sqareRule.Color.Value), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                        g.FillRectangle(new SolidBrush(ConvertXnaColor(sqareRule.Color.Value)), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
                     else if (block.Rule is SunPairRule sunRule)
-                        g.FillEllipse(new SolidBrush(sunRule.Color.Value), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
+                        g.FillEllipse(new SolidBrush(ConvertXnaColor(sunRule.Color.Value)), x - nodeRadius, y - nodeRadius, nodeRadius * 2, nodeRadius * 2);
                     else if (block.Rule is TriangleRule triRule)
                     {
                         g.FillPolygon(new SolidBrush(Color.Orange), new PointF[] {
