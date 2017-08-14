@@ -37,8 +37,8 @@ namespace TWPVisualizer
             //panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
             //panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
             
-            panel.grid[3, 0].Rule = new ColoredSquareRule(panel.grid[3, 0], Color.Magenta);
-            panel.grid[0, 1].Rule = new ColoredSquareRule(panel.grid[0, 1], Color.Black);
+            panel.grid[3, 0].Rule = new ColoredSquareRule(Color.Magenta);
+            panel.grid[0, 1].Rule = new ColoredSquareRule(Color.Black);
             //panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
 
             //panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });

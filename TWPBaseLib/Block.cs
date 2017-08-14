@@ -18,7 +18,16 @@ namespace TheWitnessPuzzles
         private List<Edge> _edges;
         public IReadOnlyList<Edge> Edges { get; }
 
-        public BlockRule Rule { get;  set; }
+        private BlockRule _rule;
+        public BlockRule Rule
+        {
+            get => _rule;
+            set
+            {
+                value.OwnerBlock = this;
+                _rule = value;
+            }
+        }
 
         public Edge LeftEdge => _edges[0];
         public Edge TopEdge => _edges[1];

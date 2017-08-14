@@ -19,18 +19,14 @@ namespace TheWitnessPuzzles
 
     public abstract class BlockRule
     {
-        public Block OwnerBlock { get; }
-
-        public BlockRule(Block parentBlock)
-        {
-            OwnerBlock = parentBlock;
-        }
+        // Owner block is set by the Block itself when we assign rule to it
+        public Block OwnerBlock { get; internal set; }
     }
 
     // Thre're can be squares of only one color in sector
     public class ColoredSquareRule : BlockRule, ISelfCheckableRule, IColorable
     {
-        public ColoredSquareRule(Block parentBlock, Color color) : base(parentBlock)
+        public ColoredSquareRule(Color color)
         {
             Color = color;
         }
@@ -58,7 +54,7 @@ namespace TheWitnessPuzzles
     // Blocks colored in different color do not matter
     public class SunPairRule : BlockRule, ISelfCheckableRule, IColorable
     {
-        public SunPairRule(Block parentBlock, Color color) : base(parentBlock)
+        public SunPairRule(Color color)
         {
             Color = color;
         }
@@ -87,7 +83,7 @@ namespace TheWitnessPuzzles
     {
         public int Power { get; }
 
-        public TriangleRule(Block parentBlock, int power) : base(parentBlock)
+        public TriangleRule(int power)
         {
             // Power can be between 1 and 3
             Power = power < 1 ? 1 : power > 3 ? 3 : power;
@@ -128,7 +124,7 @@ namespace TheWitnessPuzzles
         public Color? Color { get; }
         public bool HasColor => Color.HasValue;
 
-        public TetrisRule(Block parentBlock, bool[,] shape, bool subtractive = false, Color? color = null) : base(parentBlock)
+        public TetrisRule(bool[,] shape, bool subtractive = false, Color? color = null)
         {
             IsSubtractive = subtractive;
             Color = color;
@@ -147,8 +143,8 @@ namespace TheWitnessPuzzles
 
     public class TetrisRotatableRule : TetrisRule
     {
-        public TetrisRotatableRule(Block parentBlock, bool[,] shape, bool subtractive = false, Color? color = null) 
-            : base(parentBlock, shape, subtractive, color)
+        public TetrisRotatableRule(bool[,] shape, bool subtractive = false, Color? color = null) 
+            : base(shape, subtractive, color)
         { }
 
         public TetrisRotatableRule RotateCW()
@@ -166,7 +162,7 @@ namespace TheWitnessPuzzles
 
     public class EliminationRule : BlockRule, IColorable
     {
-        public EliminationRule(Block parentBlock, Color? color = null) : base(parentBlock)
+        public EliminationRule(Color? color = null)
         {
             Color = color;
         }
