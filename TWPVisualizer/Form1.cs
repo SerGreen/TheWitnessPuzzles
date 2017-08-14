@@ -30,12 +30,9 @@ namespace TWPVisualizer
             panel.nodes[5].SetState(NodeState.Start);
             //panel.nodes.Last().SetState(NodeState.Exit);
 
-            panel.nodes[20].SetState(NodeState.Marked);
-            panel.nodes[20].Color = Color.Cyan;
-            panel.edges.Find(x => x.Id == 410).SetState(EdgeState.Marked);
-            panel.edges.Find(x => x.Id == 410).Color = Color.Yellow;
-            panel.nodes[21].SetState(NodeState.Marked);
-            panel.nodes[21].Color = Color.Yellow;
+            panel.nodes[20].SetStateAndColor(NodeState.Marked, Color.Cyan);
+            panel.edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, Color.Yellow);
+            panel.nodes[21].SetStateAndColor(NodeState.Marked, Color.Yellow);
             panel.nodes[7].SetState(NodeState.Marked);
 
             //panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);

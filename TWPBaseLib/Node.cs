@@ -19,7 +19,7 @@ namespace TheWitnessPuzzles
         public IReadOnlyList<Edge> Edges { get; }
         // State: contains dot / is a starting node / regular node
         public NodeState State { get; private set; }
-
+        
         public bool SetState(NodeState state)
         {
             // Node can not be exit node if it's not on the border of panel (has 2 or 3 edges)
@@ -28,6 +28,12 @@ namespace TheWitnessPuzzles
 
             State = state;
             return true;
+        }
+
+        public bool SetStateAndColor(NodeState state, Color color)
+        {
+            Color = color;
+            return SetState(state);
         }
 
         public override string ToString() => $"[{Id}]";

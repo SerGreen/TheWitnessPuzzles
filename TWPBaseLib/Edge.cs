@@ -20,6 +20,11 @@ namespace TheWitnessPuzzles
         // State: regular edge / broken edge / edge with dot
         public EdgeState State { get; private set; }
         public void SetState(EdgeState state) => State = state;
+        public void SetStateAndColor(EdgeState state, Color color)
+        {
+            SetState(state);
+            Color = color;
+        }
 
         public Node NodeA => _nodes[0];
         public Node NodeB => _nodes[1];
