@@ -64,12 +64,9 @@ namespace TheWitnessPuzzles
         public List<Error> CheckForErrors()
         {
             List<Error> errors = new List<Error>();
-
-            var solutionEdges = SolutionEdges;
-            var solutionNodes = SolutionNodes;
-
+            
             foreach (Sector sector in GetSectors())
-                errors.AddRange(sector.CheckSectorErrors(solutionNodes, solutionEdges));
+                errors.AddRange(sector.CheckSectorErrors());
 
             return errors;
         }

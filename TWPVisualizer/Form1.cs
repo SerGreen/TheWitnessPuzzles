@@ -30,8 +30,13 @@ namespace TWPVisualizer
             panel.nodes[5].SetState(NodeState.Start);
             //panel.nodes.Last().SetState(NodeState.Exit);
 
-            //panel.nodes[11].SetState(NodeState.Marked);
-            //panel.nodes[16].SetState(NodeState.Marked);
+            panel.nodes[20].SetState(NodeState.Marked);
+            panel.nodes[20].Color = Color.Cyan;
+            panel.edges.Find(x => x.Id == 410).SetState(EdgeState.Marked);
+            panel.edges.Find(x => x.Id == 410).Color = Color.Yellow;
+            panel.nodes[21].SetState(NodeState.Marked);
+            panel.nodes[21].Color = Color.Yellow;
+            panel.nodes[7].SetState(NodeState.Marked);
 
             //panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
             //panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
@@ -150,6 +155,61 @@ namespace TWPVisualizer
                         br = brush;
 
                     g.FillEllipse(br, (xA + xB) / 2 - 3, (yA + yB) / 2 - 3, 6, 6);
+                }
+            }
+
+            for (int i = 0; i < panel.nodes.Length; i++)
+            {
+                int row = i / width;
+                int x = margin + (i - row * width) * nodeSpan;
+                int y = margin + row * nodeSpan;
+                
+                if (panel.nodes[i].State == NodeState.Marked)
+                {
+                    Brush br = null;
+                    if (errorParts.Contains(panel.nodes[i]))
+                        br = errBrush;
+                    else if (eliminatedParts.Contains(panel.nodes[i]))
+                        br = errBrushE;
+
+                    if(br != null)
+                        g.FillEllipse(br, x - 5, y - 5, 10, 10);
+
+                    br = panel.nodes[i].HasColor ? new SolidBrush(panel.nodes[i].Color.Value) : brush;
+                    g.FillEllipse(br, x - 3, y - 3, 6, 6);
+                }
+
+                g.DrawString(i.ToString(), Font, brush, x, y);
+            }
+            for (int i = 0; i < panel.edges.Count; i++)
+            {
+                Edge edge = panel.edges[i];
+
+                int rowA = edge.NodeA.Id / width;
+                int xA = margin + (edge.NodeA.Id - rowA * width) * nodeSpan;
+                int yA = margin + rowA * nodeSpan;
+
+                int rowB = edge.NodeB.Id / width;
+                int xB = margin + (edge.NodeB.Id - rowB * width) * nodeSpan;
+                int yB = margin + rowB * nodeSpan;
+
+                int x = (xA + xB) / 2;
+                int y = (yA + yB) / 2;
+
+                if (edge.State == EdgeState.Marked)
+                {
+                    Brush br = null;
+                    if (errorParts.Contains(edge))
+                        br = errBrush;
+                    else if (eliminatedParts.Contains(edge))
+                        br = errBrushE;
+
+                    if (br != null)
+                        g.FillEllipse(br, x - 5, y - 5, 10, 10);
+
+                    br = edge.HasColor ? new SolidBrush(edge.Color.Value) : brush;
+
+                    g.FillEllipse(br, x - 3, y - 3, 6, 6);
                 }
             }
 
