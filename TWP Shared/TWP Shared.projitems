@@ -9,6 +9,7 @@
     <Import_RootNamespace>TWP_Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TWPGame.cs" />
   </ItemGroup>
   <ItemGroup>

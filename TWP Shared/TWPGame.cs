@@ -1,6 +1,9 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using TheWitnessPuzzles;
 
 namespace TWP_Shared
@@ -12,6 +15,9 @@ namespace TWP_Shared
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+
+        SolutionLine line;
+        Texture2D t; //base for the line texture
 
         public TWPGame(bool isMobile)
         {
@@ -25,6 +31,8 @@ namespace TWP_Shared
                 graphics.PreferredBackBufferHeight = 480;
                 graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
             }
+
+            line = new SolutionLine(new Point(100));
         }
 
         /// <summary>
@@ -50,6 +58,9 @@ namespace TWP_Shared
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+
+            t = new Texture2D(GraphicsDevice, 1, 1);
+            t.SetData<Color>(new Color[] { Color.White });// fill the texture with white
         }
 
         /// <summary>
@@ -72,6 +83,17 @@ namespace TWP_Shared
                 Exit();
 
             // TODO: Add your update logic here
+            if (Keyboard.GetState().IsKeyDown(Keys.Right))
+                line.Move(new Vector2(2, 0), line.Hitboxes);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Down))
+                line.Move(new Vector2(0, 2), line.Hitboxes);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Left))
+                line.Move(new Vector2(-2, 0), line.Hitboxes);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Up))
+                line.Move(new Vector2(0, -2), line.Hitboxes);
 
             base.Update(gameTime);
         }
@@ -86,7 +108,42 @@ namespace TWP_Shared
 
             // TODO: Add your drawing code here
 
+            spriteBatch.Begin();
+            foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
+            {
+                spriteBatch.Draw(t, hitbox, Color.White);
+            }
+
+            DrawLine(spriteBatch, //draw line
+                new Vector2(200, 200), //start of line
+                new Vector2(100, 50) //end of line
+            );
+            spriteBatch.End();
+
             base.Draw(gameTime);
+        }
+
+        private void DrawLine(SpriteBatch sb, Vector2 start, Vector2 end)
+        {
+            Vector2 edge = end - start;
+            // calculate angle to rotate line
+            float angle =
+                (float) Math.Atan2(edge.Y, edge.X);
+
+
+            sb.Draw(t,
+                new Rectangle(// rectangle defines shape of line and position of start of line
+                    (int) start.X,
+                    (int) start.Y,
+                    (int) edge.Length(), //sb will strech the texture to fill this rectangle
+                    1), //width of line, change this to make thicker line
+                null,
+                Color.Red, //colour of line
+                angle,     //angle of line (calulated above)
+                new Vector2(0, 0), // point in line about which to rotate
+                SpriteEffects.None,
+                0);
+
         }
     }
 }
