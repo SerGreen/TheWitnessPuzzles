@@ -19,13 +19,13 @@ namespace TWP_Shared
 
         public int LineWidth { get; }
 
-        public SolutionLine(Point start)
+        public SolutionLine(Point start, int lineWidth)
         {
             points.Add(start);
             prevPos = currentPos = start;
             Hitboxes = hitboxes.AsReadOnly();
 
-            LineWidth = 10;
+            LineWidth = lineWidth;
 
             head = new Rectangle(currentPos.X, currentPos.Y, LineWidth, LineWidth);
         }

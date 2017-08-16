@@ -16,10 +16,15 @@ namespace TWP_Shared
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
+        const int fullscreenCooldownMax = 30;
+        int fullscreenCooldown = 0;
+
         SolutionLine line;
-        SolutionLine lineMir;
+        //SolutionLine lineMir;
         List<Rectangle> walls = new List<Rectangle>();
         Texture2D t; //base for the line texture
+
+        Point puzzleDimensions;
 
         public TWPGame(bool isMobile)
         {
@@ -34,11 +39,49 @@ namespace TWP_Shared
                 graphics.SupportedOrientations = DisplayOrientation.Portrait;
             }
 
-            line = new SolutionLine(new Point(100));
-            lineMir = new SolutionLine(new Point(300, 100));
+            puzzleDimensions = new Point(4, 3);
+            int maxPuzzleDimension = Math.Max(puzzleDimensions.X, puzzleDimensions.Y);
 
-            walls.Add(new Rectangle(250, 80, 20, 40));
+            int width = graphics.PreferredBackBufferWidth;
+            int height = graphics.PreferredBackBufferHeight;
+
+            int screenMinSize = Math.Min(width, height);
+            int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
+            int lineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
+            int blockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
+
+            int puzzleWidth = lineWidth * (puzzleDimensions.X + 1) + blockWidth * puzzleDimensions.X;
+            int puzzleHeight = lineWidth * (puzzleDimensions.Y + 1) + blockWidth * puzzleDimensions.Y;
+
+            int xMargin = (width - puzzleWidth) / 2;
+            int yMargin = (height - puzzleHeight) / 2;
+
+            int nodePadding = lineWidth + blockWidth;
+
+            walls.Add(new Rectangle(0, 0, xMargin, height));
+            walls.Add(new Rectangle(0, 0, width, yMargin));
+            walls.Add(new Rectangle(0, yMargin + puzzleHeight, width, yMargin));
+            walls.Add(new Rectangle(xMargin + puzzleWidth, 0, xMargin, height));
+
+            for (int i = 0; i < puzzleDimensions.X; i++)
+            {
+                for (int j = 0; j < puzzleDimensions.Y; j++)
+                {
+                    walls.Add(new Rectangle(xMargin + lineWidth * (i + 1) + blockWidth * i, yMargin + lineWidth * (j + 1) + blockWidth * j, blockWidth, blockWidth));
+                }
+            }
+
+
+            line = new SolutionLine(new Point(xMargin, yMargin), lineWidth);
+            //lineMir = new SolutionLine(new Point(300, 100));
         }
+
+        // Returns a coef k. Total free space in pixels * k = puzzle size in pixels
+        private float PuzzleSpaceRatio(float puzzleDimension) => (float) (-0.0005 * Math.Pow(puzzleDimension, 4) + 0.0082 * Math.Pow(puzzleDimension, 3) - 0.0439 * Math.Pow(puzzleDimension, 2) + 0.1011 * puzzleDimension + 0.6875);
+        // Returns a coef k. Puzzle size in pixels * k = block size in pixels
+        private float BlockSizeRatio(float puzzleDimension) => (float) (0.8563 * Math.Pow(puzzleDimension, -1.134));
+        // Returns a coef k. Puzzle size in pixels * k = line width in pixels
+        private float LineSizeRatio(float puzzleDimension) => -0.0064f * puzzleDimension + 0.0859f;
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -87,38 +130,45 @@ namespace TWP_Shared
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
+            FullscreenToggleCheck();
+
             // TODO: Add your update logic here
-            var hitboxes = line.Hitboxes.Concat(lineMir.Hitboxes).Concat(walls);
+            var hitboxes = line.Hitboxes.Concat(walls);
 
             if (Keyboard.GetState().IsKeyDown(Keys.Right))
             {
-                if (line.Move(new Vector2(2, 0), hitboxes))
-                    if (!lineMir.Move(new Vector2(-2, 0), hitboxes))
-                        line.Move(new Vector2(-2, 0), hitboxes);
+                line.Move(new Vector2(1, 0), hitboxes);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Down))
             {
-                if (line.Move(new Vector2(0, 2), hitboxes))
-                    if (!lineMir.Move(new Vector2(0, 2), hitboxes))
-                        line.Move(new Vector2(0, -2), hitboxes);
+                line.Move(new Vector2(0, 1), hitboxes);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Left))
             {
-                if (line.Move(new Vector2(-2, 0), hitboxes))
-                    if (!lineMir.Move(new Vector2(2, 0), hitboxes))
-                        line.Move(new Vector2(2, 0), hitboxes);
+                line.Move(new Vector2(-1, 0), hitboxes);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
             {
-                if (line.Move(new Vector2(0, -2), hitboxes))
-                    if (!lineMir.Move(new Vector2(0, -2), hitboxes))
-                        line.Move(new Vector2(0, 2), hitboxes);
+                line.Move(new Vector2(0, -1), hitboxes);
             }
 
             base.Update(gameTime);
+        }
+
+        private void FullscreenToggleCheck()
+        {
+            if (fullscreenCooldown > 0)
+                fullscreenCooldown--;
+
+            if ((Keyboard.GetState().IsKeyDown(Keys.LeftAlt) || Keyboard.GetState().IsKeyDown(Keys.RightAlt)) && Keyboard.GetState().IsKeyDown(Keys.Enter))
+            {
+                graphics.ToggleFullScreen();
+                graphics.ApplyChanges();
+                fullscreenCooldown = fullscreenCooldownMax;
+            }
         }
 
         /// <summary>
@@ -135,8 +185,10 @@ namespace TWP_Shared
             foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
                 spriteBatch.Draw(t, hitbox, Color.Cyan);
 
-            foreach (var hitbox in lineMir.Hitboxes.Concat(new List<Rectangle> { lineMir.Head }))
-                spriteBatch.Draw(t, hitbox, Color.Yellow);
+            foreach (var wall in walls)
+            {
+                spriteBatch.Draw(t, wall, Color.DarkSlateGray);
+            }
 
             //DrawLine(spriteBatch, //draw line
             //    new Vector2(200, 200), //start of line
