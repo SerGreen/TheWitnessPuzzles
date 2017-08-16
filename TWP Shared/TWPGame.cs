@@ -17,6 +17,8 @@ namespace TWP_Shared
         SpriteBatch spriteBatch;
 
         SolutionLine line;
+        SolutionLine lineMir;
+        List<Rectangle> walls = new List<Rectangle>();
         Texture2D t; //base for the line texture
 
         public TWPGame(bool isMobile)
@@ -27,12 +29,15 @@ namespace TWP_Shared
             if (isMobile)
             {
                 graphics.IsFullScreen = true;
-                graphics.PreferredBackBufferWidth = 800;
-                graphics.PreferredBackBufferHeight = 480;
-                graphics.SupportedOrientations = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+                graphics.PreferredBackBufferWidth = 480;
+                graphics.PreferredBackBufferHeight = 800;
+                graphics.SupportedOrientations = DisplayOrientation.Portrait;
             }
 
             line = new SolutionLine(new Point(100));
+            lineMir = new SolutionLine(new Point(300, 100));
+
+            walls.Add(new Rectangle(250, 80, 20, 40));
         }
 
         /// <summary>
@@ -83,17 +88,35 @@ namespace TWP_Shared
                 Exit();
 
             // TODO: Add your update logic here
+            var hitboxes = line.Hitboxes.Concat(lineMir.Hitboxes).Concat(walls);
+
             if (Keyboard.GetState().IsKeyDown(Keys.Right))
-                line.Move(new Vector2(2, 0), line.Hitboxes);
+            {
+                if (line.Move(new Vector2(2, 0), hitboxes))
+                    if (!lineMir.Move(new Vector2(-2, 0), hitboxes))
+                        line.Move(new Vector2(-2, 0), hitboxes);
+            }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Down))
-                line.Move(new Vector2(0, 2), line.Hitboxes);
+            {
+                if (line.Move(new Vector2(0, 2), hitboxes))
+                    if (!lineMir.Move(new Vector2(0, 2), hitboxes))
+                        line.Move(new Vector2(0, -2), hitboxes);
+            }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Left))
-                line.Move(new Vector2(-2, 0), line.Hitboxes);
+            {
+                if (line.Move(new Vector2(-2, 0), hitboxes))
+                    if (!lineMir.Move(new Vector2(2, 0), hitboxes))
+                        line.Move(new Vector2(2, 0), hitboxes);
+            }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Up))
-                line.Move(new Vector2(0, -2), line.Hitboxes);
+            {
+                if (line.Move(new Vector2(0, -2), hitboxes))
+                    if (!lineMir.Move(new Vector2(0, -2), hitboxes))
+                        line.Move(new Vector2(0, 2), hitboxes);
+            }
 
             base.Update(gameTime);
         }
@@ -110,14 +133,15 @@ namespace TWP_Shared
 
             spriteBatch.Begin();
             foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
-            {
-                spriteBatch.Draw(t, hitbox, Color.White);
-            }
+                spriteBatch.Draw(t, hitbox, Color.Cyan);
 
-            DrawLine(spriteBatch, //draw line
-                new Vector2(200, 200), //start of line
-                new Vector2(100, 50) //end of line
-            );
+            foreach (var hitbox in lineMir.Hitboxes.Concat(new List<Rectangle> { lineMir.Head }))
+                spriteBatch.Draw(t, hitbox, Color.Yellow);
+
+            //DrawLine(spriteBatch, //draw line
+            //    new Vector2(200, 200), //start of line
+            //    new Vector2(100, 50) //end of line
+            //);
             spriteBatch.End();
 
             base.Draw(gameTime);

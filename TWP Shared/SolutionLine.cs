@@ -30,60 +30,77 @@ namespace TWP_Shared
             head = new Rectangle(currentPos.X, currentPos.Y, LineWidth, LineWidth);
         }
 
-        public void Move(Vector2 dir, IEnumerable<Rectangle> collisionHitboxes)
+        public bool Move(Vector2 dir, IEnumerable<Rectangle> collisionHitboxes)
         {
+            bool moveSuccessful = true;
+
+            // Remove fickle hitbox between last point and current point
+            if (hitboxes.Count > 0)
+                hitboxes.RemoveAt(hitboxes.Count - 1);
+
             prevPos = currentPos;
 
-            // Try to move X
-            currentPos.X += (int) dir.X;
-            head.Offset(dir.X, 0);
+            // Try to move
+            currentPos += dir.ToPoint();
+            head.Offset(dir);
 
             // If head hits anythig => Undo
             if(CheckCollision(collisionHitboxes))
             {
                 currentPos = prevPos;
-                head.Offset(-dir.X, 0);
+                head.Offset(-dir);
+                moveSuccessful = false;
             }
 
-            // Try to move Y
-            Point tempPos = currentPos;
-            currentPos.Y += (int) dir.Y;
-            head.Offset(0, dir.Y);
-
-            // If head hits anythig => Undo
-            if (CheckCollision(collisionHitboxes))
+            if (moveSuccessful)
             {
-                currentPos = tempPos;
-                head.Offset(0, -dir.Y);
+                // If there was a turn, then we need to create a new part of the hitbox
+                if (!ThreePointsOnSameLine(points.Last(), prevPos, currentPos))
+                {
+                    Rectangle hitboxPart = CreateHitbox(points.Last(), prevPos);
+                    hitboxes.Add(hitboxPart);
+                    points.Add(prevPos);
+                }
+
+                // If we are moving backwards and hit last point, then current point takes its place
+                if (points.Count > 1 && points.Last() == currentPos)
+                {
+                    points.RemoveAt(points.Count - 1);
+                    hitboxes.RemoveAt(hitboxes.Count - 1);
+                }
             }
 
-            // If there was no turning, then we can skip creation of new point
-            if (!ThreePointsOnSameLine(points.Last(), prevPos, currentPos))
+            // Re-create hitbox between last point and current point
+            hitboxes.Add(CreateHitbox(points.Last(), currentPos));
+
+            return moveSuccessful;
+        }
+
+        private Rectangle CreateHitbox(Point start, Point end)
+        {
+            int xLength = end.X - start.X;
+            int yLength = end.Y - start.Y;
+
+            Rectangle hitbox;
+
+            // If line is vertical
+            if (xLength == 0)
             {
-                // Calculate new hitbox of the line
-                Point last = points.Last();
-                int xLength = prevPos.X - last.X;
-                int yLength = prevPos.Y - last.Y;
-
-                Rectangle hitbox;
-
-                // Vertical line
-                if (xLength == 0)
-                    hitbox = new Rectangle(last.X - LineWidth / 2, last.Y - LineWidth / 2, LineWidth, yLength + LineWidth / 2);
-                // Horizontal line
+                if (yLength > 0)
+                    hitbox = new Rectangle(start.X, start.Y, LineWidth, yLength);
                 else
-                    hitbox = new Rectangle(last.X - LineWidth / 2, last.Y - LineWidth / 2, xLength + LineWidth / 2, LineWidth);
-
-                hitboxes.Add(hitbox);
-                points.Add(prevPos);
+                    hitbox = new Rectangle(end.X, end.Y + LineWidth, LineWidth, -yLength);
             }
-
-            // If we are moving backwards and hit last point, then current point takes its place
-            if (points.Count > 1 && points.Last() == currentPos)
+            // If line is horizontal
+            else
             {
-                points.RemoveAt(points.Count - 1);
-                hitboxes.RemoveAt(hitboxes.Count - 1);
+                if (xLength > 0)
+                    hitbox = new Rectangle(start.X, start.Y, xLength, LineWidth);
+                else
+                    hitbox = new Rectangle(end.X + LineWidth, end.Y, -xLength, LineWidth);
             }
+
+            return hitbox;
         }
 
         private bool CheckCollision(IEnumerable<Rectangle> collisionHitboxes) => collisionHitboxes.Any(x => head.Intersects(x));
