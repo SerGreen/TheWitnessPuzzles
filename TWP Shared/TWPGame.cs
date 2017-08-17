@@ -1,9 +1,11 @@
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Input.Touch;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TWP_Shared;
 using TheWitnessPuzzles;
 
 namespace TWP_Shared
@@ -19,27 +21,33 @@ namespace TWP_Shared
         const int fullscreenCooldownMax = 30;
         int fullscreenCooldown = 0;
 
+        int moveStep = 5;
+        float sensitivity = 0.5f;
+
         SolutionLine line;
         //SolutionLine lineMir;
         List<Rectangle> walls = new List<Rectangle>();
         Texture2D t; //base for the line texture
 
         Point puzzleDimensions;
+        bool isMobile;
 
         public TWPGame(bool isMobile)
         {
+            this.isMobile = isMobile;
+
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
             if (isMobile)
             {
-                graphics.IsFullScreen = true;
+                //graphics.IsFullScreen = true;
                 graphics.PreferredBackBufferWidth = 480;
                 graphics.PreferredBackBufferHeight = 800;
                 graphics.SupportedOrientations = DisplayOrientation.Portrait;
             }
 
-            puzzleDimensions = new Point(4, 3);
+            puzzleDimensions = new Point(4, 4);
             int maxPuzzleDimension = Math.Max(puzzleDimensions.X, puzzleDimensions.Y);
 
             int width = graphics.PreferredBackBufferWidth;
@@ -74,6 +82,8 @@ namespace TWP_Shared
 
             line = new SolutionLine(new Point(xMargin, yMargin), lineWidth);
             //lineMir = new SolutionLine(new Point(300, 100));
+            
+            TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
         }
 
         // Returns a coef k. Total free space in pixels * k = puzzle size in pixels
@@ -133,29 +143,65 @@ namespace TWP_Shared
             FullscreenToggleCheck();
 
             // TODO: Add your update logic here
-            var hitboxes = line.Hitboxes.Concat(walls);
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Right))
+            Vector2 moveVector = GetMoveVector();
+            if (moveVector != Vector2.Zero)
             {
-                line.Move(new Vector2(1, 0), hitboxes);
-            }
+                Vector2 firstMove, secondMove;
+                if (Math.Abs(moveVector.X) > Math.Abs(moveVector.Y))
+                {
+                    firstMove = new Vector2(moveVector.X, 0);
+                    secondMove = new Vector2(0, moveVector.Y);
+                }
+                else
+                {
+                    firstMove = new Vector2(0, moveVector.Y);
+                    secondMove = new Vector2(moveVector.X, 0);
+                }
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Down))
-            {
-                line.Move(new Vector2(0, 1), hitboxes);
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Left))
-            {
-                line.Move(new Vector2(-1, 0), hitboxes);
-            }
-
-            if (Keyboard.GetState().IsKeyDown(Keys.Up))
-            {
-                line.Move(new Vector2(0, -1), hitboxes);
+                var hitboxes = line.Hitboxes.Concat(walls);
+                if (!line.Move(firstMove, hitboxes))
+                {
+                    Vector2 cornerMove = line.MoveNearEdge(moveVector, walls);
+                    if (cornerMove != Vector2.Zero)
+                        line.Move(cornerMove, hitboxes);
+                    else
+                        line.Move(secondMove, hitboxes);
+                }
             }
 
             base.Update(gameTime);
+        }
+
+        protected virtual Vector2 GetMoveVector()
+        {
+            Vector2 result = Vector2.Zero;
+
+            if (!isMobile)
+            {
+                if (Keyboard.GetState().IsKeyDown(Keys.Right))
+                    result.X += moveStep;
+
+                if (Keyboard.GetState().IsKeyDown(Keys.Left))
+                    result.X -= moveStep;
+
+                if (Keyboard.GetState().IsKeyDown(Keys.Down))
+                    result.Y += moveStep;
+
+                if (Keyboard.GetState().IsKeyDown(Keys.Up))
+                    result.Y -= moveStep;
+            }
+            else
+            {
+                GestureSample gesture;
+                while (TouchPanel.IsGestureAvailable)
+                {
+                    gesture = TouchPanel.ReadGesture();
+                    if (gesture.GestureType == GestureType.FreeDrag)
+                        result += gesture.Delta * sensitivity;
+                }
+            }
+
+            return result;
         }
 
         private void FullscreenToggleCheck()
@@ -189,7 +235,7 @@ namespace TWP_Shared
             {
                 spriteBatch.Draw(t, wall, Color.DarkSlateGray);
             }
-
+            
             //DrawLine(spriteBatch, //draw line
             //    new Vector2(200, 200), //start of line
             //    new Vector2(100, 50) //end of line
