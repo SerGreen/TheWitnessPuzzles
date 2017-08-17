@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TWP_Shared;
 using TheWitnessPuzzles;
+using System.Threading;
 
 namespace TWP_Shared
 {
@@ -18,45 +19,74 @@ namespace TWP_Shared
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
-        const int fullscreenCooldownMax = 30;
+        const int fullscreenCooldownMax = 120;
         int fullscreenCooldown = 0;
 
         int moveStep = 5;
         float sensitivity = 0.5f;
 
-        SolutionLine line;
-        //SolutionLine lineMir;
+        Puzzle panel = null;
+        SolutionLine line = null;
+        SolutionLine lineMirror = null;
+
+        List<Rectangle> startPoints = new List<Rectangle>();
+        List<Rectangle> endPoints = new List<Rectangle>();
+
         List<Rectangle> walls = new List<Rectangle>();
+
         Texture2D t; //base for the line texture
 
         Point puzzleDimensions;
+        int lineWidth;
         bool isMobile;
 
-        public TWPGame(bool isMobile)
+        public TWPGame(bool isMobile, Puzzle panel = null)
         {
+            panel = new Puzzle(4, 4);
+            panel.nodes[21].SetState(NodeState.Start);
+            panel.nodes[7].SetState(NodeState.Start);
+            panel.nodes[1].SetState(NodeState.Exit);
+            panel.nodes[3].SetState(NodeState.Exit);
+            panel.nodes[23].SetState(NodeState.Exit);
+            panel.nodes[22].SetState(NodeState.Exit);
+            panel.nodes[0].SetState(NodeState.Exit);
+            panel.nodes[20].SetState(NodeState.Exit);
+            panel.nodes[9].SetState(NodeState.Exit);
+            panel.nodes[24].SetState(NodeState.Exit);
+
             this.isMobile = isMobile;
+            this.panel = panel;
+            puzzleDimensions = new Point(panel.Width, panel.Height);
 
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
             if (isMobile)
             {
-                //graphics.IsFullScreen = true;
+                graphics.IsFullScreen = true;
                 graphics.PreferredBackBufferWidth = 480;
                 graphics.PreferredBackBufferHeight = 800;
                 graphics.SupportedOrientations = DisplayOrientation.Portrait;
             }
+            else
+                IsMouseVisible = true;
+            
+            TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
+        }
 
-            puzzleDimensions = new Point(4, 4);
+        private void InitPanel()
+        {
+            int width = GraphicsDevice.Viewport.Width;
+            int height = GraphicsDevice.Viewport.Height;
+
             int maxPuzzleDimension = Math.Max(puzzleDimensions.X, puzzleDimensions.Y);
-
-            int width = graphics.PreferredBackBufferWidth;
-            int height = graphics.PreferredBackBufferHeight;
 
             int screenMinSize = Math.Min(width, height);
             int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
             int lineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
             int blockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
+
+            int endAppendixLength = blockWidth / 4;
 
             int puzzleWidth = lineWidth * (puzzleDimensions.X + 1) + blockWidth * puzzleDimensions.X;
             int puzzleHeight = lineWidth * (puzzleDimensions.Y + 1) + blockWidth * puzzleDimensions.Y;
@@ -65,25 +95,105 @@ namespace TWP_Shared
             int yMargin = (height - puzzleHeight) / 2;
 
             int nodePadding = lineWidth + blockWidth;
-
-            walls.Add(new Rectangle(0, 0, xMargin, height));
-            walls.Add(new Rectangle(0, 0, width, yMargin));
-            walls.Add(new Rectangle(0, yMargin + puzzleHeight, width, yMargin));
-            walls.Add(new Rectangle(xMargin + puzzleWidth, 0, xMargin, height));
-
+            
+            DoHorizontalWalls(false);   // Top walls
+            DoHorizontalWalls(true);    // Bottom walls
+            DoVerticalWalls(false);     // Left walls
+            DoVerticalWalls(true);      // Right walls
+            
             for (int i = 0; i < puzzleDimensions.X; i++)
-            {
                 for (int j = 0; j < puzzleDimensions.Y; j++)
-                {
                     walls.Add(new Rectangle(xMargin + lineWidth * (i + 1) + blockWidth * i, yMargin + lineWidth * (j + 1) + blockWidth * j, blockWidth, blockWidth));
+
+            foreach (Point start in GetStartNodes())
+                startPoints.Add(new Rectangle(xMargin + start.X * nodePadding, yMargin + start.Y * nodePadding, lineWidth, lineWidth));
+
+            // Inner methods
+            IEnumerable<Point> GetStartNodes() => panel.nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
+            IEnumerable<Point> GetEndNodesTop()
+            {
+                for (int i = 1; i < panel.Width; i++)
+                    if (panel.nodes[i].State == NodeState.Exit)
+                        yield return new Point(i, 0);
+            }
+            IEnumerable<Point> GetEndNodesBot()
+            {
+                for (int i = 1; i < panel.Width; i++)
+                {
+                    int index = panel.Height * (panel.Width + 1) + i;
+                    if (panel.nodes[index].State == NodeState.Exit)
+                        yield return new Point(i, panel.Height);
                 }
             }
+            IEnumerable<Point> GetEndNodesLeft()
+            {
+                for (int j = 0; j < panel.Height + 1; j++)
+                {
+                    int index = j * (panel.Width + 1);
+                    if (panel.nodes[index].State == NodeState.Exit)
+                        yield return new Point(0, j);
+                }
+            }
+            IEnumerable<Point> GetEndNodesRight()
+            {
+                for (int j = 0; j < panel.Height + 1; j++)
+                {
+                    int index = j * (panel.Width + 1) + panel.Width;
+                    if (panel.nodes[index].State == NodeState.Exit)
+                        yield return new Point(panel.Width, j);
+                }
+            }
+            Point NodeIdToPoint(int id)
+            {
+                int y = id / (panel.Width + 1);
+                int x = id - y * (panel.Width + 1);
+                return new Point(x, y);
+            }
+            void DoHorizontalWalls(bool isBottom)
+            {
+                int yStartPoint = isBottom ? yMargin + puzzleHeight : 0;
+                var ends = isBottom ? GetEndNodesBot() : GetEndNodesTop();
 
+                if (ends.Count() == 0)
+                    walls.Add(new Rectangle(0, yStartPoint, width, yMargin));
+                else
+                {
+                    walls.Add(new Rectangle(0, yStartPoint + (isBottom ? endAppendixLength : 0), width, yMargin - endAppendixLength));
 
-            line = new SolutionLine(new Point(xMargin, yMargin), lineWidth);
-            //lineMir = new SolutionLine(new Point(300, 100));
-            
-            TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
+                    int lastXPoint = 0;
+                    foreach (Point endPoint in ends)
+                    {
+                        int x = xMargin + endPoint.X * (nodePadding);
+                        walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), x - lastXPoint, endAppendixLength));
+                        endPoints.Add(new Rectangle(x, isBottom ? yStartPoint + endAppendixLength * 3 / 4 : (yMargin - endAppendixLength), lineWidth, endAppendixLength / 4));
+                        lastXPoint = x + lineWidth;
+                    }
+                    walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), width - lastXPoint, endAppendixLength));
+                }
+            }
+            void DoVerticalWalls(bool isRight)
+            {
+                int xStartPoint = isRight ? xMargin + puzzleWidth : 0;
+                var ends = isRight ? GetEndNodesRight() : GetEndNodesLeft();
+
+                if (ends.Count() == 0)
+                    walls.Add(new Rectangle(xStartPoint, 0, xMargin, height));
+                else
+                {
+                    var aa = endAppendixLength;
+                    walls.Add(new Rectangle(xStartPoint + (isRight ? endAppendixLength : 0), 0, xMargin - endAppendixLength, height));
+
+                    int lastYPoint = 0;
+                    foreach (Point endPoint in ends)
+                    {
+                        int y = yMargin + endPoint.Y * (nodePadding);
+                        walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, y - lastYPoint));
+                        endPoints.Add(new Rectangle(isRight ? xStartPoint + endAppendixLength * 3 /4 : xMargin - endAppendixLength, y, endAppendixLength / 4, lineWidth));
+                        lastYPoint = y + lineWidth;
+                    }
+                    walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, height - lastYPoint));
+                }
+            }
         }
 
         // Returns a coef k. Total free space in pixels * k = puzzle size in pixels
@@ -116,6 +226,7 @@ namespace TWP_Shared
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // TODO: use this.Content to load your game content here
+            InitPanel();
 
             t = new Texture2D(GraphicsDevice, 1, 1);
             t.SetData<Color>(new Color[] { Color.White });// fill the texture with white
@@ -142,30 +253,32 @@ namespace TWP_Shared
 
             FullscreenToggleCheck();
 
-            // TODO: Add your update logic here
-            Vector2 moveVector = GetMoveVector();
-            if (moveVector != Vector2.Zero)
+            if (line != null)
             {
-                Vector2 firstMove, secondMove;
-                if (Math.Abs(moveVector.X) > Math.Abs(moveVector.Y))
+                Vector2 moveVector = GetMoveVector();
+                if (moveVector != Vector2.Zero)
                 {
-                    firstMove = new Vector2(moveVector.X, 0);
-                    secondMove = new Vector2(0, moveVector.Y);
-                }
-                else
-                {
-                    firstMove = new Vector2(0, moveVector.Y);
-                    secondMove = new Vector2(moveVector.X, 0);
-                }
-
-                var hitboxes = line.Hitboxes.Concat(walls);
-                if (!line.Move(firstMove, hitboxes))
-                {
-                    Vector2 cornerMove = line.MoveNearEdge(moveVector, walls);
-                    if (cornerMove != Vector2.Zero)
-                        line.Move(cornerMove, hitboxes);
+                    Vector2 firstMove, secondMove;
+                    if (Math.Abs(moveVector.X) > Math.Abs(moveVector.Y))
+                    {
+                        firstMove = new Vector2(moveVector.X, 0);
+                        secondMove = new Vector2(0, moveVector.Y);
+                    }
                     else
-                        line.Move(secondMove, hitboxes);
+                    {
+                        firstMove = new Vector2(0, moveVector.Y);
+                        secondMove = new Vector2(moveVector.X, 0);
+                    }
+
+                    var hitboxes = line.Hitboxes.Concat(walls);
+                    if (!line.Move(firstMove, hitboxes))
+                    {
+                        Vector2 cornerMove = line.MoveNearEdge(moveVector, walls);
+                        if (cornerMove != Vector2.Zero)
+                            line.Move(cornerMove, hitboxes);
+                        else
+                            line.Move(secondMove, hitboxes);
+                    }
                 }
             }
 
@@ -224,24 +337,27 @@ namespace TWP_Shared
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // TODO: Add your drawing code here
-
             spriteBatch.Begin();
-            foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
-                spriteBatch.Draw(t, hitbox, Color.Cyan);
+
+
+            if (line != null)
+                foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
+                    spriteBatch.Draw(t, hitbox, Color.Cyan);
+
+            if (lineMirror != null)
+                foreach (var hitbox in lineMirror.Hitboxes.Concat(new List<Rectangle> { lineMirror.Head }))
+                    spriteBatch.Draw(t, hitbox, Color.Yellow);
 
             foreach (var wall in walls)
-            {
                 spriteBatch.Draw(t, wall, Color.DarkSlateGray);
-            }
-            
-            //DrawLine(spriteBatch, //draw line
-            //    new Vector2(200, 200), //start of line
-            //    new Vector2(100, 50) //end of line
-            //);
-            spriteBatch.End();
 
+            foreach (var end in endPoints)
+                spriteBatch.Draw(t, end, Color.IndianRed);
+
+            foreach (var start in startPoints)
+                spriteBatch.Draw(t, start, Color.ForestGreen);
+
+            spriteBatch.End();
             base.Draw(gameTime);
         }
 
