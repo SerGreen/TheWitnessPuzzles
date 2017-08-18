@@ -34,13 +34,21 @@ namespace TWP_Shared
         SolutionLine lineMirror = null;
 
         List<Rectangle> startPoints = new List<Rectangle>();
-        List<Rectangle> endPoints = new List<Rectangle>();
-        Rectangle startPointActive, startPointActiveMirror;
+        List<EndPoint> endPoints = new List<EndPoint>();
 
         List<Rectangle> walls = new List<Rectangle>();
 
         Texture2D texPixel; //base for the line texture
         Texture2D texCircle = null;
+        Texture2D texCorner = null;
+        Texture2D texEnd = null;
+
+        RenderTarget2D backgroundTexture;
+        RenderTarget2D linesFadeTexture;
+        RenderTarget2D errorsBlinkTexture;
+
+        const int fadeAwayTimeMax = 400;
+        float fadeAwayTime = 0;
 
         Point puzzleDimensions;
         Rectangle puzzleConfig;
@@ -66,6 +74,7 @@ namespace TWP_Shared
             panel.nodes[20].SetState(NodeState.Exit);
             panel.nodes[9].SetState(NodeState.Exit);
             panel.nodes[24].SetState(NodeState.Exit);
+            panel.nodes[32].SetState(NodeState.Exit);
             panel.edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
             panel.edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
 
@@ -107,7 +116,7 @@ namespace TWP_Shared
             halfLineWidthPoint = new Point(lineWidth / 2);
             lineWidthPoint = new Point(lineWidth);
 
-            int endAppendixLength = blockWidth / 4;
+            int endAppendixLength = blockWidth / 3;
 
             int puzzleWidth = lineWidth * (puzzleDimensions.X + 1) + blockWidth * puzzleDimensions.X;
             int puzzleHeight = lineWidth * (puzzleDimensions.Y + 1) + blockWidth * puzzleDimensions.Y;
@@ -146,6 +155,13 @@ namespace TWP_Shared
                 startPoints.Add(new Rectangle(xMargin + start.X * nodePadding - lineWidth, yMargin + start.Y * nodePadding - lineWidth, lineWidth * 3, lineWidth * 3));
 
             #region === Inner methods region ===
+            // Returns a coef k: Total free space in pixels * k = puzzle size in pixels
+            float PuzzleSpaceRatio(float puzzleDimension) => (float) (-0.0005 * Math.Pow(puzzleDimension, 4) + 0.0082 * Math.Pow(puzzleDimension, 3) - 0.0439 * Math.Pow(puzzleDimension, 2) + 0.1011 * puzzleDimension + 0.6875);
+            // Returns a coef k: Puzzle size in pixels * k = block size in pixels
+            float BlockSizeRatio(float puzzleDimension) => (float) (0.8563 * Math.Pow(puzzleDimension, -1.134));
+            // Returns a coef k: Puzzle size in pixels * k = line width in pixels
+            float LineSizeRatio(float puzzleDimension) => -0.0064f * puzzleDimension + 0.0859f;
+
             IEnumerable<Point> GetStartNodes() => panel.nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
             IEnumerable<Point> GetEndNodesTop()
             {
@@ -202,7 +218,7 @@ namespace TWP_Shared
                     {
                         int x = xMargin + endPoint.X * (nodePadding);
                         walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), x - lastXPoint, endAppendixLength));
-                        endPoints.Add(new Rectangle(x, isBottom ? yStartPoint + endAppendixLength * 3 / 4 : (yMargin - endAppendixLength), lineWidth, endAppendixLength / 4));
+                        endPoints.Add(new EndPoint(new Rectangle(x, isBottom ? yStartPoint + endAppendixLength - lineWidth : (yMargin - endAppendixLength), lineWidth, lineWidth), isBottom ? Facing.Down : Facing.Up));
                         lastXPoint = x + lineWidth;
                     }
                     walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), width - lastXPoint, endAppendixLength));
@@ -217,7 +233,6 @@ namespace TWP_Shared
                     walls.Add(new Rectangle(xStartPoint, 0, xMargin, height));
                 else
                 {
-                    var aa = endAppendixLength;
                     walls.Add(new Rectangle(xStartPoint + (isRight ? endAppendixLength : 0), 0, xMargin - endAppendixLength, height));
 
                     int lastYPoint = 0;
@@ -225,7 +240,7 @@ namespace TWP_Shared
                     {
                         int y = yMargin + endPoint.Y * (nodePadding);
                         walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, y - lastYPoint));
-                        endPoints.Add(new Rectangle(isRight ? xStartPoint + endAppendixLength * 3 / 4 : xMargin - endAppendixLength, y, endAppendixLength / 4, lineWidth));
+                        endPoints.Add(new EndPoint(new Rectangle(isRight ? xStartPoint + endAppendixLength - lineWidth : xMargin - endAppendixLength, y, lineWidth, lineWidth), isRight ? Facing.Right : Facing.Left));
                         lastYPoint = y + lineWidth;
                     }
                     walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, height - lastYPoint));
@@ -233,13 +248,6 @@ namespace TWP_Shared
             }
             #endregion
         }
-
-        // Returns a coef k. Total free space in pixels * k = puzzle size in pixels
-        private float PuzzleSpaceRatio(float puzzleDimension) => (float) (-0.0005 * Math.Pow(puzzleDimension, 4) + 0.0082 * Math.Pow(puzzleDimension, 3) - 0.0439 * Math.Pow(puzzleDimension, 2) + 0.1011 * puzzleDimension + 0.6875);
-        // Returns a coef k. Puzzle size in pixels * k = block size in pixels
-        private float BlockSizeRatio(float puzzleDimension) => (float) (0.8563 * Math.Pow(puzzleDimension, -1.134));
-        // Returns a coef k. Puzzle size in pixels * k = line width in pixels
-        private float LineSizeRatio(float puzzleDimension) => -0.0064f * puzzleDimension + 0.0859f;
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
@@ -268,8 +276,32 @@ namespace TWP_Shared
             InitPanel();
 
             texCircle = Content.Load<Texture2D>("img/twp_circle");
+            texCorner = Content.Load<Texture2D>("img/twp_corner");
+            texEnd = Content.Load<Texture2D>("img/twp_ending");
             texPixel = new Texture2D(GraphicsDevice, 1, 1);
-            texPixel.SetData<Color>(new Color[] { Color.White });// fill the texture with white
+            texPixel.SetData<Color>(new Color[] { Color.White }); // fill the texture with white
+
+            backgroundTexture = new RenderTarget2D(
+                GraphicsDevice,
+                GraphicsDevice.PresentationParameters.BackBufferWidth,
+                GraphicsDevice.PresentationParameters.BackBufferHeight,
+                false,
+                GraphicsDevice.PresentationParameters.BackBufferFormat,
+                DepthFormat.Depth24);
+            linesFadeTexture = new RenderTarget2D(
+                GraphicsDevice,
+                GraphicsDevice.PresentationParameters.BackBufferWidth,
+                GraphicsDevice.PresentationParameters.BackBufferHeight,
+                false,
+                GraphicsDevice.PresentationParameters.BackBufferFormat,
+                DepthFormat.Depth24);
+            errorsBlinkTexture = new RenderTarget2D(
+                GraphicsDevice,
+                GraphicsDevice.PresentationParameters.BackBufferWidth,
+                GraphicsDevice.PresentationParameters.BackBufferHeight,
+                false,
+                GraphicsDevice.PresentationParameters.BackBufferFormat,
+                DepthFormat.Depth24);
         }
 
         /// <summary>
@@ -336,6 +368,9 @@ namespace TWP_Shared
                 }
             }
 
+            if (fadeAwayTime > 0)
+                fadeAwayTime--;
+
             base.Update(gameTime);
         }
 
@@ -372,6 +407,7 @@ namespace TWP_Shared
                     foreach (Rectangle startPoint in startPoints)
                         if (startPoint.Contains(tap.Value))
                         {
+                            fadeAwayTime = 0;
                             line = new SolutionLine(startPoint.Center - (new Point(lineWidth / 2)), lineWidth, startPoint);
                             if (panel is SymmetryPuzzle symPanel)
                                 if (symPanel.Y_Mirrored)
@@ -393,7 +429,9 @@ namespace TWP_Shared
                 else
                 {
                     // TODO code for submitting solution for error checking
+                    RenderLinesToTexture();
                     line = lineMirror = null;
+                    fadeAwayTime = fadeAwayTimeMax;
                 }
         }
 
@@ -427,30 +465,22 @@ namespace TWP_Shared
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(backgroundColor);
-            spriteBatch.Begin();
-            
-            
+            spriteBatch.Begin(SpriteSortMode.Deferred);
+
+
             foreach (var wall in walls)
                 spriteBatch.Draw(texPixel, wall, wallColor);
 
             DrawRoundedCorners();
 
-            foreach (var end in endPoints)
-            {
-                //Rectangle rect = new Rectangle(end.Location, new Point(lineWidth));
-                //spriteBatch.Draw(texPixel, rect, wallColor);
-                //spriteBatch.Draw(texCircle, rect, backgroundColor);
-                spriteBatch.Draw(texPixel, end, Color.IndianRed);
-            }
+            DrawEndPoints();
 
             foreach (var start in startPoints)
                 spriteBatch.Draw(texCircle, start, backgroundColor);
 
-            if (line != null)
-                line.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MainColor : Color.White);
-
-            if (lineMirror != null)
-                lineMirror.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MirrorColor: Color.White);
+            DrawLines(spriteBatch);
+            if (fadeAwayTime > 0 && linesFadeTexture != null)
+                spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, Color.Black * (fadeAwayTime / fadeAwayTimeMax));
 
             DrawBorders();
 
@@ -458,16 +488,25 @@ namespace TWP_Shared
             base.Draw(gameTime);
         }
 
+        private void DrawLines(SpriteBatch spriteBatch)
+        {
+            if (line != null)
+                line.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MainColor : Color.White);
+
+            if (lineMirror != null)
+                lineMirror.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MirrorColor : Color.White);
+        }
+
         private void DrawRoundedCorners()
         {
-            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location, halfLineWidthPoint), wallColor);
-            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location + new Point(puzzleConfig.Width - halfLineWidthPoint.X, 0), halfLineWidthPoint), wallColor);
-            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location + new Point(0, puzzleConfig.Height - halfLineWidthPoint.Y), halfLineWidthPoint), wallColor);
-            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location + puzzleConfig.Size - halfLineWidthPoint, halfLineWidthPoint), wallColor);
-            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location, lineWidthPoint), backgroundColor);
-            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location + new Point(puzzleConfig.Width - lineWidth, 0), lineWidthPoint), backgroundColor);
-            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location + new Point(0, puzzleConfig.Height - lineWidth), lineWidthPoint), backgroundColor);
-            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location + puzzleConfig.Size - lineWidthPoint, lineWidthPoint), backgroundColor);
+            if (panel.TopLeftNode.State != NodeState.Exit)
+                spriteBatch.Draw(texCorner, new Rectangle(puzzleConfig.Location, lineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.None, 0);
+            if (panel.TopRightNode.State != NodeState.Exit)
+                spriteBatch.Draw(texCorner, new Rectangle(puzzleConfig.Location + new Point(puzzleConfig.Width - lineWidth, 0), lineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.FlipHorizontally, 0);
+            if (panel.BottomLeftNode.State != NodeState.Exit)
+                spriteBatch.Draw(texCorner, new Rectangle(puzzleConfig.Location + new Point(0, puzzleConfig.Height - lineWidth), lineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.FlipVertically, 0);
+            if (panel.BottomRightNode.State != NodeState.Exit)
+                spriteBatch.Draw(texCorner, new Rectangle(puzzleConfig.Location + puzzleConfig.Size - lineWidthPoint, lineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.FlipHorizontally | SpriteEffects.FlipVertically, 0);
         }
         private void DrawBorders()
         {
@@ -476,6 +515,43 @@ namespace TWP_Shared
             spriteBatch.Draw(texPixel, new Rectangle(0, 0, borderWidth, GraphicsDevice.Viewport.Height), borderColor);
             spriteBatch.Draw(texPixel, new Rectangle(GraphicsDevice.Viewport.Width - borderWidth, 0, borderWidth, GraphicsDevice.Viewport.Height), borderColor);
             spriteBatch.Draw(texPixel, new Rectangle(0, GraphicsDevice.Viewport.Height - borderWidth, GraphicsDevice.Viewport.Width, borderWidth), borderColor);
+        }
+        private void DrawEndPoints()
+        {
+            foreach (var end in endPoints)
+            {
+                float angle;
+                switch (end.Facing)
+                {
+                    case Facing.Left:
+                        angle = 0; break;
+                    case Facing.Right:
+                        angle = MathHelper.ToRadians(180); break;
+                    case Facing.Up:
+                        angle = MathHelper.ToRadians(90); break;
+                    case Facing.Down:
+                        angle = MathHelper.ToRadians(270); break;
+                    default:
+                        angle = 0; break;
+                }
+                float scale = (float) end.Rectangle.Width / texEnd.Width;
+                spriteBatch.Draw(texEnd, end.Rectangle.Center.ToVector2(), null, wallColor, angle, texEnd.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
+            }
+        }
+
+        private void RenderLinesToTexture()
+        {
+            // Set the render target
+            GraphicsDevice.SetRenderTarget(linesFadeTexture);
+            GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
+
+            // Draw the lines
+            GraphicsDevice.Clear(Color.Transparent);
+            spriteBatch.Begin(SpriteSortMode.Texture);
+            DrawLines(spriteBatch);
+            spriteBatch.End();
+            // Drop the render target
+            GraphicsDevice.SetRenderTarget(null);
         }
     }
 }

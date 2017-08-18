@@ -20,6 +20,7 @@ namespace TWP_Shared
 
         public int LineWidth { get; }
         private Rectangle startCircle;
+        private float startCircleScaleAnimation = 0.1f;
 
         public SolutionLine(Point start, int lineWidth, Rectangle startCircleBounds)
         {
@@ -271,7 +272,11 @@ namespace TWP_Shared
 
             sb.Draw(texCircle, head, color ?? Color.White);
 
-            sb.Draw(texCircle, startCircle, color ?? Color.White);
+            //sb.Draw(texCircle, startCircle, color ?? Color.White);
+            float scale = (float) startCircle.Width / texCircle.Width;
+            sb.Draw(texCircle, startCircle.Center.ToVector2(), null, color ?? Color.White, 0, texCircle.Bounds.Center.ToVector2(), scale * startCircleScaleAnimation, SpriteEffects.None, 0);
+            if (startCircleScaleAnimation < 1.0f)
+                startCircleScaleAnimation += 0.15f;
         }
     }
 }

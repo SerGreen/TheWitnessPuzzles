@@ -24,6 +24,11 @@ namespace TheWitnessPuzzles
 
         public virtual IEnumerable<Node> BorderNodes => nodes.Where(x => x.Edges.Count < 4);
 
+        public Node TopLeftNode => nodes[0];
+        public Node TopRightNode => nodes[Width];
+        public Node BottomLeftNode => nodes[nodes.Length - Width - 1];
+        public Node BottomRightNode => nodes[nodes.Length - 1];
+
         public Puzzle(int width, int height)
         {
             Width = width;
