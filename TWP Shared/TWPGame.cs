@@ -42,6 +42,7 @@ namespace TWP_Shared
         Texture2D texCircle = null;
         Texture2D texCorner = null;
         Texture2D texEnd = null;
+        Texture2D texHexagon = null;
 
         RenderTarget2D backgroundTexture;
         RenderTarget2D linesFadeTexture;
@@ -77,6 +78,10 @@ namespace TWP_Shared
             panel.nodes[32].SetState(NodeState.Exit);
             panel.edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
             panel.edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
+
+            panel.nodes[14].SetState(NodeState.Marked);
+            panel.nodes[18].SetState(NodeState.Marked);
+            panel.edges.Find(x => x.Id == 2021)?.SetState(EdgeState.Marked);
 
             this.isMobile = isMobile;
             this.panel = panel;
@@ -196,12 +201,6 @@ namespace TWP_Shared
                         yield return new Point(panel.Width, j);
                 }
             }
-            Point NodeIdToPoint(int id)
-            {
-                int y = id / (panel.Width + 1);
-                int x = id - y * (panel.Width + 1);
-                return new Point(x, y);
-            }
             void CreateHorizontalWalls(bool isBottom)
             {
                 int yStartPoint = isBottom ? yMargin + puzzleHeight : 0;
@@ -278,6 +277,7 @@ namespace TWP_Shared
             texCircle = Content.Load<Texture2D>("img/twp_circle");
             texCorner = Content.Load<Texture2D>("img/twp_corner");
             texEnd = Content.Load<Texture2D>("img/twp_ending");
+            texHexagon = Content.Load<Texture2D>("img/twp_hexagon");
             texPixel = new Texture2D(GraphicsDevice, 1, 1);
             texPixel.SetData<Color>(new Color[] { Color.White }); // fill the texture with white
 
@@ -460,6 +460,13 @@ namespace TWP_Shared
             }
         }
 
+        private Point NodeIdToPoint(int nodeId)
+        {
+            int y = nodeId / (panel.Width + 1);
+            int x = nodeId - y * (panel.Width + 1);
+            return new Point(x, y);
+        }
+
         #region ===== RENDER REGION =====
         /// <summary>
         /// This is called when the game should draw itself.
@@ -562,11 +569,35 @@ namespace TWP_Shared
             foreach (var start in startPoints)
                 spriteBatch.Draw(texCircle, start, backgroundColor);
 
+            DrawMarkedNodes();
+            DrawMarkedEdges();
+
             DrawBorders();
 
             spriteBatch.End();
             // Drop the render target
             GraphicsDevice.SetRenderTarget(null);
+        }
+
+        private void DrawMarkedNodes()
+        {
+            var markedNodes = panel.nodes.Where(x => x.State == NodeState.Marked);
+            foreach (var node in markedNodes)
+            {
+                Point position = NodeIdToPoint(node.Id).Multiply(nodePadding) + puzzleConfig.Location;
+                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), Color.DarkRed);
+            }
+        }
+        private void DrawMarkedEdges()
+        {
+            var markedEdges = panel.edges.Where(x => x.State == EdgeState.Marked);
+            foreach (var edge in markedEdges)
+            {
+                Point pA = NodeIdToPoint(edge.NodeA.Id).Multiply(nodePadding);
+                Point pB = NodeIdToPoint(edge.NodeB.Id).Multiply(nodePadding);
+                Point position = (pA + pB).Divide(2) + puzzleConfig.Location;
+                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), Color.DarkRed);
+            }
         }
         #endregion
     }
