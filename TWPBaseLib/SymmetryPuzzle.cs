@@ -17,8 +17,8 @@ namespace TheWitnessPuzzles
         public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null) : base(width, height)
         {
             Y_Mirrored = y_mirrored;
-            MainColor = mainColor ?? Color.Black;
-            MirrorColor = mirrorColor ?? Color.Black;
+            MainColor = mainColor ?? Color.White;
+            MirrorColor = mirrorColor ?? Color.White;
         }
 
         public IEnumerable<Node> MainSolutionNodes => base.SolutionNodes;

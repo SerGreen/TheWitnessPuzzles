@@ -45,8 +45,12 @@ namespace TWP_Desktop
 
         protected override Point? GetTapPosition()
         {
-            if (prevLMB == ButtonState.Released && Mouse.GetState().LeftButton == ButtonState.Pressed)
-                return Mouse.GetState().Position;
+            if (prevLMB == ButtonState.Released && Mouse.GetState().LeftButton == ButtonState.Pressed && this.IsActive)
+            {
+                Point mousePoint = Mouse.GetState().Position;
+                if (GraphicsDevice.Viewport.Bounds.Contains(mousePoint))
+                    return mousePoint;
+            }
 
             return null;
         }

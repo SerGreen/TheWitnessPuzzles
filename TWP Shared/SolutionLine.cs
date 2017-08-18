@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,14 +19,16 @@ namespace TWP_Shared
         public Rectangle Head { get => head; }
 
         public int LineWidth { get; }
+        private Rectangle startCircle;
 
-        public SolutionLine(Point start, int lineWidth)
+        public SolutionLine(Point start, int lineWidth, Rectangle startCircleBounds)
         {
             points.Add(start);
             prevPos = currentPos = start;
             Hitboxes = hitboxes.AsReadOnly();
 
             LineWidth = lineWidth;
+            startCircle = startCircleBounds;
 
             head = new Rectangle(currentPos.X, currentPos.Y, LineWidth, LineWidth);
         }
@@ -199,7 +202,7 @@ namespace TWP_Shared
             }
         }
 
-        private Rectangle CreateHitbox(Point start, Point end)
+        private Rectangle CreateHitbox(Point start, Point end, int extraLength = 0)
         {
             int xLength = end.X - start.X;
             int yLength = end.Y - start.Y;
@@ -209,18 +212,18 @@ namespace TWP_Shared
             // If line is vertical
             if (xLength == 0)
             {
-                if (yLength > 0)
-                    hitbox = new Rectangle(start.X, start.Y, LineWidth, yLength);
-                else
-                    hitbox = new Rectangle(end.X, end.Y + LineWidth, LineWidth, -yLength);
+                if (yLength > 0) // Down
+                    hitbox = new Rectangle(start.X, start.Y, LineWidth, yLength + extraLength);
+                else             // Up
+                    hitbox = new Rectangle(end.X, end.Y + LineWidth - extraLength, LineWidth, -yLength + extraLength);
             }
             // If line is horizontal
             else
             {
-                if (xLength > 0)
-                    hitbox = new Rectangle(start.X, start.Y, xLength, LineWidth);
-                else
-                    hitbox = new Rectangle(end.X + LineWidth, end.Y, -xLength, LineWidth);
+                if (xLength > 0) // Right
+                    hitbox = new Rectangle(start.X, start.Y, xLength + extraLength, LineWidth);
+                else             // Left
+                    hitbox = new Rectangle(end.X + LineWidth - extraLength, end.Y, -xLength + extraLength, LineWidth);
             }
 
             return hitbox;
@@ -228,5 +231,47 @@ namespace TWP_Shared
 
         private bool CheckCollision(IEnumerable<Rectangle> collisionHitboxes) => collisionHitboxes.Any(x => head.Intersects(x));
         private bool ThreePointsOnSameLine(Point p1, Point p2, Point p3) => (p1.Y - p2.Y) * (p1.X - p3.X) == (p1.Y - p3.Y) * (p1.X - p2.X);
+
+        public void Draw(SpriteBatch sb, Texture2D texCircle, Texture2D texPixel, Color? color = null)
+        {
+            for (int i = 0; i < hitboxes.Count; i++)
+            {
+                Point location;
+                bool isHorizontal;
+                if (hitboxes[i].Height == LineWidth && hitboxes[i].Width == LineWidth)
+                    if (hitboxes[i].Y == head.Y)
+                        isHorizontal = true;
+                    else
+                        isHorizontal = false;
+                else if (hitboxes[i].Height == LineWidth)
+                    isHorizontal = true;
+                else
+                    isHorizontal = false;
+
+                if (isHorizontal)
+                {
+                    if (hitboxes[i].X < (i == hitboxes.Count - 1 ? head.X : hitboxes[i + 1].X))
+                        location = new Point(hitboxes[i].Location.X + LineWidth / 2, hitboxes[i].Location.Y);
+                    else
+                        location = new Point(hitboxes[i].Location.X - LineWidth / 2, hitboxes[i].Location.Y);
+
+                    sb.Draw(texCircle, new Rectangle(new Point(location.X - LineWidth / 2, location.Y), new Point(LineWidth)), color ?? Color.White);
+                    sb.Draw(texCircle, new Rectangle(new Point(location.X + hitboxes[i].Width - LineWidth / 2, location.Y), new Point(LineWidth)), color ?? Color.White);
+                }
+                else
+                {
+                    if (hitboxes[i].Y < (i == hitboxes.Count - 1 ? head.Y : hitboxes[i + 1].Y))
+                        location = new Point(hitboxes[i].Location.X, hitboxes[i].Location.Y + LineWidth / 2);
+                    else
+                        location = new Point(hitboxes[i].Location.X, hitboxes[i].Location.Y - LineWidth / 2);
+                }
+
+                sb.Draw(texPixel, new Rectangle(location, hitboxes[i].Size), color ?? Color.White);
+            }
+
+            sb.Draw(texCircle, head, color ?? Color.White);
+
+            sb.Draw(texCircle, startCircle, color ?? Color.White);
+        }
     }
 }

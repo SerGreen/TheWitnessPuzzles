@@ -25,28 +25,38 @@ namespace TWP_Shared
         protected int moveStep = 5;
         protected float sensitivity = 0.5f;
 
+        Color backgroundColor = Color.CornflowerBlue;
+        Color wallColor = Color.DarkSlateGray;
+        Color borderColor = Color.DimGray;
+
         Puzzle panel = null;
         SolutionLine line = null;
         SolutionLine lineMirror = null;
 
         List<Rectangle> startPoints = new List<Rectangle>();
         List<Rectangle> endPoints = new List<Rectangle>();
+        Rectangle startPointActive, startPointActiveMirror;
 
         List<Rectangle> walls = new List<Rectangle>();
 
-        Texture2D t; //base for the line texture
+        Texture2D texPixel; //base for the line texture
+        Texture2D texCircle = null;
 
         Point puzzleDimensions;
         Rectangle puzzleConfig;
         int lineWidth;
+        Point lineWidthPoint;
+        Point halfLineWidthPoint;
         int nodePadding;
         bool isMobile;
 
         public TWPGame(bool isMobile, Puzzle panel = null)
         {
-            panel = new SymmetryPuzzle(5, 5, true);
-            panel.nodes[21].SetState(NodeState.Start);
+            panel = new SymmetryPuzzle(5, 5, true, Color.Aqua, Color.Yellow);
+            panel.nodes[25].SetState(NodeState.Start);
+            panel.nodes[28].SetState(NodeState.Start);
             panel.nodes[7].SetState(NodeState.Start);
+            panel.nodes[10].SetState(NodeState.Start);
             panel.nodes[1].SetState(NodeState.Exit);
             panel.nodes[3].SetState(NodeState.Exit);
             panel.nodes[23].SetState(NodeState.Exit);
@@ -94,6 +104,8 @@ namespace TWP_Shared
             int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
             lineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
             int blockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
+            halfLineWidthPoint = new Point(lineWidth / 2);
+            lineWidthPoint = new Point(lineWidth);
 
             int endAppendixLength = blockWidth / 4;
 
@@ -255,8 +267,9 @@ namespace TWP_Shared
             // TODO: use this.Content to load your game content here
             InitPanel();
 
-            t = new Texture2D(GraphicsDevice, 1, 1);
-            t.SetData<Color>(new Color[] { Color.White });// fill the texture with white
+            texCircle = Content.Load<Texture2D>("img/twp_circle");
+            texPixel = new Texture2D(GraphicsDevice, 1, 1);
+            texPixel.SetData<Color>(new Color[] { Color.White });// fill the texture with white
         }
 
         /// <summary>
@@ -359,16 +372,19 @@ namespace TWP_Shared
                     foreach (Rectangle startPoint in startPoints)
                         if (startPoint.Contains(tap.Value))
                         {
-                            line = new SolutionLine(startPoint.Center - (new Point(lineWidth / 2)), lineWidth);
+                            line = new SolutionLine(startPoint.Center - (new Point(lineWidth / 2)), lineWidth, startPoint);
                             if (panel is SymmetryPuzzle symPanel)
                                 if (symPanel.Y_Mirrored)
                                 {
-                                    lineMirror = new SolutionLine(RectifyLinePosition(puzzleConfig.Location + puzzleConfig.Location + puzzleConfig.Size - startPoint.Center - (new Point(lineWidth / 2))), lineWidth);
+                                    Point mirPoint = puzzleConfig.Location + puzzleConfig.Location + puzzleConfig.Size - startPoint.Center - (new Point(lineWidth / 2));
+                                    Rectangle mirStartPoint = startPoints.Find(x => x.Contains(mirPoint));
+                                    lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), lineWidth, mirStartPoint);
                                 }
                                 else
                                 {
                                     Point mirPoint = new Point(puzzleConfig.Location.X * 2 + puzzleConfig.Size.X - startPoint.Center.X - lineWidth / 2, startPoint.Center.Y - lineWidth / 2);
-                                    lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), lineWidth);
+                                    Rectangle mirStartPoint = startPoints.Find(x => x.Contains(mirPoint));
+                                    lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), lineWidth, mirStartPoint);
                                 }
 
                             break;
@@ -410,53 +426,56 @@ namespace TWP_Shared
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(backgroundColor);
             spriteBatch.Begin();
             
             
             foreach (var wall in walls)
-                spriteBatch.Draw(t, wall, Color.DarkSlateGray);
+                spriteBatch.Draw(texPixel, wall, wallColor);
+
+            DrawRoundedCorners();
 
             foreach (var end in endPoints)
-                spriteBatch.Draw(t, end, Color.IndianRed);
+            {
+                //Rectangle rect = new Rectangle(end.Location, new Point(lineWidth));
+                //spriteBatch.Draw(texPixel, rect, wallColor);
+                //spriteBatch.Draw(texCircle, rect, backgroundColor);
+                spriteBatch.Draw(texPixel, end, Color.IndianRed);
+            }
 
             foreach (var start in startPoints)
-                spriteBatch.Draw(t, start, Color.ForestGreen);
+                spriteBatch.Draw(texCircle, start, backgroundColor);
 
             if (line != null)
-                foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
-                    spriteBatch.Draw(t, hitbox, Color.Cyan);
+                line.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MainColor : Color.White);
 
             if (lineMirror != null)
-                foreach (var hitbox in lineMirror.Hitboxes.Concat(new List<Rectangle> { lineMirror.Head }))
-                    spriteBatch.Draw(t, hitbox, Color.Yellow);
+                lineMirror.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MirrorColor: Color.White);
 
+            DrawBorders();
 
             spriteBatch.End();
             base.Draw(gameTime);
         }
 
-        private void DrawLine(SpriteBatch sb, Vector2 start, Vector2 end)
+        private void DrawRoundedCorners()
         {
-            Vector2 edge = end - start;
-            // calculate angle to rotate line
-            float angle =
-                (float) Math.Atan2(edge.Y, edge.X);
-
-
-            sb.Draw(t,
-                new Rectangle(// rectangle defines shape of line and position of start of line
-                    (int) start.X,
-                    (int) start.Y,
-                    (int) edge.Length(), //sb will strech the texture to fill this rectangle
-                    1), //width of line, change this to make thicker line
-                null,
-                Color.Red, //colour of line
-                angle,     //angle of line (calulated above)
-                new Vector2(0, 0), // point in line about which to rotate
-                SpriteEffects.None,
-                0);
-
+            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location, halfLineWidthPoint), wallColor);
+            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location + new Point(puzzleConfig.Width - halfLineWidthPoint.X, 0), halfLineWidthPoint), wallColor);
+            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location + new Point(0, puzzleConfig.Height - halfLineWidthPoint.Y), halfLineWidthPoint), wallColor);
+            spriteBatch.Draw(texPixel, new Rectangle(puzzleConfig.Location + puzzleConfig.Size - halfLineWidthPoint, halfLineWidthPoint), wallColor);
+            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location, lineWidthPoint), backgroundColor);
+            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location + new Point(puzzleConfig.Width - lineWidth, 0), lineWidthPoint), backgroundColor);
+            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location + new Point(0, puzzleConfig.Height - lineWidth), lineWidthPoint), backgroundColor);
+            spriteBatch.Draw(texCircle, new Rectangle(puzzleConfig.Location + puzzleConfig.Size - lineWidthPoint, lineWidthPoint), backgroundColor);
+        }
+        private void DrawBorders()
+        {
+            int borderWidth = (int) (Math.Min(GraphicsDevice.Viewport.Width, GraphicsDevice.Viewport.Height) * 0.03f);
+            spriteBatch.Draw(texPixel, new Rectangle(0, 0, GraphicsDevice.Viewport.Width, borderWidth), borderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(0, 0, borderWidth, GraphicsDevice.Viewport.Height), borderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(GraphicsDevice.Viewport.Width - borderWidth, 0, borderWidth, GraphicsDevice.Viewport.Height), borderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(0, GraphicsDevice.Viewport.Height - borderWidth, GraphicsDevice.Viewport.Width, borderWidth), borderColor);
         }
     }
 }
