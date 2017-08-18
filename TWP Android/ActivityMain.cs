@@ -19,7 +19,7 @@ namespace TWP_Android
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-            var g = new TWPGame(true);
+            var g = new TWPGameAndroid();
             SetContentView((View) g.Services.GetService(typeof(View)));
             g.Run();
         }

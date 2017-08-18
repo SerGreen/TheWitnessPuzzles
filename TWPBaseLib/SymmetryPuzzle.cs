@@ -10,13 +10,13 @@ namespace TheWitnessPuzzles
 {
     public class SymmetryPuzzle : Puzzle
     {
-        public bool Y_Mirror { get; }
+        public bool Y_Mirrored { get; }
         public Color MainColor { get; }
         public Color MirrorColor { get; }
 
         public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null) : base(width, height)
         {
-            Y_Mirror = y_mirrored;
+            Y_Mirrored = y_mirrored;
             MainColor = mainColor ?? Color.Black;
             MirrorColor = mirrorColor ?? Color.Black;
         }
@@ -26,7 +26,7 @@ namespace TheWitnessPuzzles
         {
             get
             {
-                if (Y_Mirror)
+                if (Y_Mirrored)
                 {
                     // Both axes mirroring
                     int maxNodeId = nodes.Max(x => x.Id);
@@ -76,7 +76,7 @@ namespace TheWitnessPuzzles
                     Block mirrorBlock;
 
                     // XY mirror
-                    if (Y_Mirror)
+                    if (Y_Mirrored)
                         mirrorBlockId = maxBlockId - block.Id;
                     // X mirror
                     else

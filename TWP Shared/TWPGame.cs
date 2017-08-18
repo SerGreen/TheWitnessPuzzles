@@ -22,8 +22,8 @@ namespace TWP_Shared
         const int fullscreenCooldownMax = 120;
         int fullscreenCooldown = 0;
 
-        int moveStep = 5;
-        float sensitivity = 0.5f;
+        protected int moveStep = 5;
+        protected float sensitivity = 0.5f;
 
         Puzzle panel = null;
         SolutionLine line = null;
@@ -37,18 +37,21 @@ namespace TWP_Shared
         Texture2D t; //base for the line texture
 
         Point puzzleDimensions;
+        Rectangle puzzleConfig;
         int lineWidth;
+        int nodePadding;
         bool isMobile;
 
         public TWPGame(bool isMobile, Puzzle panel = null)
         {
-            panel = new Puzzle(4, 4);
+            panel = new SymmetryPuzzle(5, 5, true);
             panel.nodes[21].SetState(NodeState.Start);
             panel.nodes[7].SetState(NodeState.Start);
             panel.nodes[1].SetState(NodeState.Exit);
             panel.nodes[3].SetState(NodeState.Exit);
             panel.nodes[23].SetState(NodeState.Exit);
             panel.nodes[22].SetState(NodeState.Exit);
+            panel.nodes[12].SetState(NodeState.Exit);
             panel.nodes[0].SetState(NodeState.Exit);
             panel.nodes[20].SetState(NodeState.Exit);
             panel.nodes[9].SetState(NodeState.Exit);
@@ -70,12 +73,16 @@ namespace TWP_Shared
             }
             else
                 IsMouseVisible = true;
-            
+
+            //graphics.PreferredBackBufferWidth = 320;
+            //graphics.PreferredBackBufferHeight = 400;
+
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
         }
 
         private void InitPanel()
         {
+            // Calculation of puzzle sizes for current screen size
             int width = GraphicsDevice.Viewport.Width;
             int height = GraphicsDevice.Viewport.Height;
 
@@ -83,7 +90,7 @@ namespace TWP_Shared
 
             int screenMinSize = Math.Min(width, height);
             int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
-            int lineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
+            lineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
             int blockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
 
             int endAppendixLength = blockWidth / 4;
@@ -94,21 +101,28 @@ namespace TWP_Shared
             int xMargin = (width - puzzleWidth) / 2;
             int yMargin = (height - puzzleHeight) / 2;
 
-            int nodePadding = lineWidth + blockWidth;
-            
-            DoHorizontalWalls(false);   // Top walls
-            DoHorizontalWalls(true);    // Bottom walls
-            DoVerticalWalls(false);     // Left walls
-            DoVerticalWalls(true);      // Right walls
-            
+            puzzleConfig = new Rectangle(xMargin, yMargin, puzzleWidth, puzzleHeight);
+
+            nodePadding = lineWidth + blockWidth;
+
+            // Creating walls hitboxes
+            CreateHorizontalWalls(false);   // Top walls
+            CreateHorizontalWalls(true);    // Bottom walls
+            CreateVerticalWalls(false);     // Left walls
+            CreateVerticalWalls(true);      // Right walls
+
             for (int i = 0; i < puzzleDimensions.X; i++)
                 for (int j = 0; j < puzzleDimensions.Y; j++)
                     walls.Add(new Rectangle(xMargin + lineWidth * (i + 1) + blockWidth * i, yMargin + lineWidth * (j + 1) + blockWidth * j, blockWidth, blockWidth));
 
-            foreach (Point start in GetStartNodes())
-                startPoints.Add(new Rectangle(xMargin + start.X * nodePadding, yMargin + start.Y * nodePadding, lineWidth, lineWidth));
+            // Creating walls for broken edges
+            // TODO
 
-            // Inner methods
+            // Creating hitboxes for starting nodes
+            foreach (Point start in GetStartNodes())
+                startPoints.Add(new Rectangle(xMargin + start.X * nodePadding - lineWidth, yMargin + start.Y * nodePadding - lineWidth, lineWidth * 3, lineWidth * 3));
+
+            #region === Inner methods region ===
             IEnumerable<Point> GetStartNodes() => panel.nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
             IEnumerable<Point> GetEndNodesTop()
             {
@@ -149,7 +163,7 @@ namespace TWP_Shared
                 int x = id - y * (panel.Width + 1);
                 return new Point(x, y);
             }
-            void DoHorizontalWalls(bool isBottom)
+            void CreateHorizontalWalls(bool isBottom)
             {
                 int yStartPoint = isBottom ? yMargin + puzzleHeight : 0;
                 var ends = isBottom ? GetEndNodesBot() : GetEndNodesTop();
@@ -171,7 +185,7 @@ namespace TWP_Shared
                     walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), width - lastXPoint, endAppendixLength));
                 }
             }
-            void DoVerticalWalls(bool isRight)
+            void CreateVerticalWalls(bool isRight)
             {
                 int xStartPoint = isRight ? xMargin + puzzleWidth : 0;
                 var ends = isRight ? GetEndNodesRight() : GetEndNodesLeft();
@@ -188,12 +202,13 @@ namespace TWP_Shared
                     {
                         int y = yMargin + endPoint.Y * (nodePadding);
                         walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, y - lastYPoint));
-                        endPoints.Add(new Rectangle(isRight ? xStartPoint + endAppendixLength * 3 /4 : xMargin - endAppendixLength, y, endAppendixLength / 4, lineWidth));
+                        endPoints.Add(new Rectangle(isRight ? xStartPoint + endAppendixLength * 3 / 4 : xMargin - endAppendixLength, y, endAppendixLength / 4, lineWidth));
                         lastYPoint = y + lineWidth;
                     }
                     walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, height - lastYPoint));
                 }
             }
+            #endregion
         }
 
         // Returns a coef k. Total free space in pixels * k = puzzle size in pixels
@@ -212,6 +227,7 @@ namespace TWP_Shared
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            
 
             base.Initialize();
         }
@@ -251,7 +267,10 @@ namespace TWP_Shared
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            FullscreenToggleCheck();
+            // Toggle fullscreen if Alt+Enter was pressed
+            HandleFullscreenToggle();
+            // Line activation and line completing logic
+            HandleScreenTap();
 
             if (line != null)
             {
@@ -270,14 +289,25 @@ namespace TWP_Shared
                         secondMove = new Vector2(moveVector.X, 0);
                     }
 
-                    var hitboxes = line.Hitboxes.Concat(walls);
-                    if (!line.Move(firstMove, hitboxes))
+                    IEnumerable<Rectangle> hitboxes;
+                    if (panel is SymmetryPuzzle)
+                        hitboxes = line.Hitboxes.Concat(lineMirror.Hitboxes).Concat(walls);
+                    else
+                        hitboxes = line.Hitboxes.Concat(walls);
+
+                    Func<Vector2, IEnumerable<Rectangle>, bool> moveFunc;
+                    if (panel is SymmetryPuzzle)
+                        moveFunc = MoveBothLines;
+                    else
+                        moveFunc = MoveOneLine;
+
+                    if (!moveFunc(firstMove, hitboxes))
                     {
-                        Vector2 cornerMove = line.MoveNearEdge(moveVector, walls);
+                        Vector2 cornerMove = line.GetMoveVectorNearCorner(moveVector, walls);
                         if (cornerMove != Vector2.Zero)
-                            line.Move(cornerMove, hitboxes);
+                            moveFunc(cornerMove, hitboxes);
                         else
-                            line.Move(secondMove, hitboxes);
+                            moveFunc(secondMove, hitboxes);
                     }
                 }
             }
@@ -285,39 +315,72 @@ namespace TWP_Shared
             base.Update(gameTime);
         }
 
-        protected virtual Vector2 GetMoveVector()
+        private bool MoveOneLine(Vector2 moveVector, IEnumerable<Rectangle> hitboxes) => line.Move(moveVector, hitboxes);
+        private bool MoveBothLines(Vector2 moveVector, IEnumerable<Rectangle> hitboxes)
         {
-            Vector2 result = Vector2.Zero;
-
-            if (!isMobile)
+            // Move first line
+            if (line.Move(moveVector, hitboxes.Append(lineMirror.Head)))
             {
-                if (Keyboard.GetState().IsKeyDown(Keys.Right))
-                    result.X += moveStep;
+                // If first line succeeded, then move second line
+                Vector2 mirroredVector;
+                if ((panel as SymmetryPuzzle).Y_Mirrored)
+                    mirroredVector = -moveVector;
+                else
+                    mirroredVector = new Vector2(-moveVector.X, moveVector.Y);
 
-                if (Keyboard.GetState().IsKeyDown(Keys.Left))
-                    result.X -= moveStep;
-
-                if (Keyboard.GetState().IsKeyDown(Keys.Down))
-                    result.Y += moveStep;
-
-                if (Keyboard.GetState().IsKeyDown(Keys.Up))
-                    result.Y -= moveStep;
-            }
-            else
-            {
-                GestureSample gesture;
-                while (TouchPanel.IsGestureAvailable)
+                if (!lineMirror.Move(mirroredVector, hitboxes.Append(line.Head)))
                 {
-                    gesture = TouchPanel.ReadGesture();
-                    if (gesture.GestureType == GestureType.FreeDrag)
-                        result += gesture.Delta * sensitivity;
+                    // If second line failed, move first line back
+                    line.Move(-moveVector, hitboxes);
+                    return false;
                 }
+                return true;
             }
-
-            return result;
+            else return false;
         }
 
-        private void FullscreenToggleCheck()
+        private void HandleScreenTap()
+        {
+            Point? tap = GetTapPosition();
+            if (tap.HasValue)
+                if (line == null)
+                {
+                    foreach (Rectangle startPoint in startPoints)
+                        if (startPoint.Contains(tap.Value))
+                        {
+                            line = new SolutionLine(startPoint.Center - (new Point(lineWidth / 2)), lineWidth);
+                            if (panel is SymmetryPuzzle symPanel)
+                                if (symPanel.Y_Mirrored)
+                                {
+                                    lineMirror = new SolutionLine(RectifyLinePosition(puzzleConfig.Location + puzzleConfig.Location + puzzleConfig.Size - startPoint.Center - (new Point(lineWidth / 2))), lineWidth);
+                                }
+                                else
+                                {
+                                    Point mirPoint = new Point(puzzleConfig.Location.X * 2 + puzzleConfig.Size.X - startPoint.Center.X - lineWidth / 2, startPoint.Center.Y - lineWidth / 2);
+                                    lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), lineWidth);
+                                }
+
+                            break;
+                        }
+                }
+                else
+                {
+                    // TODO code for submitting solution for error checking
+                    line = lineMirror = null;
+                }
+        }
+
+        private Point RectifyLinePosition(Point pos)
+        {
+            Point zeroedPos = pos - puzzleConfig.Location;
+            return new Point(zeroedPos.X / nodePadding * nodePadding, zeroedPos.Y / nodePadding * nodePadding) + puzzleConfig.Location;
+        }
+
+        protected virtual Point? GetTapPosition() => null;
+
+        protected virtual Vector2 GetMoveVector() => Vector2.Zero;
+
+        private void HandleFullscreenToggle()
         {
             if (fullscreenCooldown > 0)
                 fullscreenCooldown--;
@@ -338,7 +401,16 @@ namespace TWP_Shared
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
             spriteBatch.Begin();
+            
+            
+            foreach (var wall in walls)
+                spriteBatch.Draw(t, wall, Color.DarkSlateGray);
 
+            foreach (var end in endPoints)
+                spriteBatch.Draw(t, end, Color.IndianRed);
+
+            foreach (var start in startPoints)
+                spriteBatch.Draw(t, start, Color.ForestGreen);
 
             if (line != null)
                 foreach (var hitbox in line.Hitboxes.Concat(new List<Rectangle> { line.Head }))
@@ -348,14 +420,6 @@ namespace TWP_Shared
                 foreach (var hitbox in lineMirror.Hitboxes.Concat(new List<Rectangle> { lineMirror.Head }))
                     spriteBatch.Draw(t, hitbox, Color.Yellow);
 
-            foreach (var wall in walls)
-                spriteBatch.Draw(t, wall, Color.DarkSlateGray);
-
-            foreach (var end in endPoints)
-                spriteBatch.Draw(t, end, Color.IndianRed);
-
-            foreach (var start in startPoints)
-                spriteBatch.Draw(t, start, Color.ForestGreen);
 
             spriteBatch.End();
             base.Draw(gameTime);

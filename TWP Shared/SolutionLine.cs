@@ -82,7 +82,7 @@ namespace TWP_Shared
         /// <param name="moveVector">XY motion Vector</param>
         /// <param name="collisionHitboxes">Panel hitboxes, except the hitboxes of line itself</param>
         /// <returns>New motion vector that will move head towards corner</returns>
-        public Vector2 MoveNearEdge(Vector2 moveVector, IEnumerable<Rectangle> collisionHitboxes)
+        public Vector2 GetMoveVectorNearCorner(Vector2 moveVector, IEnumerable<Rectangle> collisionHitboxes)
         {
             // We put small rectangles at corners to check if edge is near the head
             // Size of small rectangles

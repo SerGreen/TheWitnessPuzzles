@@ -15,7 +15,7 @@ namespace TWP_Desktop
         [STAThread]
         static void Main()
         {
-            using (var game = new TWPGame(false))
+            using (var game = new TWPGameDesktop())
                 game.Run();
         }
     }
