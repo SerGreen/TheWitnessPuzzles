@@ -56,6 +56,8 @@ namespace TWP_Shared
             panel.nodes[20].SetState(NodeState.Exit);
             panel.nodes[9].SetState(NodeState.Exit);
             panel.nodes[24].SetState(NodeState.Exit);
+            panel.edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
+            panel.edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
 
             this.isMobile = isMobile;
             this.panel = panel;
@@ -100,6 +102,7 @@ namespace TWP_Shared
 
             int xMargin = (width - puzzleWidth) / 2;
             int yMargin = (height - puzzleHeight) / 2;
+            Point margins = new Point(xMargin, yMargin);
 
             puzzleConfig = new Rectangle(xMargin, yMargin, puzzleWidth, puzzleHeight);
 
@@ -116,7 +119,15 @@ namespace TWP_Shared
                     walls.Add(new Rectangle(xMargin + lineWidth * (i + 1) + blockWidth * i, yMargin + lineWidth * (j + 1) + blockWidth * j, blockWidth, blockWidth));
 
             // Creating walls for broken edges
-            // TODO
+            var brokenEdges = panel.edges.Where(x => x.State == EdgeState.Broken);
+            foreach (Edge edge in brokenEdges)
+            {
+                Point nodeA = NodeIdToPoint(edge.Id % 100).Multiply(nodePadding) + margins;
+                Point nodeB = NodeIdToPoint(edge.Id / 100).Multiply(nodePadding) + margins;
+                Point middle = (nodeA + nodeB).Divide(2);
+                walls.Add(new Rectangle(middle, new Point(lineWidth)));
+            }
+
 
             // Creating hitboxes for starting nodes
             foreach (Point start in GetStartNodes())
