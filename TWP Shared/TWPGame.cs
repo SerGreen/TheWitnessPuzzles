@@ -302,6 +302,8 @@ namespace TWP_Shared
                 false,
                 GraphicsDevice.PresentationParameters.BackBufferFormat,
                 DepthFormat.Depth24);
+
+            RenderBackgroundTexture();
         }
 
         /// <summary>
@@ -458,32 +460,22 @@ namespace TWP_Shared
             }
         }
 
+        #region ===== RENDER REGION =====
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(backgroundColor);
             spriteBatch.Begin(SpriteSortMode.Deferred);
 
-
-            foreach (var wall in walls)
-                spriteBatch.Draw(texPixel, wall, wallColor);
-
-            DrawRoundedCorners();
-
-            DrawEndPoints();
-
-            foreach (var start in startPoints)
-                spriteBatch.Draw(texCircle, start, backgroundColor);
+            spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
 
             DrawLines(spriteBatch);
+
             if (fadeAwayTime > 0 && linesFadeTexture != null)
                 spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, Color.Black * (fadeAwayTime / fadeAwayTimeMax));
-
-            DrawBorders();
-
+            
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -543,7 +535,6 @@ namespace TWP_Shared
         {
             // Set the render target
             GraphicsDevice.SetRenderTarget(linesFadeTexture);
-            GraphicsDevice.DepthStencilState = new DepthStencilState() { DepthBufferEnable = true };
 
             // Draw the lines
             GraphicsDevice.Clear(Color.Transparent);
@@ -553,5 +544,30 @@ namespace TWP_Shared
             // Drop the render target
             GraphicsDevice.SetRenderTarget(null);
         }
+
+        private void RenderBackgroundTexture()
+        {
+            // Set the render target
+            GraphicsDevice.SetRenderTarget(backgroundTexture);
+
+            GraphicsDevice.Clear(backgroundColor);
+            spriteBatch.Begin(SpriteSortMode.Deferred);
+
+            foreach (var wall in walls)
+                spriteBatch.Draw(texPixel, wall, wallColor);
+
+            DrawRoundedCorners();
+            DrawEndPoints();
+
+            foreach (var start in startPoints)
+                spriteBatch.Draw(texCircle, start, backgroundColor);
+
+            DrawBorders();
+
+            spriteBatch.End();
+            // Drop the render target
+            GraphicsDevice.SetRenderTarget(null);
+        }
+        #endregion
     }
 }
