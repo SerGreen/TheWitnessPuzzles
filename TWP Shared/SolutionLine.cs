@@ -46,7 +46,7 @@ namespace TWP_Shared
             int width = puzzleWidth + 1;
             int PointToNodeId(Point point) => point.Y * width + point.X;
 
-            List<int> solution = points.Select(x => PointToNodeId((x - puzzleZeroPoint).Divide(nodePadding))).ToList();
+            List<int> solution = points.Append(currentPos).Select(x => PointToNodeId((x - puzzleZeroPoint).Divide(nodePadding))).ToList();
             for (int i = solution.Count - 2; i >= 0; i--)
             {
                 int curID = solution[i];

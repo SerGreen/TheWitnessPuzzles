@@ -216,11 +216,11 @@ namespace TheWitnessPuzzles
                 // Solution line nodes
                 var nodes = GetSolutionNodesForSectorLinesCalculation().ToArray();
 
-                for (int i = 0; i < nodes.Length - 1; i++)
+                for (int i = 0; i < nodes.Length; i++)
                 {
                     // Current and next position of solution line parser
                     Node nodeNow = nodes[i];
-                    Node nodeNext = nodes[i + 1];
+                    Node nodeNext = i < nodes.Length - 1 ? nodes[i + 1] : nodes[i - 1];
 
                     if (!sectorStarted)
                     {

@@ -133,3 +133,10 @@
 /processorParam:TextureFormat=Color
 /build:img/twp_hexagon.png
 
+#begin font/fnt_debug.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=False
+/processorParam:TextureFormat=Compressed
+/build:font/fnt_debug.spritefont
+

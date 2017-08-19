@@ -12,7 +12,8 @@ namespace TWP_Desktop
 {
     public class TWPGameDesktop : TWPGame
     {
-        ButtonState prevLMB = ButtonState.Released;
+        KeyboardState prevKB;
+        MouseState prevMouse;
 
         public TWPGameDesktop(Puzzle panel = null) : base(false, panel)
         {
@@ -21,7 +22,8 @@ namespace TWP_Desktop
         protected override void Update(GameTime gameTime)
         {
             base.Update(gameTime);
-            prevLMB = Mouse.GetState().LeftButton;
+            prevMouse = Mouse.GetState();
+            prevKB = Keyboard.GetState();
         }
 
         protected override Vector2 GetMoveVector()
@@ -45,12 +47,15 @@ namespace TWP_Desktop
 
         protected override Point? GetTapPosition()
         {
-            if (prevLMB == ButtonState.Released && Mouse.GetState().LeftButton == ButtonState.Pressed && this.IsActive)
+            if (prevMouse.LeftButton == ButtonState.Released && Mouse.GetState().LeftButton == ButtonState.Pressed && this.IsActive)
             {
                 Point mousePoint = Mouse.GetState().Position;
                 if (GraphicsDevice.Viewport.Bounds.Contains(mousePoint))
                     return mousePoint;
             }
+
+            if (!prevKB.IsKeyDown(Keys.N) && Keyboard.GetState().IsKeyDown(Keys.N))
+                drawDebug = !drawDebug;
 
             return null;
         }

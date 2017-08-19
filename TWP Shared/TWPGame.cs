@@ -16,6 +16,8 @@ namespace TWP_Shared
     /// </summary>
     public class TWPGame : Game
     {
+        protected bool drawDebug = false;
+
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
 
@@ -39,6 +41,7 @@ namespace TWP_Shared
 
         List<Rectangle> walls = new List<Rectangle>();
 
+        SpriteFont fntDebug = null;
         Texture2D texPixel; //base for the line texture
         Texture2D texCircle = null;
         Texture2D texCorner = null;
@@ -290,6 +293,8 @@ namespace TWP_Shared
             // InitPanel is in LoadContent() because GraphicsDevice is not created yet in Initialize() on Android
             InitPanel();
 
+            fntDebug = Content.Load<SpriteFont>("font/fnt_debug");
+
             // One pixel sized white texture, used to draw rectangles of any size
             texPixel = new Texture2D(GraphicsDevice, 1, 1);
             texPixel.SetData(new Color[] { Color.White });
@@ -458,7 +463,7 @@ namespace TWP_Shared
                             if (errors.Count > 0)
                             {
                                 errorsPresent = true;
-                                RenderErrorsToTexture(errors);
+                                RenderErrorsToTexture(errors.Where(x => x.IsEliminated == false));
                             }
                             else
                                 panelState.SetSuccess();
@@ -507,7 +512,7 @@ namespace TWP_Shared
             int x = nodeId - y * (panel.Width + 1);
             return new Point(x, y);
         }
-
+        
         #region ===== RENDER REGION =====
         /// <summary>
         /// This is called when the game should draw itself.
@@ -525,6 +530,9 @@ namespace TWP_Shared
 
             if (panelState.State == PanelStates.Error && errorsBlinkTexture != null)
                 spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.Red * panelState.BlinkOpacity);
+
+            if (drawDebug)
+                DebugDrawNodeIDs();
 
             spriteBatch.End();
             base.Draw(gameTime);
@@ -709,6 +717,19 @@ namespace TWP_Shared
             {
                 int texIndex = (block.Rule as TriangleRule).Power - 1;
                 spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : Color.Gold);
+            }
+        }
+
+
+        private void DebugDrawNodeIDs()
+        {
+            for (int i = 0; i < panel.Width + 1; i++)
+            {
+                for (int j = 0; j < panel.Height + 1; j++)
+                {
+                    int id = j * (panel.Width + 1) + i;
+                    spriteBatch.DrawString(fntDebug, id.ToString(), (puzzleConfig.Location + new Point(i, j).Multiply(nodePadding)).ToVector2(), Color.Black);
+                }
             }
         }
         #endregion

@@ -23,33 +23,65 @@ namespace TWPVisualizer
 
         private void btnDisplay_Click(object sender, EventArgs e)
         {
-            panel = new SymmetryPuzzle(5, 4, true, XnaColor.Cyan, XnaColor.Yellow);
-            //panel = new Puzzle(5, 4);
-            panel.Nodes[24].SetState(NodeState.Start);
-            panel.Nodes[29].SetState(NodeState.Exit);
+            //panel = new SymmetryPuzzle(5, 4, true, XnaColor.Cyan, XnaColor.Yellow);
+            ////panel = new Puzzle(5, 4);
+            //panel.Nodes[24].SetState(NodeState.Start);
+            //panel.Nodes[29].SetState(NodeState.Exit);
+            //panel.Nodes[0].SetState(NodeState.Exit);
+            //panel.Nodes[5].SetState(NodeState.Start);
+            ////panel.nodes.Last().SetState(NodeState.Exit);
+
+            //panel.Nodes[20].SetStateAndColor(NodeState.Marked, XnaColor.Cyan);
+            //panel.Edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, XnaColor.Yellow);
+            //panel.Nodes[21].SetStateAndColor(NodeState.Marked, XnaColor.Yellow);
+            //panel.Nodes[7].SetState(NodeState.Marked);
+
+            ////panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
+            ////panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
+            ////panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
+
+            //panel.Grid[3, 0].Rule = new ColoredSquareRule(XnaColor.Magenta);
+            //panel.Grid[0, 1].Rule = new ColoredSquareRule(XnaColor.Black);
+            ////panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
+
+            ////panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
+            ////panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true } });
+
+            ////panel.grid[0, 3].Rule = new EliminationRule(panel.grid[0, 3]);
+
+            panel = new SymmetryPuzzle(5, 5, true, XnaColor.Aqua, XnaColor.Yellow);
+            panel.Nodes[25].SetState(NodeState.Start);
+            panel.Nodes[28].SetState(NodeState.Start);
+            panel.Nodes[7].SetState(NodeState.Start);
+            panel.Nodes[10].SetState(NodeState.Start);
+            panel.Nodes[1].SetState(NodeState.Exit);
+            panel.Nodes[3].SetState(NodeState.Exit);
+            panel.Nodes[23].SetState(NodeState.Exit);
+            panel.Nodes[22].SetState(NodeState.Exit);
+            panel.Nodes[12].SetState(NodeState.Exit);
             panel.Nodes[0].SetState(NodeState.Exit);
-            panel.Nodes[5].SetState(NodeState.Start);
-            //panel.nodes.Last().SetState(NodeState.Exit);
+            panel.Nodes[20].SetState(NodeState.Exit);
+            panel.Nodes[9].SetState(NodeState.Exit);
+            panel.Nodes[24].SetState(NodeState.Exit);
+            panel.Nodes[32].SetState(NodeState.Exit);
+            panel.Edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
+            panel.Edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
 
-            panel.Nodes[20].SetStateAndColor(NodeState.Marked, XnaColor.Cyan);
-            panel.Edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, XnaColor.Yellow);
-            panel.Nodes[21].SetStateAndColor(NodeState.Marked, XnaColor.Yellow);
-            panel.Nodes[7].SetState(NodeState.Marked);
+            panel.Nodes[14].SetStateAndColor(NodeState.Marked, XnaColor.Yellow);
+            panel.Nodes[18].SetState(NodeState.Marked);
+            panel.Edges.Find(x => x.Id == 2021)?.SetStateAndColor(EdgeState.Marked, XnaColor.Aqua);
 
-            //panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
-            //panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
-            //panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
-            
-            panel.Grid[3, 0].Rule = new ColoredSquareRule(XnaColor.Magenta);
-            panel.Grid[0, 1].Rule = new ColoredSquareRule(XnaColor.Black);
-            //panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
+            panel.Grid[2, 0].Rule = new ColoredSquareRule(XnaColor.Magenta);
+            panel.Grid[1, 1].Rule = new SunPairRule(XnaColor.Magenta);
+            panel.Grid[4, 4].Rule = new ColoredSquareRule(XnaColor.Lime);
+            panel.Grid[1, 4].Rule = new SunPairRule(XnaColor.Lime);
+            panel.Grid[2, 1].Rule = new TriangleRule(1);
+            panel.Grid[3, 2].Rule = new TriangleRule(2);
+            panel.Grid[3, 1].Rule = new TriangleRule(3);
+            panel.Grid[4, 2].Rule = new EliminationRule();
+            panel.Grid[2, 3].Rule = new EliminationRule(XnaColor.Magenta);
 
-            //panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
-            //panel.grid[2, 2].Rule = new TetrisRule(panel.grid[2, 2], new bool[,] { { true } });
-
-            //panel.grid[0, 3].Rule = new EliminationRule(panel.grid[0, 3]);
-
-            panel.Solution = new List<int>();
+            panel.SetSolution(new List<int>());
 
 
 
@@ -65,7 +97,7 @@ namespace TWPVisualizer
         private void btnSolve_Click(object sender, EventArgs e)
         {
             List<int> solution = Array.ConvertAll(txtSolution.Text.Split(" ".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), int.Parse).ToList();
-            panel.Solution = solution;
+            panel.SetSolution(solution);
 
             Bitmap bmp = new Bitmap(picCanvas.Width, picCanvas.Height);
             using (Graphics g = Graphics.FromImage(bmp))
