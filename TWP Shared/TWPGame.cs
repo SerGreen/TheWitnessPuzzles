@@ -32,6 +32,7 @@ namespace TWP_Shared
         Puzzle panel = null;
         SolutionLine line = null;
         SolutionLine lineMirror = null;
+        PanelState panelState = new PanelState();
 
         List<Rectangle> startPoints = new List<Rectangle>();
         List<EndPoint> endPoints = new List<EndPoint>();
@@ -47,9 +48,6 @@ namespace TWP_Shared
         RenderTarget2D backgroundTexture;
         RenderTarget2D linesFadeTexture;
         RenderTarget2D errorsBlinkTexture;
-
-        const int fadeAwayTimeMax = 400;
-        float fadeAwayTime = 0;
 
         Point puzzleDimensions;
         Rectangle puzzleConfig;
@@ -330,9 +328,18 @@ namespace TWP_Shared
             // Line activation and line completing logic
             HandleScreenTap();
 
+            Vector2 moveVector = GetMoveVector();
+            MoveLine(moveVector);
+
+            panelState.Update();
+
+            base.Update(gameTime);
+        }
+
+        private void MoveLine(Vector2 moveVector)
+        {
             if (line != null)
             {
-                Vector2 moveVector = GetMoveVector();
                 if (moveVector != Vector2.Zero)
                 {
                     Vector2 firstMove, secondMove;
@@ -370,34 +377,29 @@ namespace TWP_Shared
                 }
             }
 
-            if (fadeAwayTime > 0)
-                fadeAwayTime--;
-
-            base.Update(gameTime);
-        }
-
-        private bool MoveOneLine(Vector2 moveVector, IEnumerable<Rectangle> hitboxes) => line.Move(moveVector, hitboxes);
-        private bool MoveBothLines(Vector2 moveVector, IEnumerable<Rectangle> hitboxes)
-        {
-            // Move first line
-            if (line.Move(moveVector, hitboxes.Append(lineMirror.Head)))
+            bool MoveOneLine(Vector2 moveVect, IEnumerable<Rectangle> hitboxes) => line.Move(moveVect, hitboxes);
+            bool MoveBothLines(Vector2 moveVect, IEnumerable<Rectangle> hitboxes)
             {
-                // If first line succeeded, then move second line
-                Vector2 mirroredVector;
-                if ((panel as SymmetryPuzzle).Y_Mirrored)
-                    mirroredVector = -moveVector;
-                else
-                    mirroredVector = new Vector2(-moveVector.X, moveVector.Y);
-
-                if (!lineMirror.Move(mirroredVector, hitboxes.Append(line.Head)))
+                // Move first line
+                if (line.Move(moveVect, hitboxes.Append(lineMirror.Head)))
                 {
-                    // If second line failed, move first line back
-                    line.Move(-moveVector, hitboxes);
-                    return false;
+                    // If first line succeeded, then move second line
+                    Vector2 mirroredVector;
+                    if ((panel as SymmetryPuzzle).Y_Mirrored)
+                        mirroredVector = -moveVect;
+                    else
+                        mirroredVector = new Vector2(-moveVect.X, moveVect.Y);
+
+                    if (!lineMirror.Move(mirroredVector, hitboxes.Append(line.Head)))
+                    {
+                        // If second line failed, move first line back
+                        line.Move(-moveVect, hitboxes);
+                        return false;
+                    }
+                    return true;
                 }
-                return true;
+                else return false;
             }
-            else return false;
         }
 
         private void HandleScreenTap()
@@ -409,7 +411,7 @@ namespace TWP_Shared
                     foreach (Rectangle startPoint in startPoints)
                         if (startPoint.Contains(tap.Value))
                         {
-                            fadeAwayTime = 0;
+                            panelState.ResetToNeutral();
                             line = new SolutionLine(startPoint.Center - (new Point(lineWidth / 2)), lineWidth, startPoint);
                             if (panel is SymmetryPuzzle symPanel)
                                 if (symPanel.Y_Mirrored)
@@ -431,9 +433,24 @@ namespace TWP_Shared
                 else
                 {
                     // TODO code for submitting solution for error checking
+
+                    bool error = false;
+                    foreach (var endPoint in endPoints)
+                        if (endPoint.IntercetionPercent(line.Head) > 0.4f)
+                        {
+                            Point headOffset = endPoint.Rectangle.Location - line.Head.Location;
+                            MoveLine(headOffset.ToVector2());
+
+                            error = true;
+                            panelState.InvokeFadeOut(true);
+                            break;
+                        }
+
+                    if (!error)
+                        panelState.InvokeFadeOut(false);
+                    
                     RenderLinesToTexture();
                     line = lineMirror = null;
-                    fadeAwayTime = fadeAwayTimeMax;
                 }
         }
 
@@ -444,7 +461,6 @@ namespace TWP_Shared
         }
 
         protected virtual Point? GetTapPosition() => null;
-
         protected virtual Vector2 GetMoveVector() => Vector2.Zero;
 
         private void HandleFullscreenToggle()
@@ -480,8 +496,8 @@ namespace TWP_Shared
 
             DrawLines(spriteBatch);
 
-            if (fadeAwayTime > 0 && linesFadeTexture != null)
-                spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, Color.Black * (fadeAwayTime / fadeAwayTimeMax));
+            if (panelState.IsFading && linesFadeTexture != null)
+                spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State == PanelStates.Error ? Color.Black : Color.White) * panelState.FadeOpacity);
             
             spriteBatch.End();
             base.Draw(gameTime);
@@ -522,16 +538,11 @@ namespace TWP_Shared
                 float angle;
                 switch (end.Facing)
                 {
-                    case Facing.Left:
-                        angle = 0; break;
-                    case Facing.Right:
-                        angle = MathHelper.ToRadians(180); break;
-                    case Facing.Up:
-                        angle = MathHelper.ToRadians(90); break;
-                    case Facing.Down:
-                        angle = MathHelper.ToRadians(270); break;
-                    default:
-                        angle = 0; break;
+                    case Facing.Left:   angle = 0; break;
+                    case Facing.Right:  angle = MathHelper.ToRadians(180); break;
+                    case Facing.Up:     angle = MathHelper.ToRadians(90); break;
+                    case Facing.Down:   angle = MathHelper.ToRadians(270); break;
+                    default:            angle = 0; break;
                 }
                 float scale = (float) end.Rectangle.Width / texEnd.Width;
                 spriteBatch.Draw(texEnd, end.Rectangle.Center.ToVector2(), null, wallColor, angle, texEnd.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);

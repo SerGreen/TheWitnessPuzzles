@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)EndPoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TWPGame.cs" />
   </ItemGroup>
