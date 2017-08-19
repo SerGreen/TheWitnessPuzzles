@@ -273,7 +273,7 @@ namespace TWP_Shared
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
-            
+
 
             base.Initialize();
         }
@@ -286,7 +286,7 @@ namespace TWP_Shared
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            
+
             // InitPanel is in LoadContent() because GraphicsDevice is not created yet in Initialize() on Android
             InitPanel();
 
@@ -443,23 +443,39 @@ namespace TWP_Shared
                 {
                     // TODO code for submitting solution for error checking
 
-                    bool error = false;
+                    bool errorsPresent = false;
                     foreach (var endPoint in endPoints)
                         if (endPoint.IntercetionPercent(line.Head) > 0.4f)
                         {
                             Point headOffset = endPoint.Rectangle.Location - line.Head.Location;
                             MoveLine(headOffset.ToVector2());
 
-                            error = true;
-                            panelState.InvokeFadeOut(true);
+                            List<Error> errors = null;
+                            List<int> solution = line.GetSolution(panel.Width, puzzleConfig.Location, nodePadding);
+                            if (panel.SetSolution(solution))
+                                errors = panel.CheckForErrors();
+
+                            if (errors.Count > 0)
+                            {
+                                errorsPresent = true;
+                                RenderErrorsToTexture(errors);
+                            }
+                            else
+                                panelState.SetSuccess();
+
                             break;
                         }
 
-                    if (!error)
-                        panelState.InvokeFadeOut(false);
-                    
-                    RenderLinesToTexture();
-                    line = lineMirror = null;
+                    if (panelState.State == PanelStates.Solved)
+                    {
+                        // TODO play sound and do win logic
+                    }
+                    else
+                    {
+                        panelState.InvokeFadeOut(errorsPresent);
+                        RenderLinesToTexture();
+                        line = lineMirror = null;
+                    }
                 }
         }
 
@@ -502,12 +518,14 @@ namespace TWP_Shared
             spriteBatch.Begin(SpriteSortMode.Deferred);
 
             spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
-
             DrawLines(spriteBatch);
-
+                        
             if (panelState.IsFading && linesFadeTexture != null)
                 spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State == PanelStates.Error ? Color.Black : Color.White) * panelState.FadeOpacity);
-            
+
+            if (panelState.State == PanelStates.Error && errorsBlinkTexture != null)
+                spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.Red * panelState.BlinkOpacity);
+
             spriteBatch.End();
             base.Draw(gameTime);
         }
@@ -547,11 +565,11 @@ namespace TWP_Shared
                 float angle;
                 switch (end.Facing)
                 {
-                    case Facing.Left:   angle = 0; break;
-                    case Facing.Right:  angle = MathHelper.ToRadians(180); break;
-                    case Facing.Up:     angle = MathHelper.ToRadians(90); break;
-                    case Facing.Down:   angle = MathHelper.ToRadians(270); break;
-                    default:            angle = 0; break;
+                    case Facing.Left: angle = 0; break;
+                    case Facing.Right: angle = MathHelper.ToRadians(180); break;
+                    case Facing.Up: angle = MathHelper.ToRadians(90); break;
+                    case Facing.Down: angle = MathHelper.ToRadians(270); break;
+                    default: angle = 0; break;
                 }
                 float scale = (float) end.Rectangle.Width / texEndPoint.Width;
                 spriteBatch.Draw(texEndPoint, end.Rectangle.Center.ToVector2(), null, wallColor, angle, texEndPoint.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
@@ -589,12 +607,7 @@ namespace TWP_Shared
             foreach (var start in startPoints)
                 spriteBatch.Draw(texCircle, start, backgroundColor);
 
-            DrawHexagonDots();
-            DrawColoredSquares();
-            DrawSuns();
-            DrawEliminations();
-            DrawTriangles();
-
+            DrawAllRules();
             DrawBorders();
 
             spriteBatch.End();
@@ -602,73 +615,100 @@ namespace TWP_Shared
             GraphicsDevice.SetRenderTarget(null);
         }
 
-        private void DrawHexagonDots()
+        private void DrawAllRules()
         {
-            DrawMarkedNodes();
-            DrawMarkedEdges();
+            var allBlocks = panel.Blocks;
 
-            // === Methods ===
-            void DrawMarkedNodes()
+            DrawMarkedNodes(panel.Nodes, false);
+            DrawMarkedEdges(panel.Edges, false);
+            DrawColoredSquares(allBlocks, false);
+            DrawSuns(allBlocks, false);
+            DrawEliminations(allBlocks, false);
+            DrawTriangles(allBlocks, false);
+        }
+
+        private void RenderErrorsToTexture(IEnumerable<Error> errors)
+        {
+            var nodes = errors.Select(x => x.Source).OfType<Node>();
+            var edges = errors.Select(x => x.Source).OfType<Edge>();
+            var blocks = errors.Select(x => x.Source).OfType<Block>();
+
+            // Set the render target
+            GraphicsDevice.SetRenderTarget(errorsBlinkTexture);
+
+            // Draw rules onto the texture
+            GraphicsDevice.Clear(Color.Transparent);
+            spriteBatch.Begin(SpriteSortMode.Texture);
+
+            DrawMarkedNodes(nodes, true);
+            DrawMarkedEdges(edges, true);
+            DrawColoredSquares(blocks, true);
+            DrawSuns(blocks, true);
+            DrawEliminations(blocks, true);
+            DrawTriangles(blocks, true);
+
+            spriteBatch.End();
+            // Drop the render target
+            GraphicsDevice.SetRenderTarget(null);
+        }
+
+        private void DrawMarkedNodes(IEnumerable<Node> allNodes, bool isError)
+        {
+            var markedNodes = allNodes.Where(x => x.State == NodeState.Marked);
+            foreach (var node in markedNodes)
             {
-                var markedNodes = panel.Nodes.Where(x => x.State == NodeState.Marked);
-                foreach (var node in markedNodes)
-                {
-                    Point position = NodeIdToPoint(node.Id).Multiply(nodePadding) + puzzleConfig.Location;
-                    spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), node.Color ?? Color.Black);
-                }
-            }
-            void DrawMarkedEdges()
-            {
-                var markedEdges = panel.Edges.Where(x => x.State == EdgeState.Marked);
-                foreach (var edge in markedEdges)
-                {
-                    Point pA = NodeIdToPoint(edge.NodeA.Id).Multiply(nodePadding);
-                    Point pB = NodeIdToPoint(edge.NodeB.Id).Multiply(nodePadding);
-                    Point position = (pA + pB).Divide(2) + puzzleConfig.Location;
-                    spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), edge.Color ?? Color.Black);
-                }
+                Point position = NodeIdToPoint(node.Id).Multiply(nodePadding) + puzzleConfig.Location;
+                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), isError ? Color.Red : node.Color ?? Color.Black);
             }
         }
-                
+        private void DrawMarkedEdges(IEnumerable<Edge> allEdges, bool isError)
+        {
+            var markedEdges = allEdges.Where(x => x.State == EdgeState.Marked);
+            foreach (var edge in markedEdges)
+            {
+                Point pA = NodeIdToPoint(edge.NodeA.Id).Multiply(nodePadding);
+                Point pB = NodeIdToPoint(edge.NodeB.Id).Multiply(nodePadding);
+                Point position = (pA + pB).Divide(2) + puzzleConfig.Location;
+                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), isError ? Color.Red : edge.Color ?? Color.Black);
+            }
+        }
+
         private Point BlockPositionToOnScreenLocation(int x, int y) => new Point(puzzleConfig.X + x * nodePadding + lineWidth, puzzleConfig.Y + y * nodePadding + lineWidth);
 
-        private void DrawColoredSquares()
+        private void DrawColoredSquares(IEnumerable<Block> allBlocks, bool isError)
         {
-            var squareRuleBlocks = panel.Blocks.Where(x => x.Rule is ColoredSquareRule);
+            var squareRuleBlocks = allBlocks.Where(x => x.Rule is ColoredSquareRule);
             foreach (var block in squareRuleBlocks)
             {
                 Color color = (block.Rule as ColoredSquareRule).Color.Value;
-                spriteBatch.Draw(texSquare, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), color);
+                spriteBatch.Draw(texSquare, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : color);
             }
         }
-
-        private void DrawSuns()
+        private void DrawSuns(IEnumerable<Block> allBlocks, bool isError)
         {
-            var sunRuleBlocks = panel.Blocks.Where(x => x.Rule is SunPairRule);
+            var sunRuleBlocks = allBlocks.Where(x => x.Rule is SunPairRule);
             foreach (var block in sunRuleBlocks)
             {
                 Color color = (block.Rule as SunPairRule).Color.Value;
-                spriteBatch.Draw(texSun, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), color);
+                spriteBatch.Draw(texSun, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : color);
             }
         }
-
-        private void DrawEliminations()
+        private void DrawEliminations(IEnumerable<Block> allBlocks, bool isError)
         {
-            var eliminationRuleBlocks = panel.Blocks.Where(x => x.Rule is EliminationRule);
+            var eliminationRuleBlocks = allBlocks.Where(x => x.Rule is EliminationRule);
             foreach (var block in eliminationRuleBlocks)
             {
                 Color color = (block.Rule as EliminationRule).Color ?? Color.White;
-                spriteBatch.Draw(texElimination, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), color);
+                spriteBatch.Draw(texElimination, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : color);
             }
         }
-
-        private void DrawTriangles()
+        private void DrawTriangles(IEnumerable<Block> allBlocks, bool isError)
         {
-            var triangleRuleBlocks = panel.Blocks.Where(x => x.Rule is TriangleRule);
+            var triangleRuleBlocks = allBlocks.Where(x => x.Rule is TriangleRule);
             foreach (var block in triangleRuleBlocks)
             {
                 int texIndex = (block.Rule as TriangleRule).Power - 1;
-                spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), Color.Gold);
+                spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : Color.Gold);
             }
         }
         #endregion

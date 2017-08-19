@@ -8,15 +8,27 @@ namespace TheWitnessPuzzles
 {
     public class Puzzle
     {
+        /// <summary>
+        /// Panel width in blocks (normally 2 to 7)
+        /// </summary>
         public int Width { get; }
+        /// <summary>
+        /// Panel height in blocks (normally 2 to 7)
+        /// </summary>
         public int Height { get; }
 
+        /// <summary>
+        /// Panel blocks in two-dimensional array
+        /// </summary>
         public Block[,] Grid { get; private set; }
         public Node[] Nodes { get; private set; }
         public List<Edge> Edges { get; private set; }
         // Auxilary array for sector splitting. It contains only vertical edges in a grid fashion
         protected Edge[,] edgesAlignment;
 
+        /// <summary>
+        /// Panel blocks in the form of enumeration
+        /// </summary>
         public IEnumerable<Block> Blocks
         {
             get
@@ -27,17 +39,44 @@ namespace TheWitnessPuzzles
             }
         }
 
-        public List<int> Solution { get; set; } = null;
+        /// <summary>
+        /// Sequence of node IDs that represents solution to the puzzle
+        /// Main line only
+        /// </summary>
+        public List<int> Solution { get; private set; } = null;
+        /// <summary>
+        /// All nodes, that are in solution (including mirror line)
+        /// </summary>
         public virtual IEnumerable<Node> SolutionNodes => Solution.Select(x => Nodes.First(z => z.Id == x));
+        /// <summary>
+        /// All edges, that are in solution (including mirror line)
+        /// </summary>
         // Zip creates sequence from the pair of elements of original and second collection; Skip(1) forms the second collection
         public virtual IEnumerable<Edge> SolutionEdges => Solution.Zip(Solution.Skip(1), (idA, idB) => Edges.First(x => (idA, idB) == x));
 
+        /// <summary>
+        /// Nodes, that are located on top, bottom, left or right border of puzzle
+        /// </summary>
         public virtual IEnumerable<Node> BorderNodes => Nodes.Where(x => x.Edges.Count < 4);
 
         public Node TopLeftNode => Nodes[0];
         public Node TopRightNode => Nodes[Width];
         public Node BottomLeftNode => Nodes[Nodes.Length - Width - 1];
         public Node BottomRightNode => Nodes[Nodes.Length - 1];
+
+        /// <summary>
+        /// Checks that proposed solution contains only existing node IDs and sets new Solution
+        /// </summary>
+        /// <param name="newSolution">List of node IDs that form a solution line</param>
+        /// <returns>True if new solution is set or False if proposed solution contains invalid nodes</returns>
+        public bool SetSolution(List<int> newSolution)
+        {
+            if (newSolution.Any(x => x < 0 || x >= Nodes.Length))
+                return false;
+
+            Solution = newSolution;
+            return true;
+        }
 
         public Puzzle(int width, int height)
         {
@@ -76,12 +115,19 @@ namespace TheWitnessPuzzles
                 }
         }
 
+        /// <summary>
+        /// Invokes sector splitting and evaluets errors in the puzzle with current solution
+        /// </summary>
+        /// <returns>List with found errors or empty list if Solution is null</returns>
         public List<Error> CheckForErrors()
         {
             List<Error> errors = new List<Error>();
-            
-            foreach (Sector sector in GetSectors())
-                errors.AddRange(sector.CheckSectorErrors());
+
+            if (Solution != null)
+            {
+                foreach (Sector sector in GetSectors())
+                    errors.AddRange(sector.CheckSectorErrors());
+            }
 
             return errors;
         }
@@ -133,6 +179,11 @@ namespace TheWitnessPuzzles
             return sectors;
         }
 
+        /// <summary>
+        /// Forms last sector from unused blocks in the end of sector splitting
+        /// </summary>
+        /// <param name="sectors">List of found sectors</param>
+        /// <param name="usedBlocks">Array with flags of the same size as Grid</param>
         protected virtual void DistributeUnusedBlocksToSectors(List<Sector> sectors, bool[,] usedBlocks)
         {
             List<Block> sectorBlocks = new List<Block>();

@@ -34,6 +34,56 @@ namespace TWP_Shared
             head = new Rectangle(currentPos.X, currentPos.Y, LineWidth, LineWidth);
         }
 
+        /// <summary>
+        /// Transforms SolutionLine path to sequence of node IDs
+        /// </summary>
+        /// <param name="puzzleWidth">Puzzle width in blocks</param>
+        /// <param name="puzzleZeroPoint">Top left corner of puzzle in pixels</param>
+        /// <param name="nodePadding">Distance between two adjacent nodes in pixels</param>
+        /// <returns>List of node IDs through which solution line passes</returns>
+        public List<int> GetSolution(int puzzleWidth, Point puzzleZeroPoint, int nodePadding)
+        {
+            int width = puzzleWidth + 1;
+            int PointToNodeId(Point point) => point.Y * width + point.X;
+
+            List<int> solution = points.Select(x => PointToNodeId((x - puzzleZeroPoint).Divide(nodePadding))).ToList();
+            for (int i = solution.Count - 2; i >= 0; i--)
+            {
+                int curID = solution[i];
+                int nextID = solution[i + 1];
+
+                // If two neighbour nodes are not adjacent (ID difference should be either 1 or (panel.width + 1)
+                // Then fill the list with missing nodes
+                int diff = nextID - curID;
+                int diffAbs = Math.Abs(diff);
+                if (diffAbs != width && diffAbs != 1)
+                {
+                    // Node ID that should be after curID
+                    int desiredID;
+                    int step;
+
+                    // Vertical line
+                    if (diffAbs > width)
+                    {
+                        step = diff > 0 ? width : -width;
+                        desiredID = curID + step;
+                    }
+                    // Horizontal line
+                    else
+                    {
+                        step = diff > 0 ? 1 : -1;
+                        desiredID = curID + step;
+                    }
+
+                    // Fill the gap
+                    while (solution[i + 1] != desiredID)
+                        solution.Insert(i + 1, solution[i + 1] - step);
+                }
+            }
+
+            return solution;
+        }
+
         public bool Move(Vector2 moveVector, IEnumerable<Rectangle> collisionHitboxes)
         {
             bool moveSuccessful = true;
