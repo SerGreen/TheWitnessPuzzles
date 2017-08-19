@@ -41,7 +41,7 @@ namespace TWP_Android
             Vector2 result = Vector2.Zero;
 
             foreach (var gesture in gestures.Where(x => x.GestureType == GestureType.FreeDrag))
-                result += gesture.Delta * sensitivity;
+                result += gesture.Delta * moveSensitivity;
 
             return result;
         }

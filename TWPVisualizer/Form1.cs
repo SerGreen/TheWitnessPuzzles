@@ -25,23 +25,23 @@ namespace TWPVisualizer
         {
             panel = new SymmetryPuzzle(5, 4, true, XnaColor.Cyan, XnaColor.Yellow);
             //panel = new Puzzle(5, 4);
-            panel.nodes[24].SetState(NodeState.Start);
-            panel.nodes[29].SetState(NodeState.Exit);
-            panel.nodes[0].SetState(NodeState.Exit);
-            panel.nodes[5].SetState(NodeState.Start);
+            panel.Nodes[24].SetState(NodeState.Start);
+            panel.Nodes[29].SetState(NodeState.Exit);
+            panel.Nodes[0].SetState(NodeState.Exit);
+            panel.Nodes[5].SetState(NodeState.Start);
             //panel.nodes.Last().SetState(NodeState.Exit);
 
-            panel.nodes[20].SetStateAndColor(NodeState.Marked, XnaColor.Cyan);
-            panel.edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, XnaColor.Yellow);
-            panel.nodes[21].SetStateAndColor(NodeState.Marked, XnaColor.Yellow);
-            panel.nodes[7].SetState(NodeState.Marked);
+            panel.Nodes[20].SetStateAndColor(NodeState.Marked, XnaColor.Cyan);
+            panel.Edges.Find(x => x.Id == 410).SetStateAndColor(EdgeState.Marked, XnaColor.Yellow);
+            panel.Nodes[21].SetStateAndColor(NodeState.Marked, XnaColor.Yellow);
+            panel.Nodes[7].SetState(NodeState.Marked);
 
             //panel.edges.Find(x => x.Id == 1617).SetState(EdgeState.Marked);
             //panel.edges.Find(x => x.Id == 1116).SetState(EdgeState.Broken);
             //panel.edges.Find(x => x.Id == 1718).SetState(EdgeState.Broken);
             
-            panel.grid[3, 0].Rule = new ColoredSquareRule(XnaColor.Magenta);
-            panel.grid[0, 1].Rule = new ColoredSquareRule(XnaColor.Black);
+            panel.Grid[3, 0].Rule = new ColoredSquareRule(XnaColor.Magenta);
+            panel.Grid[0, 1].Rule = new ColoredSquareRule(XnaColor.Black);
             //panel.grid[1, 2].Rule = new TriangleRule(panel.grid[1, 2], 2);
 
             //panel.grid[2, 1].Rule = new TetrisRotatableRule(panel.grid[2, 1], new bool[,] { { true, true }, { true, false }, { true, false } });
@@ -101,23 +101,23 @@ namespace TWPVisualizer
             var errorParts = errors.Where(x => !x.IsEliminated).Select(x => x.Source);
             var eliminatedParts = errors.Where(x => x.IsEliminated).Select(x => x.Source);
             
-            for (int i = 0; i < panel.nodes.Length; i++)
+            for (int i = 0; i < panel.Nodes.Length; i++)
             {
                 int row = i / width;
                 int x = margin + (i - row * width) * nodeSpan;
                 int y = margin + row * nodeSpan;
 
-               if (panel.nodes[i].State == NodeState.Start)
+               if (panel.Nodes[i].State == NodeState.Start)
                    g.FillEllipse(brush, x - nodeRadius/2, y - nodeRadius/2, nodeRadius, nodeRadius);
-                if (panel.nodes[i].State == NodeState.Exit)
+                if (panel.Nodes[i].State == NodeState.Exit)
                     g.DrawEllipse(pen, x - nodeRadius / 2, y - nodeRadius / 2, nodeRadius, nodeRadius);
 
-                if (panel.nodes[i].State == NodeState.Marked)
+                if (panel.Nodes[i].State == NodeState.Marked)
                 {
                     Brush br;
-                    if (errorParts.Contains(panel.nodes[i]))
+                    if (errorParts.Contains(panel.Nodes[i]))
                         br = errBrush;
-                    else if (eliminatedParts.Contains(panel.nodes[i]))
+                    else if (eliminatedParts.Contains(panel.Nodes[i]))
                         br = errBrushE;
                     else
                         br = brush;
@@ -129,9 +129,9 @@ namespace TWPVisualizer
 
             var solutionEdges = panel.SolutionEdges;
             var mirrorEdges = panel is SymmetryPuzzle sym3 ? sym3.MirrorSolutionEdges : null;
-            for (int i = 0; i < panel.edges.Count; i++)
+            for (int i = 0; i < panel.Edges.Count; i++)
             {
-                Edge edge = panel.edges[i];
+                Edge edge = panel.Edges[i];
                 
                 int rowA = edge.NodeA.Id / width;
                 int xA = margin + (edge.NodeA.Id - rowA * width) * nodeSpan;
@@ -158,32 +158,32 @@ namespace TWPVisualizer
                 }
             }
 
-            for (int i = 0; i < panel.nodes.Length; i++)
+            for (int i = 0; i < panel.Nodes.Length; i++)
             {
                 int row = i / width;
                 int x = margin + (i - row * width) * nodeSpan;
                 int y = margin + row * nodeSpan;
                 
-                if (panel.nodes[i].State == NodeState.Marked)
+                if (panel.Nodes[i].State == NodeState.Marked)
                 {
                     Brush br = null;
-                    if (errorParts.Contains(panel.nodes[i]))
+                    if (errorParts.Contains(panel.Nodes[i]))
                         br = errBrush;
-                    else if (eliminatedParts.Contains(panel.nodes[i]))
+                    else if (eliminatedParts.Contains(panel.Nodes[i]))
                         br = errBrushE;
 
                     if(br != null)
                         g.FillEllipse(br, x - 5, y - 5, 10, 10);
 
-                    br = panel.nodes[i].HasColor ? new SolidBrush(ConvertXnaColor(panel.nodes[i].Color.Value)) : brush;
+                    br = panel.Nodes[i].HasColor ? new SolidBrush(ConvertXnaColor(panel.Nodes[i].Color.Value)) : brush;
                     g.FillEllipse(br, x - 3, y - 3, 6, 6);
                 }
 
                 g.DrawString(i.ToString(), Font, brush, x, y);
             }
-            for (int i = 0; i < panel.edges.Count; i++)
+            for (int i = 0; i < panel.Edges.Count; i++)
             {
-                Edge edge = panel.edges[i];
+                Edge edge = panel.Edges[i];
 
                 int rowA = edge.NodeA.Id / width;
                 int xA = margin + (edge.NodeA.Id - rowA * width) * nodeSpan;

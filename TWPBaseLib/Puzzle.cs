@@ -11,50 +11,60 @@ namespace TheWitnessPuzzles
         public int Width { get; }
         public int Height { get; }
 
-        public Block[,] grid;
-        public Node[] nodes;
-        public List<Edge> edges;
+        public Block[,] Grid { get; private set; }
+        public Node[] Nodes { get; private set; }
+        public List<Edge> Edges { get; private set; }
         // Auxilary array for sector splitting. It contains only vertical edges in a grid fashion
         protected Edge[,] edgesAlignment;
 
+        public IEnumerable<Block> Blocks
+        {
+            get
+            {
+                for (int i = 0; i < Grid.GetLength(0); i++)
+                    for (int j = 0; j < Grid.GetLength(1); j++)
+                        yield return Grid[i, j];
+            }
+        }
+
         public List<int> Solution { get; set; } = null;
-        public virtual IEnumerable<Node> SolutionNodes => Solution.Select(x => nodes.First(z => z.Id == x));
+        public virtual IEnumerable<Node> SolutionNodes => Solution.Select(x => Nodes.First(z => z.Id == x));
         // Zip creates sequence from the pair of elements of original and second collection; Skip(1) forms the second collection
-        public virtual IEnumerable<Edge> SolutionEdges => Solution.Zip(Solution.Skip(1), (idA, idB) => edges.First(x => (idA, idB) == x));
+        public virtual IEnumerable<Edge> SolutionEdges => Solution.Zip(Solution.Skip(1), (idA, idB) => Edges.First(x => (idA, idB) == x));
 
-        public virtual IEnumerable<Node> BorderNodes => nodes.Where(x => x.Edges.Count < 4);
+        public virtual IEnumerable<Node> BorderNodes => Nodes.Where(x => x.Edges.Count < 4);
 
-        public Node TopLeftNode => nodes[0];
-        public Node TopRightNode => nodes[Width];
-        public Node BottomLeftNode => nodes[nodes.Length - Width - 1];
-        public Node BottomRightNode => nodes[nodes.Length - 1];
+        public Node TopLeftNode => Nodes[0];
+        public Node TopRightNode => Nodes[Width];
+        public Node BottomLeftNode => Nodes[Nodes.Length - Width - 1];
+        public Node BottomRightNode => Nodes[Nodes.Length - 1];
 
         public Puzzle(int width, int height)
         {
             Width = width;
             Height = height;
 
-            nodes = new Node[(width + 1) * (height + 1)];
-            grid = new Block[width, height];
+            Nodes = new Node[(width + 1) * (height + 1)];
+            Grid = new Block[width, height];
 
-            for (int i = 0; i < nodes.Length; i++)
-                nodes[i] = new Node(i);
+            for (int i = 0; i < Nodes.Length; i++)
+                Nodes[i] = new Node(i);
 
             for (int j = 0; j < height; j++)
             {
                 for (int i = 0; i < width; i++)
                 {
-                    grid[i, j] = new Block(j * width + i,
-                                           nodes[(j + 1) * (width + 1) + i],
-                                           nodes[j * (width + 1) + i],
-                                           nodes[j * (width + 1) + i + 1],
-                                           nodes[(j + 1) * (width + 1) + i + 1],
+                    Grid[i, j] = new Block(j * width + i,
+                                           Nodes[(j + 1) * (width + 1) + i],
+                                           Nodes[j * (width + 1) + i],
+                                           Nodes[j * (width + 1) + i + 1],
+                                           Nodes[(j + 1) * (width + 1) + i + 1],
                                            this,
                                            i, j);
                 }
             }
 
-            edges = nodes.SelectMany(x => x.Edges).Distinct().ToList();
+            Edges = Nodes.SelectMany(x => x.Edges).Distinct().ToList();
 
             edgesAlignment = new Edge[width + 1, height];
             for (int i = 0; i < width+1; i++)
@@ -62,7 +72,7 @@ namespace TheWitnessPuzzles
                 {
                     int a = j * (width + 1) + i;
                     int b = (j + 1) * (width + 1) + i;
-                    edgesAlignment[i, j] = nodes[a].LinkToNode(nodes[b]);
+                    edgesAlignment[i, j] = Nodes[a].LinkToNode(Nodes[b]);
                 }
         }
 
@@ -105,7 +115,7 @@ namespace TheWitnessPuzzles
                         // If we are inside sector, then add to the block list the block, that has current edge as the right edge
                         if (sectorActive)
                         {
-                            sectorBlocks.Add(grid[col - 1, row]);
+                            sectorBlocks.Add(Grid[col - 1, row]);
                             usedBlocks[col - 1, row] = true;
                         }
 
@@ -129,7 +139,7 @@ namespace TheWitnessPuzzles
             for (int x = 0; x < usedBlocks.GetLength(0); x++)
                 for (int y = 0; y < usedBlocks.GetLength(1); y++)
                     if (!usedBlocks[x, y])
-                        sectorBlocks.Add(grid[x, y]);
+                        sectorBlocks.Add(Grid[x, y]);
 
             sectors.Add(new Sector(sectorBlocks));
         }

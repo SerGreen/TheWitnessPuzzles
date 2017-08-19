@@ -29,14 +29,14 @@ namespace TheWitnessPuzzles
                 if (Y_Mirrored)
                 {
                     // Both axes mirroring
-                    int maxNodeId = nodes.Max(x => x.Id);
-                    return MainSolutionNodes.Select(x => nodes.First(n => n.Id == maxNodeId - x.Id));
+                    int maxNodeId = Nodes.Max(x => x.Id);
+                    return MainSolutionNodes.Select(x => Nodes.First(n => n.Id == maxNodeId - x.Id));
                 }
                 else
                 {
                     // Only X-axis mirroring
                     int width1 = Width + 1;
-                    return MainSolutionNodes.Select(x => nodes.First(n => n.Id == (x.Id / width1 * width1) * 2 + Width - x.Id));
+                    return MainSolutionNodes.Select(x => Nodes.First(n => n.Id == (x.Id / width1 * width1) * 2 + Width - x.Id));
                 }
             }
         }
@@ -44,7 +44,7 @@ namespace TheWitnessPuzzles
         public override IEnumerable<Node> SolutionNodes => MainSolutionNodes.Concat(MirrorSolutionNodes);
 
         public IEnumerable<Edge> MainSolutionEdges => base.SolutionEdges;
-        public IEnumerable<Edge> MirrorSolutionEdges => MirrorSolutionNodes.Zip(MirrorSolutionNodes.Skip(1), (idA, idB) => edges.First(x => (idA, idB) == x));
+        public IEnumerable<Edge> MirrorSolutionEdges => MirrorSolutionNodes.Zip(MirrorSolutionNodes.Skip(1), (idA, idB) => Edges.First(x => (idA, idB) == x));
 
         public override IEnumerable<Edge> SolutionEdges => MainSolutionEdges.Concat(MirrorSolutionEdges);
 
@@ -60,7 +60,7 @@ namespace TheWitnessPuzzles
             for (int x = 0; x < usedBlocks.GetLength(0); x++)
                 for (int y = 0; y < usedBlocks.GetLength(1); y++)
                     if (!usedBlocks[x, y])
-                        unusedBlocksList.Add(grid[x, y]);
+                        unusedBlocksList.Add(Grid[x, y]);
 
             List<Block> newSector = new List<Block>();
 

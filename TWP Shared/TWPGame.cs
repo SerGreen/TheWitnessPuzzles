@@ -23,7 +23,7 @@ namespace TWP_Shared
         int fullscreenCooldown = 0;
 
         protected int moveStep = 5;
-        protected float sensitivity = 0.5f;
+        protected float moveSensitivity = 0.5f;
 
         Color backgroundColor = Color.CornflowerBlue;
         Color wallColor = Color.DarkSlateGray;
@@ -42,8 +42,12 @@ namespace TWP_Shared
         Texture2D texPixel; //base for the line texture
         Texture2D texCircle = null;
         Texture2D texCorner = null;
-        Texture2D texEnd = null;
+        Texture2D texEndPoint = null;
         Texture2D texHexagon = null;
+        Texture2D texSquare = null;
+        Texture2D texSun = null;
+        Texture2D texElimination = null;
+        Texture2D[] texTriangle = new Texture2D[3];
 
         RenderTarget2D backgroundTexture;
         RenderTarget2D linesFadeTexture;
@@ -55,31 +59,44 @@ namespace TWP_Shared
         Point lineWidthPoint;
         Point halfLineWidthPoint;
         int nodePadding;
+        int blockWidth;
+        Point blockSizePoint;
+
         bool isMobile;
 
         public TWPGame(bool isMobile, Puzzle panel = null)
         {
             panel = new SymmetryPuzzle(5, 5, true, Color.Aqua, Color.Yellow);
-            panel.nodes[25].SetState(NodeState.Start);
-            panel.nodes[28].SetState(NodeState.Start);
-            panel.nodes[7].SetState(NodeState.Start);
-            panel.nodes[10].SetState(NodeState.Start);
-            panel.nodes[1].SetState(NodeState.Exit);
-            panel.nodes[3].SetState(NodeState.Exit);
-            panel.nodes[23].SetState(NodeState.Exit);
-            panel.nodes[22].SetState(NodeState.Exit);
-            panel.nodes[12].SetState(NodeState.Exit);
-            panel.nodes[0].SetState(NodeState.Exit);
-            panel.nodes[20].SetState(NodeState.Exit);
-            panel.nodes[9].SetState(NodeState.Exit);
-            panel.nodes[24].SetState(NodeState.Exit);
-            panel.nodes[32].SetState(NodeState.Exit);
-            panel.edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
-            panel.edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
+            panel.Nodes[25].SetState(NodeState.Start);
+            panel.Nodes[28].SetState(NodeState.Start);
+            panel.Nodes[7].SetState(NodeState.Start);
+            panel.Nodes[10].SetState(NodeState.Start);
+            panel.Nodes[1].SetState(NodeState.Exit);
+            panel.Nodes[3].SetState(NodeState.Exit);
+            panel.Nodes[23].SetState(NodeState.Exit);
+            panel.Nodes[22].SetState(NodeState.Exit);
+            panel.Nodes[12].SetState(NodeState.Exit);
+            panel.Nodes[0].SetState(NodeState.Exit);
+            panel.Nodes[20].SetState(NodeState.Exit);
+            panel.Nodes[9].SetState(NodeState.Exit);
+            panel.Nodes[24].SetState(NodeState.Exit);
+            panel.Nodes[32].SetState(NodeState.Exit);
+            panel.Edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
+            panel.Edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
 
-            panel.nodes[14].SetState(NodeState.Marked);
-            panel.nodes[18].SetState(NodeState.Marked);
-            panel.edges.Find(x => x.Id == 2021)?.SetState(EdgeState.Marked);
+            panel.Nodes[14].SetStateAndColor(NodeState.Marked, Color.Yellow);
+            panel.Nodes[18].SetState(NodeState.Marked);
+            panel.Edges.Find(x => x.Id == 2021)?.SetStateAndColor(EdgeState.Marked, Color.Aqua);
+
+            panel.Grid[2, 0].Rule = new ColoredSquareRule(Color.Magenta);
+            panel.Grid[1, 1].Rule = new SunPairRule(Color.Magenta);
+            panel.Grid[4, 4].Rule = new ColoredSquareRule(Color.Lime);
+            panel.Grid[1, 4].Rule = new SunPairRule(Color.Lime);
+            panel.Grid[2, 1].Rule = new TriangleRule(1);
+            panel.Grid[3, 2].Rule = new TriangleRule(2);
+            panel.Grid[3, 1].Rule = new TriangleRule(3);
+            panel.Grid[4, 2].Rule = new EliminationRule();
+            panel.Grid[2, 3].Rule = new EliminationRule(Color.Magenta);
 
             this.isMobile = isMobile;
             this.panel = panel;
@@ -115,9 +132,10 @@ namespace TWP_Shared
             int screenMinSize = Math.Min(width, height);
             int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
             lineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
-            int blockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
+            blockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
             halfLineWidthPoint = new Point(lineWidth / 2);
             lineWidthPoint = new Point(lineWidth);
+            blockSizePoint = new Point(blockWidth);
 
             int endAppendixLength = blockWidth / 3;
 
@@ -143,7 +161,7 @@ namespace TWP_Shared
                     walls.Add(new Rectangle(xMargin + lineWidth * (i + 1) + blockWidth * i, yMargin + lineWidth * (j + 1) + blockWidth * j, blockWidth, blockWidth));
 
             // Creating walls for broken edges
-            var brokenEdges = panel.edges.Where(x => x.State == EdgeState.Broken);
+            var brokenEdges = panel.Edges.Where(x => x.State == EdgeState.Broken);
             foreach (Edge edge in brokenEdges)
             {
                 Point nodeA = NodeIdToPoint(edge.Id % 100).Multiply(nodePadding) + margins;
@@ -165,11 +183,11 @@ namespace TWP_Shared
             // Returns a coef k: Puzzle size in pixels * k = line width in pixels
             float LineSizeRatio(float puzzleDimension) => -0.0064f * puzzleDimension + 0.0859f;
 
-            IEnumerable<Point> GetStartNodes() => panel.nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
+            IEnumerable<Point> GetStartNodes() => panel.Nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
             IEnumerable<Point> GetEndNodesTop()
             {
                 for (int i = 1; i < panel.Width; i++)
-                    if (panel.nodes[i].State == NodeState.Exit)
+                    if (panel.Nodes[i].State == NodeState.Exit)
                         yield return new Point(i, 0);
             }
             IEnumerable<Point> GetEndNodesBot()
@@ -177,7 +195,7 @@ namespace TWP_Shared
                 for (int i = 1; i < panel.Width; i++)
                 {
                     int index = panel.Height * (panel.Width + 1) + i;
-                    if (panel.nodes[index].State == NodeState.Exit)
+                    if (panel.Nodes[index].State == NodeState.Exit)
                         yield return new Point(i, panel.Height);
                 }
             }
@@ -186,7 +204,7 @@ namespace TWP_Shared
                 for (int j = 0; j < panel.Height + 1; j++)
                 {
                     int index = j * (panel.Width + 1);
-                    if (panel.nodes[index].State == NodeState.Exit)
+                    if (panel.Nodes[index].State == NodeState.Exit)
                         yield return new Point(0, j);
                 }
             }
@@ -195,7 +213,7 @@ namespace TWP_Shared
                 for (int j = 0; j < panel.Height + 1; j++)
                 {
                     int index = j * (panel.Width + 1) + panel.Width;
-                    if (panel.nodes[index].State == NodeState.Exit)
+                    if (panel.Nodes[index].State == NodeState.Exit)
                         yield return new Point(panel.Width, j);
                 }
             }
@@ -268,39 +286,30 @@ namespace TWP_Shared
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // TODO: use this.Content to load your game content here
+            
+            // InitPanel is in LoadContent() because GraphicsDevice is not created yet in Initialize() on Android
             InitPanel();
 
+            // One pixel sized white texture, used to draw rectangles of any size
+            texPixel = new Texture2D(GraphicsDevice, 1, 1);
+            texPixel.SetData(new Color[] { Color.White });
             texCircle = Content.Load<Texture2D>("img/twp_circle");
             texCorner = Content.Load<Texture2D>("img/twp_corner");
-            texEnd = Content.Load<Texture2D>("img/twp_ending");
+            texEndPoint = Content.Load<Texture2D>("img/twp_ending");
+            // Puzzle rules textures
             texHexagon = Content.Load<Texture2D>("img/twp_hexagon");
-            texPixel = new Texture2D(GraphicsDevice, 1, 1);
-            texPixel.SetData<Color>(new Color[] { Color.White }); // fill the texture with white
+            texSquare = Content.Load<Texture2D>("img/twp_square");
+            texSun = Content.Load<Texture2D>("img/twp_sun");
+            texElimination = Content.Load<Texture2D>("img/twp_elimination");
+            for (int i = 0; i < 3; i++)
+                texTriangle[i] = Content.Load<Texture2D>($"img/twp_triangle{i + 1}");
 
-            backgroundTexture = new RenderTarget2D(
-                GraphicsDevice,
-                GraphicsDevice.PresentationParameters.BackBufferWidth,
-                GraphicsDevice.PresentationParameters.BackBufferHeight,
-                false,
-                GraphicsDevice.PresentationParameters.BackBufferFormat,
-                DepthFormat.Depth24);
-            linesFadeTexture = new RenderTarget2D(
-                GraphicsDevice,
-                GraphicsDevice.PresentationParameters.BackBufferWidth,
-                GraphicsDevice.PresentationParameters.BackBufferHeight,
-                false,
-                GraphicsDevice.PresentationParameters.BackBufferFormat,
-                DepthFormat.Depth24);
-            errorsBlinkTexture = new RenderTarget2D(
-                GraphicsDevice,
-                GraphicsDevice.PresentationParameters.BackBufferWidth,
-                GraphicsDevice.PresentationParameters.BackBufferHeight,
-                false,
-                GraphicsDevice.PresentationParameters.BackBufferFormat,
-                DepthFormat.Depth24);
+            // Fullscreen textures for 1. background, 2. fading solution lines and 3. red blinking rules with error highlighting
+            backgroundTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
+            linesFadeTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
+            errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
 
+            // Draw static parts of panel onto the texture
             RenderBackgroundTexture();
         }
 
@@ -544,8 +553,8 @@ namespace TWP_Shared
                     case Facing.Down:   angle = MathHelper.ToRadians(270); break;
                     default:            angle = 0; break;
                 }
-                float scale = (float) end.Rectangle.Width / texEnd.Width;
-                spriteBatch.Draw(texEnd, end.Rectangle.Center.ToVector2(), null, wallColor, angle, texEnd.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
+                float scale = (float) end.Rectangle.Width / texEndPoint.Width;
+                spriteBatch.Draw(texEndPoint, end.Rectangle.Center.ToVector2(), null, wallColor, angle, texEndPoint.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
             }
         }
 
@@ -580,8 +589,11 @@ namespace TWP_Shared
             foreach (var start in startPoints)
                 spriteBatch.Draw(texCircle, start, backgroundColor);
 
-            DrawMarkedNodes();
-            DrawMarkedEdges();
+            DrawHexagonDots();
+            DrawColoredSquares();
+            DrawSuns();
+            DrawEliminations();
+            DrawTriangles();
 
             DrawBorders();
 
@@ -590,24 +602,73 @@ namespace TWP_Shared
             GraphicsDevice.SetRenderTarget(null);
         }
 
-        private void DrawMarkedNodes()
+        private void DrawHexagonDots()
         {
-            var markedNodes = panel.nodes.Where(x => x.State == NodeState.Marked);
-            foreach (var node in markedNodes)
+            DrawMarkedNodes();
+            DrawMarkedEdges();
+
+            // === Methods ===
+            void DrawMarkedNodes()
             {
-                Point position = NodeIdToPoint(node.Id).Multiply(nodePadding) + puzzleConfig.Location;
-                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), Color.DarkRed);
+                var markedNodes = panel.Nodes.Where(x => x.State == NodeState.Marked);
+                foreach (var node in markedNodes)
+                {
+                    Point position = NodeIdToPoint(node.Id).Multiply(nodePadding) + puzzleConfig.Location;
+                    spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), node.Color ?? Color.Black);
+                }
+            }
+            void DrawMarkedEdges()
+            {
+                var markedEdges = panel.Edges.Where(x => x.State == EdgeState.Marked);
+                foreach (var edge in markedEdges)
+                {
+                    Point pA = NodeIdToPoint(edge.NodeA.Id).Multiply(nodePadding);
+                    Point pB = NodeIdToPoint(edge.NodeB.Id).Multiply(nodePadding);
+                    Point position = (pA + pB).Divide(2) + puzzleConfig.Location;
+                    spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), edge.Color ?? Color.Black);
+                }
             }
         }
-        private void DrawMarkedEdges()
+                
+        private Point BlockPositionToOnScreenLocation(int x, int y) => new Point(puzzleConfig.X + x * nodePadding + lineWidth, puzzleConfig.Y + y * nodePadding + lineWidth);
+
+        private void DrawColoredSquares()
         {
-            var markedEdges = panel.edges.Where(x => x.State == EdgeState.Marked);
-            foreach (var edge in markedEdges)
+            var squareRuleBlocks = panel.Blocks.Where(x => x.Rule is ColoredSquareRule);
+            foreach (var block in squareRuleBlocks)
             {
-                Point pA = NodeIdToPoint(edge.NodeA.Id).Multiply(nodePadding);
-                Point pB = NodeIdToPoint(edge.NodeB.Id).Multiply(nodePadding);
-                Point position = (pA + pB).Divide(2) + puzzleConfig.Location;
-                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), Color.DarkRed);
+                Color color = (block.Rule as ColoredSquareRule).Color.Value;
+                spriteBatch.Draw(texSquare, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), color);
+            }
+        }
+
+        private void DrawSuns()
+        {
+            var sunRuleBlocks = panel.Blocks.Where(x => x.Rule is SunPairRule);
+            foreach (var block in sunRuleBlocks)
+            {
+                Color color = (block.Rule as SunPairRule).Color.Value;
+                spriteBatch.Draw(texSun, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), color);
+            }
+        }
+
+        private void DrawEliminations()
+        {
+            var eliminationRuleBlocks = panel.Blocks.Where(x => x.Rule is EliminationRule);
+            foreach (var block in eliminationRuleBlocks)
+            {
+                Color color = (block.Rule as EliminationRule).Color ?? Color.White;
+                spriteBatch.Draw(texElimination, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), color);
+            }
+        }
+
+        private void DrawTriangles()
+        {
+            var triangleRuleBlocks = panel.Blocks.Where(x => x.Rule is TriangleRule);
+            foreach (var block in triangleRuleBlocks)
+            {
+                int texIndex = (block.Rule as TriangleRule).Power - 1;
+                spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), Color.Gold);
             }
         }
         #endregion
