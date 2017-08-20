@@ -122,7 +122,7 @@ namespace TheWitnessPuzzles
         public List<Error> CheckForErrors()
         {
             List<Error> errors = new List<Error>();
-
+            
             if (Solution != null)
             {
                 foreach (Sector sector in GetSectors())
@@ -300,9 +300,9 @@ namespace TheWitnessPuzzles
                                         (indexInOtherSector == sectorLines[otherSectorIndex].Count - 1 && otherSectorDirection == 1))
                                     {
                                         // Change backPrev to the node as if we were following the border
-                                        int foundIndex = theRightWay.FindIndex(x => x.Id == backNow.Id);
+                                        int rightWayIndex = theRightWay.FindIndex(x => x.Id == backNow.Id);
                                         // If we couldn't find our index in the right way border line, it means that we were moving in the wrong direction
-                                        if (foundIndex == -1)
+                                        if (rightWayIndex == -1)
                                         {
                                             // We have to reset to the saved first postition in other line and move in other direction
                                             // Also remove last N nodes from current sector (diff amount) as they are wrong
@@ -310,12 +310,12 @@ namespace TheWitnessPuzzles
                                             currentSector.RemoveRange(currentSector.Count - diff, diff);
                                             indexInOtherSector = savedIndexInOtherSector;
                                             otherSectorDirection = -otherSectorDirection;
+                                            backNow = sectorLines[otherSectorIndex][savedIndexInOtherSector];
+                                            rightWayIndex = theRightWay.FindIndex(x => x.Id == backNow.Id);
                                         }
-                                        else
-                                        {
-                                            followSectorLine = false;
-                                            backPrev = theRightWay[foundIndex - 1];
-                                        }
+
+                                        followSectorLine = false;
+                                        backPrev = theRightWay[rightWayIndex - 1];
                                     }
                                 }
 
@@ -355,31 +355,61 @@ namespace TheWitnessPuzzles
         protected virtual void ModifySectorLinesBefore(List<List<Node>> sectorLines) { }
         protected virtual void ModifySectorLinesAfter(List<List<Node>> sectorLines) { }
 
-        public List<List<int>> GetAllSolutions()
+        /// <summary>
+        /// Returns the list of all solution lines that can solve the puzzle
+        /// WARNING: It is VERY slow for big puzzles
+        /// </summary>
+        /// <returns>Collection of solution lines in the form of a sequence of node IDs</returns>
+        public IEnumerable<List<int>> GetAllSolutions(bool reportProgress = false)
         {
-            return null;
+            // Get all lines that you can possibly draw
+            var allLines = GetAllPossibleLines();
+            
+            // Save the current Solution to restore it later
+            var savedSolution = Solution;
+
+            // Check every line for being the right solution line
+            for (int i = 0; i < allLines.Count; i++)
+            {
+                Solution = allLines[i];
+                var errors = CheckForErrors();
+                if (errors.Where(x => x.IsEliminated == false).Count() == 0)
+                    yield return allLines[i];
+
+                if (reportProgress)
+                    GetAllSolutionsProgressUpdate?.Invoke((float) i / allLines.Count);
+            }
+
+            // Restore Solution
+            Solution = savedSolution;
         }
+        
+        public event Action<float> GetAllSolutionsProgressUpdate;
 
         protected virtual List<List<int>> GetAllPossibleLines()
         {
             List<List<Node>> solutions = new List<List<Node>>();
-            
-            var endPoints = Nodes.Where(x => x.State == NodeState.Exit);
+            List<List<Node>> finishedSolutions = new List<List<Node>>();
 
-            GAPL_AddStartNodes(solutions);
+            // Get the list of exit nodes
+            var endNodes = GAPL_GetEndNodes();
+            // Initiate one line from every start node
+            GAPL_AddStartNodes(solutions, Nodes.Where(x => x.State == NodeState.Start));
+
+            // Loop until all lines will get to the exit nodes
             bool allFinished = false;
             while (!allFinished)
             {
                 allFinished = true;
 
+                // Loop through every line and try to move it further
                 for (int i = solutions.Count - 1; i >= 0; i--)
                 {
+                    // If line is completed (it's last node is the exit node) => copy it to the finished list
                     List<Node> line = solutions[i];
-
-                    // If line is completed => skip it
                     Node last = line[line.Count - 1];
-                    if (endPoints.Contains(last))
-                        continue;
+                    if (endNodes.Contains(last))
+                        finishedSolutions.Add(new List<Node>(line));
 
                     // Get all nodes, where we can move from current (last) node
                     // This excludes nodes over the broken edges, nodes in the solution line(s) and nodes, that can not be entered by two symmetry lines at the same time (nodes on the line of symmetry)
@@ -403,13 +433,13 @@ namespace TheWitnessPuzzles
                 }
             }
 
-            return solutions.Select(x => x.Select(z => z.Id).ToList()).ToList();
+            return finishedSolutions.Select(x => x.Select(z => z.Id).ToList()).ToList();
         }
         
-        protected virtual void GAPL_AddStartNodes(List<List<Node>> solutions)
+        protected virtual IEnumerable<Node> GAPL_GetEndNodes() => Nodes.Where(x => x.State == NodeState.Exit);
+        protected virtual void GAPL_AddStartNodes(List<List<Node>> solutions, IEnumerable<Node> startNodes)
         {
-            var startPoints = Nodes.Where(x => x.State == NodeState.Start);
-            foreach (var start in startPoints)
+            foreach (var start in startNodes)
                 solutions.Add(new List<Node>() { start });
         }
         protected virtual IEnumerable<Node> GAPL_GetNeighbourNodes(Node last) => last.Edges.Where(x => x.State != EdgeState.Broken).SelectMany(x => x.Nodes).Where(x => x.Id != last.Id);

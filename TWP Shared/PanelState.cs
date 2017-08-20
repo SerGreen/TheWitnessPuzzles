@@ -32,7 +32,7 @@ namespace TWP_Shared
         float blinkSpeed = 0.1f;
         bool blinkOpacityDown = true;
 
-        const int eliminationTimeMax = 80;
+        const int eliminationTimeMax = 70;
         int eliminationTime = 0;
         const int eliminationFadeTimeMax = 80;
         float eliminationFadeTime = eliminationFadeTimeMax;

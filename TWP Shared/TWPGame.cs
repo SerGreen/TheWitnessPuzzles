@@ -105,7 +105,7 @@ namespace TWP_Shared
             this.isMobile = isMobile;
             this.panel = panel;
             puzzleDimensions = new Point(panel.Width, panel.Height);
-
+            
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 

@@ -137,10 +137,18 @@ namespace TheWitnessPuzzles
             return base.GetAllPossibleLines();
         }
 
-        protected override void GAPL_AddStartNodes(List<List<Node>> solutions)
+        protected override IEnumerable<Node> GAPL_GetEndNodes()
         {
+            var main = base.GAPL_GetEndNodes();
+            return main.Where(x => GetMirrorNode(x).State == NodeState.Exit);
+        }
+
+        protected override void GAPL_AddStartNodes(List<List<Node>> solutions, IEnumerable<Node> startNodes)
+        {
+            // Remove start nodes that do not have mirrored start node
+            var nodesWithMirroredStart = startNodes.Where(x => GetMirrorNode(x).State == NodeState.Start);
+            base.GAPL_AddStartNodes(solutions, nodesWithMirroredStart);
             // Add mirrored starts to mirrored solutions
-            base.GAPL_AddStartNodes(solutions);
             foreach (var line in solutions)
                 mirrorSolutions.Add(new List<Node>() { GetMirrorNode(line[0]) });
         }
