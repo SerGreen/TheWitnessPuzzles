@@ -13,12 +13,16 @@ namespace TheWitnessPuzzles
         public bool Y_Mirrored { get; }
         public Color MainColor { get; }
         public Color MirrorColor { get; }
+        private readonly int MaxNodeID;
+        private readonly int WidthPlus1;
 
         public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null) : base(width, height)
         {
             Y_Mirrored = y_mirrored;
             MainColor = mainColor ?? Color.White;
             MirrorColor = mirrorColor ?? Color.White;
+            MaxNodeID = Nodes.Max(x => x.Id);
+            WidthPlus1 = Width + 1;
         }
 
         public IEnumerable<Node> MainSolutionNodes => base.SolutionNodes;
@@ -27,18 +31,22 @@ namespace TheWitnessPuzzles
             get
             {
                 if (Y_Mirrored)
-                {
                     // Both axes mirroring
-                    int maxNodeId = Nodes.Max(x => x.Id);
-                    return MainSolutionNodes.Select(x => Nodes.First(n => n.Id == maxNodeId - x.Id));
-                }
+                    return MainSolutionNodes.Select(x => Nodes.First(n => n.Id == MaxNodeID - x.Id));
                 else
-                {
                     // Only X-axis mirroring
-                    int width1 = Width + 1;
-                    return MainSolutionNodes.Select(x => Nodes.First(n => n.Id == (x.Id / width1 * width1) * 2 + Width - x.Id));
-                }
+                    return MainSolutionNodes.Select(x => Nodes.First(n => n.Id == (x.Id / WidthPlus1 * WidthPlus1) * 2 + Width - x.Id));
             }
+        }
+
+        public Node GetMirrorNode(Node node)
+        {
+            if (Y_Mirrored)
+                // Both axes mirroring
+                return Nodes.First(n => n.Id == MaxNodeID - node.Id);
+            else
+                // Only X-axis mirroring
+                return Nodes.First(n => n.Id == (node.Id / WidthPlus1 * WidthPlus1) * 2 + Width - node.Id);
         }
 
         public override IEnumerable<Node> SolutionNodes => MainSolutionNodes.Concat(MirrorSolutionNodes);
@@ -120,6 +128,60 @@ namespace TheWitnessPuzzles
 
             if (unusedBlocksList.Count > 0)
                 sectors.Add(new Sector(unusedBlocksList));
+        }
+
+        private List<List<Node>> mirrorSolutions;
+        protected override List<List<int>> GetAllPossibleLines()
+        {
+            mirrorSolutions = new List<List<Node>>();
+            return base.GetAllPossibleLines();
+        }
+
+        protected override void GAPL_AddStartNodes(List<List<Node>> solutions)
+        {
+            // Add mirrored starts to mirrored solutions
+            base.GAPL_AddStartNodes(solutions);
+            foreach (var line in solutions)
+                mirrorSolutions.Add(new List<Node>() { GetMirrorNode(line[0]) });
+        }
+
+        protected override IEnumerable<Node> GAPL_GetNeighbourNodes(Node last)
+        {
+            Node mirNode = GetMirrorNode(last);
+            // Get all neighbours of main node (this excludes nodes over broken edges)
+            var main = base.GAPL_GetNeighbourNodes(last);
+            // Get all neighbours of mirror node
+            var mirror = base.GAPL_GetNeighbourNodes(mirNode);
+            // Transform mirror neighbours to main nodes
+            var mirrorMirror = mirror.Select(x => GetMirrorNode(x));
+            // Return intersection
+            return main.Intersect(mirrorMirror);
+        }
+
+        protected override IEnumerable<Node> GAPL_RemoveImpossibleNodes(IEnumerable<Node> possibleMoves, IEnumerable<Node> mainLine, int lineIndexInSolutions)
+        {
+            // Send to base func both solution lines, so main line will not cross mirrored one
+            var main = base.GAPL_RemoveImpossibleNodes(possibleMoves, mainLine.Concat(mirrorSolutions[lineIndexInSolutions]), lineIndexInSolutions);
+            // Also exclude nodes from center symmetry line: two lines can not enter these nodes simultaneously
+            return main.Where(x => x.Id != GetMirrorNode(x).Id);
+        }
+
+        protected override void GAPL_DeleteDeadEndLine(List<List<Node>> solutions, int index)
+        {
+            base.GAPL_DeleteDeadEndLine(solutions, index);
+            mirrorSolutions.RemoveAt(index);
+        }
+
+        protected override void GAPL_AddNewLineToAllSolutions(List<List<Node>> solutions, int index, Node node)
+        {
+            base.GAPL_AddNewLineToAllSolutions(solutions, index, node);
+            mirrorSolutions.Add(new List<Node>(mirrorSolutions[index]) { GetMirrorNode(node) });
+        }
+
+        protected override void GAPL_ExtendLineWithNode(List<List<Node>> solutions, int index, Node node)
+        {
+            base.GAPL_ExtendLineWithNode(solutions, index, node);
+            mirrorSolutions[index].Add(GetMirrorNode(node));
         }
     }
 }

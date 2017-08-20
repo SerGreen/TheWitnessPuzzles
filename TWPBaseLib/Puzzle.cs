@@ -354,5 +354,68 @@ namespace TheWitnessPuzzles
         // Returns true if sectorLines was modified 
         protected virtual void ModifySectorLinesBefore(List<List<Node>> sectorLines) { }
         protected virtual void ModifySectorLinesAfter(List<List<Node>> sectorLines) { }
+
+        public List<List<int>> GetAllSolutions()
+        {
+            return null;
+        }
+
+        protected virtual List<List<int>> GetAllPossibleLines()
+        {
+            List<List<Node>> solutions = new List<List<Node>>();
+            
+            var endPoints = Nodes.Where(x => x.State == NodeState.Exit);
+
+            GAPL_AddStartNodes(solutions);
+            bool allFinished = false;
+            while (!allFinished)
+            {
+                allFinished = true;
+
+                for (int i = solutions.Count - 1; i >= 0; i--)
+                {
+                    List<Node> line = solutions[i];
+
+                    // If line is completed => skip it
+                    Node last = line[line.Count - 1];
+                    if (endPoints.Contains(last))
+                        continue;
+
+                    // Get all nodes, where we can move from current (last) node
+                    // This excludes nodes over the broken edges, nodes in the solution line(s) and nodes, that can not be entered by two symmetry lines at the same time (nodes on the line of symmetry)
+                    var possibleMoves = GAPL_GetNeighbourNodes(last);
+                    possibleMoves = GAPL_RemoveImpossibleNodes(possibleMoves, solutions[i], i);
+
+                    // If there are no possible ways to move from current position, then we are in the dead end, so we have to delete current line
+                    if (possibleMoves.Count() == 0)
+                        GAPL_DeleteDeadEndLine(solutions, i);
+                    else
+                    {
+                        // If there are possible moves => remove the flag of readiness
+                        allFinished = false;
+                        // And then create new line for each new node
+                        foreach (Node node in possibleMoves.Skip(1))
+                            GAPL_AddNewLineToAllSolutions(solutions, i, node);
+
+                        // For the sake of saving some memory we are not deleting current line, but extending it with skipped earlier node
+                        GAPL_ExtendLineWithNode(solutions, i, possibleMoves.First());
+                    }
+                }
+            }
+
+            return solutions.Select(x => x.Select(z => z.Id).ToList()).ToList();
+        }
+        
+        protected virtual void GAPL_AddStartNodes(List<List<Node>> solutions)
+        {
+            var startPoints = Nodes.Where(x => x.State == NodeState.Start);
+            foreach (var start in startPoints)
+                solutions.Add(new List<Node>() { start });
+        }
+        protected virtual IEnumerable<Node> GAPL_GetNeighbourNodes(Node last) => last.Edges.Where(x => x.State != EdgeState.Broken).SelectMany(x => x.Nodes).Where(x => x.Id != last.Id);
+        protected virtual IEnumerable<Node> GAPL_RemoveImpossibleNodes(IEnumerable<Node> possibleMoves, IEnumerable<Node> line, int lineIndexInSolutions) => possibleMoves.Except(line);
+        protected virtual void GAPL_DeleteDeadEndLine(List<List<Node>> solutions, int index) => solutions.RemoveAt(index);
+        protected virtual void GAPL_AddNewLineToAllSolutions(List<List<Node>> solutions, int index, Node node) => solutions.Add(new List<Node>(solutions[index]) { node });
+        protected virtual void GAPL_ExtendLineWithNode(List<List<Node>> solutions, int index, Node node) => solutions[index].Add(node);
     }
 }

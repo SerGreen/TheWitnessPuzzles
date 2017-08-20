@@ -120,9 +120,9 @@ namespace TWP_Shared
                 IsMouseVisible = true;
 
             //graphics.IsFullScreen = true;
-            graphics.PreferredBackBufferWidth = 320;
-            graphics.PreferredBackBufferHeight = 480;
-
+            //graphics.PreferredBackBufferWidth = 320;
+            //graphics.PreferredBackBufferHeight = 480;
+            
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
         }
 
@@ -277,9 +277,6 @@ namespace TWP_Shared
         /// </summary>
         protected override void Initialize()
         {
-            // TODO: Add your initialization logic here
-
-
             base.Initialize();
         }
 
@@ -570,6 +567,7 @@ namespace TWP_Shared
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
+            
             spriteBatch.Begin(SpriteSortMode.Deferred);
 
             spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
