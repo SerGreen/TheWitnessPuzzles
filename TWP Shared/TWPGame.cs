@@ -45,7 +45,7 @@ namespace TWP_Shared
         Texture2D texPixel; //base for the line texture
         Texture2D texCircle = null;
         Texture2D texCorner = null;
-        Texture2D texEndPoint = null;
+        Texture2D[] texEndPoint = new Texture2D[2];
         Texture2D texHexagon = null;
         Texture2D texSquare = null;
         Texture2D texSun = null;
@@ -119,8 +119,9 @@ namespace TWP_Shared
             else
                 IsMouseVisible = true;
 
-            //graphics.PreferredBackBufferWidth = 320;
-            //graphics.PreferredBackBufferHeight = 400;
+            //graphics.IsFullScreen = true;
+            graphics.PreferredBackBufferWidth = 320;
+            graphics.PreferredBackBufferHeight = 480;
 
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
         }
@@ -301,7 +302,8 @@ namespace TWP_Shared
             texPixel.SetData(new Color[] { Color.White });
             texCircle = Content.Load<Texture2D>("img/twp_circle");
             texCorner = Content.Load<Texture2D>("img/twp_corner");
-            texEndPoint = Content.Load<Texture2D>("img/twp_ending");
+            texEndPoint[0] = Content.Load<Texture2D>("img/twp_ending_left");
+            texEndPoint[1] = Content.Load<Texture2D>("img/twp_ending_top");
             // Puzzle rules textures
             texHexagon = Content.Load<Texture2D>("img/twp_hexagon");
             texSquare = Content.Load<Texture2D>("img/twp_square");
@@ -617,24 +619,7 @@ namespace TWP_Shared
             spriteBatch.Draw(texPixel, new Rectangle(GraphicsDevice.Viewport.Width - borderWidth, 0, borderWidth, GraphicsDevice.Viewport.Height), borderColor);
             spriteBatch.Draw(texPixel, new Rectangle(0, GraphicsDevice.Viewport.Height - borderWidth, GraphicsDevice.Viewport.Width, borderWidth), borderColor);
         }
-        private void DrawEndPoints()
-        {
-            foreach (var end in endPoints)
-            {
-                float angle;
-                switch (end.Facing)
-                {
-                    case Facing.Left: angle = 0; break;
-                    case Facing.Right: angle = MathHelper.ToRadians(180); break;
-                    case Facing.Up: angle = MathHelper.ToRadians(90); break;
-                    case Facing.Down: angle = MathHelper.ToRadians(270); break;
-                    default: angle = 0; break;
-                }
-                float scale = (float) end.Rectangle.Width / texEndPoint.Width;
-                spriteBatch.Draw(texEndPoint, end.Rectangle.Center.ToVector2(), null, wallColor, angle, texEndPoint.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
-            }
-        }
-
+        
         private void RenderLinesToTexture()
         {
             // Set the render target
@@ -661,10 +646,16 @@ namespace TWP_Shared
                 spriteBatch.Draw(texPixel, wall, wallColor);
 
             DrawRoundedCorners();
-            DrawEndPoints();
+
+            foreach (var end in endPoints)
+                end.Draw(spriteBatch, wallColor, texEndPoint);
 
             foreach (var start in startPoints)
-                spriteBatch.Draw(texCircle, start, backgroundColor);
+            {
+                //spriteBatch.Draw(texCircle, start, backgroundColor);
+                float scale = (float) start.Width / texCircle.Width;
+                spriteBatch.Draw(texCircle, start.Center.ToVector2(), null, backgroundColor, 0, texCircle.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
+            }
 
             DrawAllRules();
             DrawBorders();

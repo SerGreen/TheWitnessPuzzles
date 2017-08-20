@@ -262,6 +262,7 @@ namespace TheWitnessPuzzles
                             int otherSectorIndex = -1;
                             int otherSectorDirection = 0;
                             int indexInOtherSector = -1;
+                            int savedIndexInOtherSector = -1;
 
                             // Until we finish full circle
                             while (backNext?.Id != currentSector[0].Id)
@@ -276,6 +277,7 @@ namespace TheWitnessPuzzles
                                         if (sectorLines[j].Contains(backNow))
                                         {
                                             indexInOtherSector = sectorLines[j].FindIndex(x => x.Id == backNow.Id);
+                                            savedIndexInOtherSector = indexInOtherSector;
                                             if ((indexInOtherSector > 0 && sectorLines[j][indexInOtherSector - 1].Edges.Count > 3) ||
                                                 (indexInOtherSector < sectorLines[j].Count - 1 && sectorLines[j][indexInOtherSector + 1].Edges.Count > 3))
                                             {
@@ -297,9 +299,23 @@ namespace TheWitnessPuzzles
                                         (indexInOtherSector == 0 && otherSectorDirection == -1) ||
                                         (indexInOtherSector == sectorLines[otherSectorIndex].Count - 1 && otherSectorDirection == 1))
                                     {
-                                        followSectorLine = false;
                                         // Change backPrev to the node as if we were following the border
-                                        backPrev = theRightWay[theRightWay.FindIndex(x => x.Id == backNow.Id) - 1];
+                                        int foundIndex = theRightWay.FindIndex(x => x.Id == backNow.Id);
+                                        // If we couldn't find our index in the right way border line, it means that we were moving in the wrong direction
+                                        if (foundIndex == -1)
+                                        {
+                                            // We have to reset to the saved first postition in other line and move in other direction
+                                            // Also remove last N nodes from current sector (diff amount) as they are wrong
+                                            int diff = Math.Abs(indexInOtherSector - savedIndexInOtherSector);
+                                            currentSector.RemoveRange(currentSector.Count - diff, diff);
+                                            indexInOtherSector = savedIndexInOtherSector;
+                                            otherSectorDirection = -otherSectorDirection;
+                                        }
+                                        else
+                                        {
+                                            followSectorLine = false;
+                                            backPrev = theRightWay[foundIndex - 1];
+                                        }
                                     }
                                 }
 
