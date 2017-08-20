@@ -83,6 +83,9 @@ namespace TheWitnessPuzzles
                 eliminatedParts.Clear();
                 foreach (int index in kcomb)
                     eliminatedParts.Add(errorsList[index].Source);
+                // Also include eliminators itself
+                foreach (var elim in eliminationBlocks)
+                    eliminatedParts.Add(elim);
 
                 // Re-check for errors
                 eliminatedErrorsList = CheckErrors();

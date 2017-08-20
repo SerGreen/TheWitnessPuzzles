@@ -47,6 +47,10 @@ namespace TWP_Shared
             int PointToNodeId(Point point) => point.Y * width + point.X;
 
             List<int> solution = points.Append(currentPos).Select(x => PointToNodeId((x - puzzleZeroPoint).Divide(nodePadding))).ToList();
+            // Crunch-fix ¯\_(ツ)_/¯
+            if (solution.Count > 1 && solution[solution.Count - 1] == solution[solution.Count - 2])
+                solution.RemoveAt(solution.Count - 1);
+
             for (int i = solution.Count - 2; i >= 0; i--)
             {
                 int curID = solution[i];

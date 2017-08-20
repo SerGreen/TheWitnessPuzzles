@@ -55,6 +55,7 @@ namespace TWP_Shared
         RenderTarget2D backgroundTexture;
         RenderTarget2D linesFadeTexture;
         RenderTarget2D errorsBlinkTexture;
+        RenderTarget2D eliminatedErrorsTexture;
 
         Point puzzleDimensions;
         Rectangle puzzleConfig;
@@ -309,10 +310,11 @@ namespace TWP_Shared
             for (int i = 0; i < 3; i++)
                 texTriangle[i] = Content.Load<Texture2D>($"img/twp_triangle{i + 1}");
 
-            // Fullscreen textures for 1. background, 2. fading solution lines and 3. red blinking rules with error highlighting
+            // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
             backgroundTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
             linesFadeTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
+            eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
 
             // Draw static parts of panel onto the texture
             RenderBackgroundTexture();
@@ -420,7 +422,7 @@ namespace TWP_Shared
         {
             Point? tap = GetTapPosition();
             if (tap.HasValue)
-                if (line == null)
+                if (line == null || panelState.State.HasFlag(PanelStates.Solved))
                 {
                     foreach (Rectangle startPoint in startPoints)
                         if (startPoint.Contains(tap.Value))
@@ -446,41 +448,87 @@ namespace TWP_Shared
                 }
                 else
                 {
-                    // TODO code for submitting solution for error checking
-
-                    bool errorsPresent = false;
+                    // Check if line head is in the end point
                     foreach (var endPoint in endPoints)
                         if (endPoint.IntercetionPercent(line.Head) > 0.4f)
                         {
+                            // Place line head rignt in the end, nice and tight
                             Point headOffset = endPoint.Rectangle.Location - line.Head.Location;
                             MoveLine(headOffset.ToVector2());
 
+                            // Retrieve Solution from the line and check for errors
                             List<Error> errors = null;
                             List<int> solution = line.GetSolution(panel.Width, puzzleConfig.Location, nodePadding);
                             if (panel.SetSolution(solution))
                                 errors = panel.CheckForErrors();
 
-                            if (errors.Count > 0)
-                            {
-                                errorsPresent = true;
-                                RenderErrorsToTexture(errors.Where(x => x.IsEliminated == false));
-                            }
-                            else
-                                panelState.SetSuccess();
+                            // Split errors into true errors and the ones, that are eliminated by respective rules
+                            var trueErrors = errors.Where(x => x.IsEliminated == false).ToList();
+                            var eliminatedErrors = errors.Where(x => x.IsEliminated == true).ToList();
 
-                            break;
+                            // If there are eliminated errors, initialize elimination process
+                            if (eliminatedErrors.Count() > 0)
+                            {
+                                // Draw all errors in red as for now
+                                RenderErrorsToTexture(errors, false);
+
+                                // Begin black line fade out as if there was an error
+                                RenderLinesToTexture();
+                                panelState.InvokeFadeOut(true);
+                                // And start elimination timer
+                                panelState.InitializeElimination();
+
+                                // This event will be executed a few seconds later, after elimination is complete
+                                Action handler = null;
+                                handler = () =>
+                                {
+                                    // Re-draw true errors in red and eliminated errors separately
+                                    RenderErrorsToTexture(trueErrors, false);
+                                    RenderErrorsToTexture(eliminatedErrors, true);
+
+                                    // If there are no true errors, then panel is solved
+                                    if (trueErrors.Count() == 0)
+                                    {
+                                        // Setting success will stop lines fading process, but retain eliminated errors intact
+                                        panelState.SetSuccess();
+                                    }
+                                    else
+                                    {
+                                        // If there are true errors => delete the lines
+                                        // They will continue to fade out and errors will continue to blink
+                                        line = lineMirror = null;
+                                    }
+
+                                    // Don't forget to unsubscribe ffs!
+                                    panelState.EliminationFinished -= handler;
+                                };
+                                panelState.EliminationFinished += handler;
+                            }
+                            // If there are no eliminated errors, everything happens instantly
+                            else
+                            {
+                                // If there are no true errors, then panel is solved
+                                if (trueErrors.Count() == 0)
+                                {
+                                    panelState.SetSuccess();
+                                }
+                                else
+                                {
+                                    // If there are true errors => start fading process and delete the lines
+                                    RenderLinesToTexture();
+                                    panelState.InvokeFadeOut(true);
+                                    line = lineMirror = null;
+                                }
+                            }
+
+                            return;
                         }
 
-                    if (panelState.State == PanelStates.Solved)
-                    {
-                        // TODO play sound and do win logic
-                    }
-                    else
-                    {
-                        panelState.InvokeFadeOut(errorsPresent);
-                        RenderLinesToTexture();
-                        line = lineMirror = null;
-                    }
+                    // If we looked through every endpoint and line head is not in any of them
+                    // Then simply delete lines and fade them out without errors
+                    RenderLinesToTexture();
+                    panelState.InvokeFadeOut(false);
+                    line = lineMirror = null;
                 }
         }
 
@@ -525,11 +573,14 @@ namespace TWP_Shared
             spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
             DrawLines(spriteBatch);
                         
-            if (panelState.IsFading && linesFadeTexture != null)
-                spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State == PanelStates.Error ? Color.Black : Color.White) * panelState.FadeOpacity);
+            if (panelState.State.HasFlag(PanelStates.LineFade) && linesFadeTexture != null)
+                spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State.HasFlag(PanelStates.ErrorHappened) ? Color.Black : Color.White) * panelState.LineFadeOpacity);
 
-            if (panelState.State == PanelStates.Error && errorsBlinkTexture != null)
-                spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.Red * panelState.BlinkOpacity);
+            if (panelState.State.HasFlag(PanelStates.ErrorBlink) && errorsBlinkTexture != null)
+                spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.BlinkOpacity);
+
+            if (panelState.State.HasFlag(PanelStates.EliminationFinished) && eliminatedErrorsTexture != null)
+                spriteBatch.Draw(eliminatedErrorsTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.EliminationFadeOpacity);
 
             if (drawDebug)
                 DebugDrawNodeIDs();
@@ -627,49 +678,51 @@ namespace TWP_Shared
         {
             var allBlocks = panel.Blocks;
 
-            DrawMarkedNodes(panel.Nodes, false);
-            DrawMarkedEdges(panel.Edges, false);
-            DrawColoredSquares(allBlocks, false);
-            DrawSuns(allBlocks, false);
-            DrawEliminations(allBlocks, false);
-            DrawTriangles(allBlocks, false);
+            DrawMarkedNodes(panel.Nodes);
+            DrawMarkedEdges(panel.Edges);
+            DrawColoredSquares(allBlocks);
+            DrawSuns(allBlocks);
+            DrawEliminations(allBlocks);
+            DrawTriangles(allBlocks);
         }
 
-        private void RenderErrorsToTexture(IEnumerable<Error> errors)
+        private void RenderErrorsToTexture(IEnumerable<Error> errors, bool isEliminated)
         {
             var nodes = errors.Select(x => x.Source).OfType<Node>();
             var edges = errors.Select(x => x.Source).OfType<Edge>();
             var blocks = errors.Select(x => x.Source).OfType<Block>();
 
             // Set the render target
-            GraphicsDevice.SetRenderTarget(errorsBlinkTexture);
+            GraphicsDevice.SetRenderTarget(isEliminated ? eliminatedErrorsTexture : errorsBlinkTexture);
 
             // Draw rules onto the texture
             GraphicsDevice.Clear(Color.Transparent);
             spriteBatch.Begin(SpriteSortMode.Texture);
 
-            DrawMarkedNodes(nodes, true);
-            DrawMarkedEdges(edges, true);
-            DrawColoredSquares(blocks, true);
-            DrawSuns(blocks, true);
-            DrawEliminations(blocks, true);
-            DrawTriangles(blocks, true);
+            Color fillColor = isEliminated ? Color.Gray * 0.7f : Color.Red;
+
+            DrawMarkedNodes(nodes, fillColor);
+            DrawMarkedEdges(edges, fillColor);
+            DrawColoredSquares(blocks, fillColor);
+            DrawSuns(blocks, fillColor);
+            DrawEliminations(blocks, fillColor);
+            DrawTriangles(blocks, fillColor);
 
             spriteBatch.End();
             // Drop the render target
             GraphicsDevice.SetRenderTarget(null);
         }
 
-        private void DrawMarkedNodes(IEnumerable<Node> allNodes, bool isError)
+        private void DrawMarkedNodes(IEnumerable<Node> allNodes, Color? fillColor = null)
         {
             var markedNodes = allNodes.Where(x => x.State == NodeState.Marked);
             foreach (var node in markedNodes)
             {
                 Point position = NodeIdToPoint(node.Id).Multiply(nodePadding) + puzzleConfig.Location;
-                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), isError ? Color.Red : node.Color ?? Color.Black);
+                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), fillColor ?? node.Color ?? Color.Black);
             }
         }
-        private void DrawMarkedEdges(IEnumerable<Edge> allEdges, bool isError)
+        private void DrawMarkedEdges(IEnumerable<Edge> allEdges, Color? fillColor = null)
         {
             var markedEdges = allEdges.Where(x => x.State == EdgeState.Marked);
             foreach (var edge in markedEdges)
@@ -677,46 +730,46 @@ namespace TWP_Shared
                 Point pA = NodeIdToPoint(edge.NodeA.Id).Multiply(nodePadding);
                 Point pB = NodeIdToPoint(edge.NodeB.Id).Multiply(nodePadding);
                 Point position = (pA + pB).Divide(2) + puzzleConfig.Location;
-                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), isError ? Color.Red : edge.Color ?? Color.Black);
+                spriteBatch.Draw(texHexagon, new Rectangle(position, lineWidthPoint), fillColor ?? edge.Color ?? Color.Black);
             }
         }
 
         private Point BlockPositionToOnScreenLocation(int x, int y) => new Point(puzzleConfig.X + x * nodePadding + lineWidth, puzzleConfig.Y + y * nodePadding + lineWidth);
 
-        private void DrawColoredSquares(IEnumerable<Block> allBlocks, bool isError)
+        private void DrawColoredSquares(IEnumerable<Block> allBlocks, Color? fillColor = null)
         {
             var squareRuleBlocks = allBlocks.Where(x => x.Rule is ColoredSquareRule);
             foreach (var block in squareRuleBlocks)
             {
                 Color color = (block.Rule as ColoredSquareRule).Color.Value;
-                spriteBatch.Draw(texSquare, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : color);
+                spriteBatch.Draw(texSquare, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), fillColor ?? color);
             }
         }
-        private void DrawSuns(IEnumerable<Block> allBlocks, bool isError)
+        private void DrawSuns(IEnumerable<Block> allBlocks, Color? fillColor = null)
         {
             var sunRuleBlocks = allBlocks.Where(x => x.Rule is SunPairRule);
             foreach (var block in sunRuleBlocks)
             {
                 Color color = (block.Rule as SunPairRule).Color.Value;
-                spriteBatch.Draw(texSun, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : color);
+                spriteBatch.Draw(texSun, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), fillColor ?? color);
             }
         }
-        private void DrawEliminations(IEnumerable<Block> allBlocks, bool isError)
+        private void DrawEliminations(IEnumerable<Block> allBlocks, Color? fillColor = null)
         {
             var eliminationRuleBlocks = allBlocks.Where(x => x.Rule is EliminationRule);
             foreach (var block in eliminationRuleBlocks)
             {
                 Color color = (block.Rule as EliminationRule).Color ?? Color.White;
-                spriteBatch.Draw(texElimination, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : color);
+                spriteBatch.Draw(texElimination, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), fillColor ?? color);
             }
         }
-        private void DrawTriangles(IEnumerable<Block> allBlocks, bool isError)
+        private void DrawTriangles(IEnumerable<Block> allBlocks, Color? fillColor = null)
         {
             var triangleRuleBlocks = allBlocks.Where(x => x.Rule is TriangleRule);
             foreach (var block in triangleRuleBlocks)
             {
                 int texIndex = (block.Rule as TriangleRule).Power - 1;
-                spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), isError ? Color.Red : Color.Gold);
+                spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), blockSizePoint), fillColor ?? Color.Gold);
             }
         }
 
