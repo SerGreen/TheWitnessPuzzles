@@ -57,9 +57,11 @@ namespace TWP_Shared
                     State &= ~PanelStates.LineFade;
             }
 
-            if(errorBlinkTime > 0)
+            if(errorBlinkTime > 0 || (errorBlinkTime == 0 && BlinkOpacity > 0))
             {
-                errorBlinkTime--;
+                if (errorBlinkTime > 0)
+                    errorBlinkTime--;
+
                 if (blinkOpacityDown)
                 {
                     BlinkOpacity = Math.Max(0, BlinkOpacity - blinkSpeed);
@@ -73,7 +75,7 @@ namespace TWP_Shared
                         blinkOpacityDown = true;
                 }
 
-                if (errorBlinkTime == 0 && BlinkOpacity == 1f)
+                if (errorBlinkTime == 0)
                     State &= ~PanelStates.ErrorBlink;
             }
 
@@ -95,6 +97,8 @@ namespace TWP_Shared
                 State |= PanelStates.ErrorHappened | PanelStates.ErrorBlink | PanelStates.LineFade;
                 fadeOutTime = fadeOutErrorMaxTime;
                 errorBlinkTime = errorBlinkMaxTime;
+                BlinkOpacity = 1f;
+                blinkOpacityDown = true;
             }
             else
             {
@@ -105,9 +109,10 @@ namespace TWP_Shared
 
         public void SetSuccess()
         {
-            var tempState = PanelStates.Solved | (State & (PanelStates.EliminationFinished | PanelStates.EliminationStarted));
-            ResetToNeutral();
-            State = tempState;
+            fadeOutTime = 0;
+            errorBlinkTime = 0;
+            blinkOpacityDown = true;
+            State = PanelStates.Solved | (State & (PanelStates.EliminationFinished | PanelStates.EliminationStarted));
         }
 
         public void ResetToNeutral()

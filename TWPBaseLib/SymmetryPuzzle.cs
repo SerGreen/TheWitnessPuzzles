@@ -39,14 +39,15 @@ namespace TheWitnessPuzzles
             }
         }
 
-        public Node GetMirrorNode(Node node)
+        public Node GetMirrorNode(Node node) => GetMirrorNode(node.Id);
+        public Node GetMirrorNode(int nodeId)
         {
             if (Y_Mirrored)
                 // Both axes mirroring
-                return Nodes.First(n => n.Id == MaxNodeID - node.Id);
+                return Nodes.First(n => n.Id == MaxNodeID - nodeId);
             else
                 // Only X-axis mirroring
-                return Nodes.First(n => n.Id == (node.Id / WidthPlus1 * WidthPlus1) * 2 + Width - node.Id);
+                return Nodes.First(n => n.Id == (nodeId / WidthPlus1 * WidthPlus1) * 2 + Width - nodeId);
         }
 
         public override IEnumerable<Node> SolutionNodes => MainSolutionNodes.Concat(MirrorSolutionNodes);

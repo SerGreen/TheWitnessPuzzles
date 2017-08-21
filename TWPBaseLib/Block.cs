@@ -24,7 +24,8 @@ namespace TheWitnessPuzzles
             get => _rule;
             set
             {
-                value.OwnerBlock = this;
+                if (value != null)
+                    value.OwnerBlock = this;
                 _rule = value;
             }
         }

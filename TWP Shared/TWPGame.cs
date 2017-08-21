@@ -17,6 +17,7 @@ namespace TWP_Shared
     public class TWPGame : Game
     {
         protected bool drawDebug = false;
+        Rectangle btnRandom;
 
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
@@ -38,7 +39,6 @@ namespace TWP_Shared
 
         List<Rectangle> startPoints = new List<Rectangle>();
         List<EndPoint> endPoints = new List<EndPoint>();
-
         List<Rectangle> walls = new List<Rectangle>();
 
         SpriteFont fntDebug = null;
@@ -104,7 +104,6 @@ namespace TWP_Shared
 
             this.isMobile = isMobile;
             this.panel = panel;
-            puzzleDimensions = new Point(panel.Width, panel.Height);
             
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
@@ -120,14 +119,23 @@ namespace TWP_Shared
                 IsMouseVisible = true;
 
             //graphics.IsFullScreen = true;
-            //graphics.PreferredBackBufferWidth = 320;
-            //graphics.PreferredBackBufferHeight = 480;
-            
+            graphics.PreferredBackBufferWidth = 320;
+            graphics.PreferredBackBufferHeight = 480;
+
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
+
+            btnRandom = new Rectangle((int)(graphics.PreferredBackBufferWidth *0.05f), (int) (graphics.PreferredBackBufferHeight * 0.05f), (int) (graphics.PreferredBackBufferWidth * 0.2f), (int) (graphics.PreferredBackBufferWidth * 0.2f));
         }
 
         private void InitPanel()
         {
+            puzzleDimensions = new Point(panel.Width, panel.Height);
+            walls.Clear();
+            startPoints.Clear();
+            endPoints.Clear();
+            line = lineMirror = null;
+            panelState.ResetToNeutral();
+
             // Calculation of puzzle sizes for current screen size
             int width = GraphicsDevice.Viewport.Width;
             int height = GraphicsDevice.Viewport.Height;
@@ -175,10 +183,12 @@ namespace TWP_Shared
                 walls.Add(new Rectangle(middle, new Point(lineWidth)));
             }
 
-
             // Creating hitboxes for starting nodes
             foreach (Point start in GetStartNodes())
                 startPoints.Add(new Rectangle(xMargin + start.X * nodePadding - lineWidth, yMargin + start.Y * nodePadding - lineWidth, lineWidth * 3, lineWidth * 3));
+
+            // Draw static parts of panel onto the texture
+            RenderBackgroundTexture();
 
             #region === Inner methods region ===
             // Returns a coef k: Total free space in pixels * k = puzzle size in pixels
@@ -288,10 +298,7 @@ namespace TWP_Shared
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-
-            // InitPanel is in LoadContent() because GraphicsDevice is not created yet in Initialize() on Android
-            InitPanel();
-
+            
             fntDebug = Content.Load<SpriteFont>("font/fnt_debug");
 
             // One pixel sized white texture, used to draw rectangles of any size
@@ -315,8 +322,8 @@ namespace TWP_Shared
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
 
-            // Draw static parts of panel onto the texture
-            RenderBackgroundTexture();
+            // InitPanel is in LoadContent() because GraphicsDevice is not created yet in Initialize() on Android
+            InitPanel();
         }
 
         /// <summary>
@@ -421,6 +428,13 @@ namespace TWP_Shared
         {
             Point? tap = GetTapPosition();
             if (tap.HasValue)
+            {
+                if(btnRandom.Contains(tap.Value))
+                {
+                    panel = PanelGenerator.GeneratePanel();
+                    InitPanel();
+                }
+
                 if (line == null || panelState.State.HasFlag(PanelStates.Solved))
                 {
                     foreach (Rectangle startPoint in startPoints)
@@ -515,6 +529,7 @@ namespace TWP_Shared
                                 {
                                     // If there are true errors => start fading process and delete the lines
                                     RenderLinesToTexture();
+                                    RenderErrorsToTexture(errors, false);
                                     panelState.InvokeFadeOut(true);
                                     line = lineMirror = null;
                                 }
@@ -529,6 +544,7 @@ namespace TWP_Shared
                     panelState.InvokeFadeOut(false);
                     line = lineMirror = null;
                 }
+            }
         }
 
         private Point RectifyLinePosition(Point pos)
@@ -584,6 +600,8 @@ namespace TWP_Shared
 
             if (drawDebug)
                 DebugDrawNodeIDs();
+
+            spriteBatch.Draw(texPixel, btnRandom, Color.Red * 0.5f);
 
             spriteBatch.End();
             base.Draw(gameTime);
