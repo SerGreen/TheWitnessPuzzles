@@ -145,18 +145,6 @@
 /processorParam:TextureFormat=Color
 /build:img/twp_ending_left.png
 
-#begin img/icon_random.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=False
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:img/icon_random.png
-
 #begin img/twp_pixel.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -169,10 +157,17 @@
 /processorParam:TextureFormat=Color
 /build:img/twp_pixel.png
 
-#begin font/fnt_constantia.spritefont
+#begin font/fnt_constantia12.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
 /processorParam:PremultiplyAlpha=True
 /processorParam:TextureFormat=Compressed
-/build:font/fnt_constantia.spritefont
+/build:font/fnt_constantia12.spritefont
+
+#begin font/fnt_constantia36.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:font/fnt_constantia36.spritefont
 

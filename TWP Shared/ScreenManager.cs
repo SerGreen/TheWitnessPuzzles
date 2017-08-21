@@ -18,6 +18,7 @@ namespace TWP_Shared
         Stack<GameScreen> screenStack = new Stack<GameScreen>();
         public GameScreen CurrentScreen { get; private set; }
         Dictionary<string, Texture2D> TextureProvider = new Dictionary<string, Texture2D>();
+        Dictionary<string, SpriteFont> FontProvider = new Dictionary<string, SpriteFont>();
         readonly static string[] texturesToLoad = 
         {
             "img/twp_pixel",
@@ -31,22 +32,44 @@ namespace TWP_Shared
             "img/twp_elimination",
             "img/twp_triangle1..3"
         };
+        readonly static string[] fontsToLoad =
+        {
+            "font/fnt_constantia12",
+            "font/fnt_constantia36"
+        };
         System.Text.RegularExpressions.Regex texIsMultiple = new System.Text.RegularExpressions.Regex(@"\d+\.\.\d+");
         System.Text.RegularExpressions.Regex texMultipleGetName = new System.Text.RegularExpressions.Regex(@".+(?=\d+\.\.)");
 
-        public void AddScreen(GameScreen screen)
+        FadeTransition transitionAnimation = new FadeTransition(15, 20, 10);
+        Texture2D texPixel;
+
+        public void AddScreen(GameScreen screen, bool replaceCurrent = false, bool doFadeAnimation = false)
         {
-            screenStack.Push(screen);
-            CurrentScreen = screen;
-            CurrentScreen.LoadContent(TextureProvider);
+            if (doFadeAnimation)
+            {
+                Action callback = null;
+                callback = () =>
+                {
+                    _addScreen(screen, replaceCurrent);
+                    transitionAnimation.FadeOutComplete -= callback;
+                };
+                transitionAnimation.FadeOutComplete += callback;
+                transitionAnimation.Restart();
+            }
+            else
+                _addScreen(screen, replaceCurrent);
         }
 
-        public void ReplaceScreen(GameScreen screen)
+        private void _addScreen(GameScreen screen, bool replaceCurrent)
         {
-            screenStack.Pop();
+            if (replaceCurrent)
+                screenStack.Pop();
             screenStack.Push(screen);
             CurrentScreen = screen;
-            CurrentScreen.LoadContent(TextureProvider);
+            CurrentScreen.LoadContent(TextureProvider, FontProvider);
+
+            if (screen is PanelGameScreen pgs)
+                pgs.LoadNewPanel(PanelGenerator.GeneratePanel());
         }
 
         public void Initialize(GraphicsDevice device)
@@ -56,7 +79,7 @@ namespace TWP_Shared
         public void LoadContent(ContentManager contentManager)
         {
             Content = contentManager;
-            
+
             // Load all textures from the list
             foreach (string texName in texturesToLoad)
             {
@@ -71,13 +94,27 @@ namespace TWP_Shared
                         TextureProvider.Add(name + i, Content.Load<Texture2D>(name + i));
                 }
             }
+            texPixel = TextureProvider["img/twp_pixel"];
+
+            // Load all fonts from the list
+            foreach (string fontName in fontsToLoad)
+                FontProvider.Add(fontName, Content.Load<SpriteFont>(fontName));
         }
         public void Update(GameTime gameTime)
         {
             CurrentScreen?.Update(gameTime);
+            transitionAnimation.Update();
+
+            if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Enter) || 
+                (CurrentScreen is SplashGameScreen && InputManager.GetTapPosition() != null))
+                AddScreen(new PanelGameScreen(ScreenSize, Device), true, true);
         }
-        public void Draw(SpriteBatch spriteBatch) {
+        public void Draw(SpriteBatch spriteBatch)
+        {
             CurrentScreen?.Draw(spriteBatch);
+
+            if (transitionAnimation.IsActive)
+                spriteBatch.Draw(texPixel, new Rectangle(Point.Zero, ScreenSize), Color.Black * transitionAnimation.Opacity);
         }
     }
 }

@@ -285,8 +285,7 @@ namespace TheWitnessPuzzles
                                                 otherSectorIndex = j;
                                                 // If the next node in other sector line is the one not on border, then we are going to move forward
                                                 // Otherwise we should move along other sector line backwards
-                                                int indexForwardDirection = (indexInOtherSector + 1) % sectorLines[j].Count;
-                                                otherSectorDirection = sectorLines[j][indexForwardDirection].Edges.Count > 3 ? 1 : -1;
+                                                otherSectorDirection = (indexInOtherSector < sectorLines[j].Count - 1 && sectorLines[j][indexInOtherSector + 1].Edges.Count > 3) ? 1 : -1;
 
                                                 break;
                                             }

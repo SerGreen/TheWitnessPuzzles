@@ -41,9 +41,9 @@ namespace TWP_Shared
         RenderTarget2D errorsBlinkTexture;
         RenderTarget2D eliminatedErrorsTexture;
 
-        Point puzzleDimensions;     // Size of puzzle in blocks
-        Rectangle puzzleConfig;     // Location on screen and size of puzzle in pixels
-        int lineWidth;              // Width of the solution linie in pixels
+        Point puzzleDimensions;     // Size of the puzzle in blocks
+        Rectangle puzzleConfig;     // Location on screen and size of the puzzle in pixels
+        int lineWidth;              // Width of the solution line in pixels
         Point lineWidthPoint;       // Point with both X and Y set to the lineWith
         Point halfLineWidthPoint;   // Point with both X and Y set to the lineWidth / 2
         int blockWidth;             // Size of the block in pixels
@@ -52,9 +52,8 @@ namespace TWP_Shared
 
         public PanelGameScreen(Point screenSize, GraphicsDevice device) : base(screenSize, device) { }
 
-        public override void LoadContent(Dictionary<string, Texture2D> TextureProvider)
+        public override void LoadContent(Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider)
         {
-            // One pixel sized white texture, used to draw rectangles of any size
             texPixel = TextureProvider["img/twp_pixel"];
             texCircle = TextureProvider["img/twp_circle"];
             texCorner = TextureProvider["img/twp_corner"];
@@ -74,7 +73,9 @@ namespace TWP_Shared
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
 
-            base.LoadContent(TextureProvider);
+            fntDebug = FontProvider["font/fnt_constantia12"];
+
+            base.LoadContent(TextureProvider, FontProvider);
         }
         public void LoadNewPanel(Puzzle panel)
         {
@@ -247,6 +248,9 @@ namespace TWP_Shared
             HandleScreenTap();
             MoveLine(GetMoveVector());
             panelState.Update();
+
+            if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
+                drawDebug = !drawDebug;
 
             base.Update(gameTime);
         }
@@ -458,8 +462,8 @@ namespace TWP_Shared
             if (panelState.State.HasFlag(PanelStates.EliminationFinished) && eliminatedErrorsTexture != null)
                 spriteBatch.Draw(eliminatedErrorsTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.EliminationFadeOpacity);
 
-            //if (drawDebug)
-            //    DebugDrawNodeIDs();
+            if (drawDebug)
+                DebugDrawNodeIDs(spriteBatch);
 
             //spriteBatch.Draw(texPixel, btnRandom, Color.Red * 0.5f);
             

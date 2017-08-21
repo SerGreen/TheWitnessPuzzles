@@ -74,23 +74,25 @@ namespace TWP_Shared
         protected override void Initialize()
         {
             ScreenManager.Instance.Initialize(GraphicsDevice);
-            ScreenManager.Instance.ScreenSize = new Point(graphics.GraphicsDevice.Viewport.Width, graphics.GraphicsDevice.Viewport.Height);
-
-            graphics.PreferredBackBufferWidth = ScreenManager.Instance.ScreenSize.X;
-            graphics.PreferredBackBufferHeight = ScreenManager.Instance.ScreenSize.Y;
 
             if (isMobile)
             {
-                graphics.IsFullScreen = true;    
+                graphics.IsFullScreen = true;
+                graphics.PreferredBackBufferWidth = ScreenManager.Instance.ScreenSize.X;
+                graphics.PreferredBackBufferHeight = ScreenManager.Instance.ScreenSize.Y;
                 graphics.SupportedOrientations = DisplayOrientation.Portrait;
                 TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
             }
             else
             {
                 IsMouseVisible = true;
+                graphics.PreferredBackBufferWidth = 320;
+                graphics.PreferredBackBufferHeight = 480;
             }
+
             graphics.ApplyChanges();
-            
+            ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
+
             base.Initialize();
         }
 
@@ -109,7 +111,7 @@ namespace TWP_Shared
 
         protected virtual void InitializeAfterContentIsLoaded()
         {
-            ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenManager.Instance.ScreenSize, GraphicsDevice));
+            ScreenManager.Instance.AddScreen(new SplashGameScreen(ScreenManager.Instance.ScreenSize, GraphicsDevice));
 
             if (ScreenManager.Instance.CurrentScreen is PanelGameScreen panelScreen)
                 panelScreen.LoadNewPanel(CreateTestPanel());

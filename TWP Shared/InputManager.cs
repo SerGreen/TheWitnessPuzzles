@@ -69,5 +69,10 @@ namespace TWP_Shared
 
             return result;
         }
+
+        /// <summary>
+        /// Returns True if key has just been pressed down. If not pressed or being holded => False
+        /// </summary>
+        public static bool IsKeyPressed(Keys key) => prevKB.IsKeyUp(key) && Keyboard.GetState().IsKeyDown(key);
     }
 }

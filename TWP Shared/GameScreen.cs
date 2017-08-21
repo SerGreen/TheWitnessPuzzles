@@ -20,7 +20,7 @@ namespace TWP_Shared
         }
 
         public virtual void Initialize() { }
-        public virtual void LoadContent(Dictionary<string, Texture2D> TextureProvider) { }
+        public virtual void LoadContent(Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider) { }
         public virtual void Update(GameTime gameTime) { }
         public virtual void Draw(SpriteBatch spriteBatch) { }
     }
