@@ -11,7 +11,7 @@ namespace TWP_Shared
         protected Rectangle hitbox;
         Texture2D textureUp, textureDown;
         protected bool isPressedDown;
-        protected readonly int timeDownMax = 10;
+        protected readonly int timeDownMax = 15;
         protected int timeDown;
 
         public event Action Click;

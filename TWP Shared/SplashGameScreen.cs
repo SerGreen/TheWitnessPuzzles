@@ -21,7 +21,7 @@ namespace TWP_Shared
         FadeInAnimation fadeIn;
         Rectangle menuBounds;
         int menuButtonHeight;
-        TextTouchButton btnStart;
+        List<TextTouchButton> buttons = new List<TextTouchButton>();
 
         RenderTarget2D backgroundTexture;
 
@@ -41,17 +41,14 @@ namespace TWP_Shared
             };
             currentSymbol = texSymbols[rnd.Next(texSymbols.Count)];
             fadeOut = new FadeOutAnimation(60, 150);
-            Action callback = null;
-            callback = () => {
+            Action fadeOutCallback = null;
+            fadeOutCallback = () => {
                 currentSymbol = null;
-                btnStart = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, 0), new Point(menuBounds.Width, menuButtonHeight)), font, "Start", texPixel);
-                btnStart.Click += () => {
-                    ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
-                };
+                SpawnButtons();
                 fadeIn.Restart();
-                fadeOut.FadeComplete -= callback;
+                fadeOut.FadeComplete -= fadeOutCallback;
             };
-            fadeOut.FadeComplete += callback;
+            fadeOut.FadeComplete += fadeOutCallback;
             fadeOut.Restart();
             
             backgroundTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
@@ -63,11 +60,29 @@ namespace TWP_Shared
             base.LoadContent(TextureProvider, FontProvider);
         }
 
+        private void SpawnButtons()
+        {
+            TextTouchButton btnStart = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, 0), new Point(menuBounds.Width, menuButtonHeight)), font, "Start", texPixel);
+            btnStart.Click += () => {
+                ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
+            };
+
+            TextTouchButton btnEditor = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight)), font, "Editor", texPixel);
+            btnEditor.Click += () => {
+                //ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
+            };
+
+            buttons.Add(btnStart);
+            buttons.Add(btnEditor);
+        }
+
         public override void Update(GameTime gameTime)
         {
             fadeOut.Update();
             fadeIn.Update();
-            btnStart?.Update(InputManager.GetTapPosition());
+            foreach (var btn in buttons)
+                btn.Update(InputManager.GetTapPosition());
+
             base.Update(gameTime);
         }
 
@@ -78,7 +93,8 @@ namespace TWP_Shared
             if(currentSymbol != null)
                 spriteBatch.Draw(currentSymbol, symbolPosition, null, Color.White * fadeOut.Opacity, 0, currentSymbol.Bounds.Center.ToVector2(), symbolScale, SpriteEffects.None, 0);
 
-            btnStart?.Draw(spriteBatch, fadeIn.Opacity);
+            foreach (var btn in buttons)
+                btn.Draw(spriteBatch, fadeIn.Opacity);
 
             base.Draw(spriteBatch);
         }
