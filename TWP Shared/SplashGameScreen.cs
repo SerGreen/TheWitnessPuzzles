@@ -9,7 +9,19 @@ namespace TWP_Shared
     public class SplashGameScreen : GameScreen
     {
         SpriteFont font = null;
-        Texture2D texHexagon = null;
+
+        Random rnd = new Random();
+        List<Texture2D> texSymbols;
+        Texture2D currentSymbol;
+        FadeOutAnimation fadeOut;
+        Vector2 symbolPosition;
+        float symbolScale;
+
+        Texture2D texPixel;
+        FadeInAnimation fadeIn;
+        Rectangle menuBounds;
+        int menuButtonHeight;
+        TextTouchButton btnStart;
 
         RenderTarget2D backgroundTexture;
 
@@ -17,18 +29,57 @@ namespace TWP_Shared
 
         public override void LoadContent(Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider)
         {
-            texHexagon = TextureProvider["img/twp_hexagon"];
             font = FontProvider["font/fnt_constantia36"];
 
+            texSymbols = new List<Texture2D>()
+            {
+                TextureProvider["img/twp_hexagon"],
+                TextureProvider["img/twp_square"],
+                //TextureProvider["img/twp_triangle1"],
+                TextureProvider["img/twp_elimination"],
+                TextureProvider["img/twp_sun"]
+            };
+            currentSymbol = texSymbols[rnd.Next(texSymbols.Count)];
+            fadeOut = new FadeOutAnimation(60, 150);
+            Action callback = null;
+            callback = () => {
+                currentSymbol = null;
+                btnStart = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, 0), new Point(menuBounds.Width, menuButtonHeight)), font, "Start", texPixel);
+                btnStart.Click += () => {
+                    ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
+                };
+                fadeIn.Restart();
+                fadeOut.FadeComplete -= callback;
+            };
+            fadeOut.FadeComplete += callback;
+            fadeOut.Restart();
+            
             backgroundTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
             RenderBackgroundToTexture();
 
+            texPixel = TextureProvider["img/twp_pixel"];
+            fadeIn = new FadeInAnimation(60);
+
             base.LoadContent(TextureProvider, FontProvider);
+        }
+
+        public override void Update(GameTime gameTime)
+        {
+            fadeOut.Update();
+            fadeIn.Update();
+            btnStart?.Update(InputManager.GetTapPosition());
+            base.Update(gameTime);
         }
 
         public override void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(backgroundTexture, Vector2.Zero, Color.White);
+
+            if(currentSymbol != null)
+                spriteBatch.Draw(currentSymbol, symbolPosition, null, Color.White * fadeOut.Opacity, 0, currentSymbol.Bounds.Center.ToVector2(), symbolScale, SpriteEffects.None, 0);
+
+            btnStart?.Draw(spriteBatch, fadeIn.Opacity);
+
             base.Draw(spriteBatch);
         }
 
@@ -60,10 +111,15 @@ namespace TWP_Shared
                 spriteBatch.DrawString(font, firstLine, firstLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
                 spriteBatch.DrawString(font, secondLine, secondLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
 
-                Vector2 symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
-                float symbolScale = (minScreenSize * 0.25f) / texHexagon.Width;
+                symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
+                symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
 
-                spriteBatch.Draw(texHexagon, symbolPosition, null, Color.White, 0, texHexagon.Bounds.Center.ToVector2(), symbolScale, SpriteEffects.None, 0);
+                //spriteBatch.Draw(currentSymbol, symbolPosition, null, Color.White, 0, currentSymbol.Bounds.Center.ToVector2(), symbolScale, SpriteEffects.None, 0);
+
+                float menuWidth = ScreenSize.X * 0.8f;
+                float menuHeight = secondLinePosition.Y + secondLineSize.Y * 2;
+                menuButtonHeight = (int) (firstLineSize.Y * 0.8f);
+                menuBounds = new Rectangle((int) (ScreenSize.X - menuWidth) / 2, (int) menuHeight, (int) menuWidth, (int) (ScreenSize.Y - menuHeight));
 
                 spriteBatch.End();
                 // Drop the render target

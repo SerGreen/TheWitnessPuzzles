@@ -105,8 +105,7 @@ namespace TWP_Shared
             CurrentScreen?.Update(gameTime);
             transitionAnimation.Update();
 
-            if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Enter) || 
-                (CurrentScreen is SplashGameScreen && InputManager.GetTapPosition() != null))
+            if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Enter))
                 AddScreen(new PanelGameScreen(ScreenSize, Device), true, true);
         }
         public void Draw(SpriteBatch spriteBatch)

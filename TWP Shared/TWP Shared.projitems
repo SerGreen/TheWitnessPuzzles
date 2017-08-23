@@ -11,6 +11,8 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)EndPoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FadeInAnimation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FadeOutAnimation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FadeTransition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InputManager.cs" />
@@ -20,6 +22,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)ScreenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SplashGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TextTouchButton.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)TouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TWPGame.cs" />
   </ItemGroup>
   <ItemGroup>
