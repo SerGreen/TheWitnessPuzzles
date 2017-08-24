@@ -8,28 +8,29 @@ using System.Text;
 namespace TWP_Shared
 {
     public enum Sound { StartTracing, AbortTracing, Failure, Success, PotentialFailure, FinishTracing, AbortFinishTracing, EliminatorApply, MenuEnter, MenuEscape }
-    public enum SoundLoop { PathComplete, ScintStartPoint, ScintEndPoint }
+    public enum SoundLoop { Tracing, PathComplete, ScintStartPoint, ScintEndPoint }
 
     public static class SoundManager
     {
-        private static SoundEffect sfxStartTracing, sfxAbortTracing, sfxFailure, sfxSuccess, sfxPotentialFailure, sfxFinishTracing, sfxAbortFinishTracing, sfxEliminator, sfxMenuEnter, sfxMenuEscape, sfxPathComplete, sfxScintStart, sfxScintEnd;
-        private static SoundEffectInstance sfxPathCompleteInst, sfxScintStartInst, sfxScintEndInst;
+        private static SoundEffect sfxStartTracing, sfxAbortTracing, sfxFailure, sfxSuccess, sfxPotentialFailure, sfxFinishTracing, sfxAbortFinishTracing, sfxEliminator, sfxMenuEnter, sfxMenuEscape, sfxPathComplete, sfxScintStart, sfxScintEnd, sfxTracing;
+        private static SoundEffectInstance sfxPathCompleteInst, sfxScintStartInst, sfxScintEndInst, sfxTracingInst;
 
         private static readonly Dictionary<Enum, float> defaultVolumes = new Dictionary<Enum, float>()
         {
-            { Sound.StartTracing,           0.4f },
-            { Sound.AbortTracing,           0.4f },
-            { Sound.Failure,                0.5f },
-            { Sound.Success,                0.7f },
-            { Sound.PotentialFailure,       0.7f },
-            { Sound.FinishTracing,          0.8f },
-            { Sound.AbortFinishTracing,     0.9f },
-            { Sound.EliminatorApply,        1f },
+            { Sound.StartTracing,           0.25f },
+            { Sound.AbortTracing,           0.3f },
+            { Sound.Failure,                0.2f },
+            { Sound.Success,                0.4f },
+            { Sound.PotentialFailure,       0.4f },
+            { Sound.FinishTracing,          0.2f },
+            { Sound.AbortFinishTracing,     0.2f },
+            { Sound.EliminatorApply,        0.8f },
             { Sound.MenuEnter,              0.4f },
             { Sound.MenuEscape,             0.4f },
-            { SoundLoop.PathComplete,       1f },
+            { SoundLoop.PathComplete,       0.06f },
             { SoundLoop.ScintStartPoint,    1f },
-            { SoundLoop.ScintEndPoint,      1f }
+            { SoundLoop.ScintEndPoint,      1f },
+            { SoundLoop.Tracing,            0.04f }
         };
 
         public static bool Mute = false;
@@ -55,6 +56,7 @@ namespace TWP_Shared
             sfxPathComplete = Content.Load<SoundEffect>("sfx/panel_path_complete");
             sfxScintStart = Content.Load<SoundEffect>("sfx/panel_scint_startpoint");
             sfxScintEnd = Content.Load<SoundEffect>("sfx/panel_scint_endpoint");
+            sfxTracing = Content.Load<SoundEffect>("sfx/panel_tracing");
 
             sfxPathCompleteInst = sfxPathComplete.CreateInstance();
             sfxPathCompleteInst.IsLooped = true;
@@ -62,6 +64,8 @@ namespace TWP_Shared
             sfxScintStartInst.IsLooped = true;
             sfxScintEndInst = sfxScintEnd.CreateInstance();
             sfxScintEndInst.IsLooped = true;
+            sfxTracingInst = sfxTracing.CreateInstance();
+            sfxTracingInst.IsLooped = true;
         }
 
         public static void PlayOnce(Sound sound, float volume = 1f)
@@ -108,6 +112,10 @@ namespace TWP_Shared
                         sfxScintEndInst.Volume = volumeTweak * volume * MasterVolume;
                         sfxScintEndInst.Play();
                         break;
+                    case SoundLoop.Tracing:
+                        sfxTracingInst.Volume = volumeTweak * volume * MasterVolume;
+                        sfxTracingInst.Play();
+                        break;
                 }
             }
         }
@@ -128,6 +136,10 @@ namespace TWP_Shared
                     if (sfxScintEndInst.State == SoundState.Playing)
                         sfxScintEndInst.Stop();
                     break;
+                case SoundLoop.Tracing:
+                    if (sfxTracingInst.State == SoundState.Playing)
+                        sfxTracingInst.Stop();
+                    break;
             }
         }
 
@@ -147,6 +159,10 @@ namespace TWP_Shared
                 case SoundLoop.ScintEndPoint:
                     if (sfxScintEndInst.State == SoundState.Playing)
                         sfxScintEndInst.Volume = volumeTweak * volume * MasterVolume;
+                    break;
+                case SoundLoop.Tracing:
+                    if (sfxTracingInst.State == SoundState.Playing)
+                        sfxTracingInst.Volume = volumeTweak * volume * MasterVolume;
                     break;
             }
         }

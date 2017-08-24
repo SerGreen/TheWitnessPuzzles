@@ -249,3 +249,9 @@
 /processorParam:Quality=Best
 /build:sfx/menu_enter.ogg
 
+#begin sfx/panel_tracing.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/panel_tracing.ogg
+

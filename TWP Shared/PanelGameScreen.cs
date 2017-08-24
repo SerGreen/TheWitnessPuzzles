@@ -74,16 +74,20 @@ namespace TWP_Shared
             MoveLine(GetMoveVector());
             panelState.Update();
 
+            // If line touched end point => Produce sound
             bool lineAtEndpoint = IsLineAtEndPoint();
             if (lineAtEndpoint && !panelState.State.HasFlag(PanelStates.FinishTracing))
             {
                 panelState.SetFinishTracing(true);
                 SoundManager.PlayOnce(Sound.FinishTracing);
+                SoundManager.PlayLoop(SoundLoop.PathComplete);
             }
+            // If line left end point => Produce another sound
             else if(!lineAtEndpoint && panelState.State.HasFlag(PanelStates.FinishTracing) && !(panelState.State.HasFlag(PanelStates.Solved) || panelState.State.HasFlag(PanelStates.ErrorHappened)))
             {
                 panelState.SetFinishTracing(false);
                 SoundManager.PlayOnce(Sound.AbortFinishTracing);
+                SoundManager.StopLoop(SoundLoop.PathComplete);
             }
 
             if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
@@ -107,6 +111,7 @@ namespace TWP_Shared
                         {
                             panelState.ResetToNeutral();
                             SoundManager.PlayOnce(Sound.StartTracing);
+                            SoundManager.PlayLoop(SoundLoop.Tracing);
                             line = new SolutionLine(startPoint.Center - (new Point(renderer.LineWidth / 2)), renderer.LineWidth, startPoint);
                             if (panel is SymmetryPuzzle symPanel)
                                 if (symPanel.Y_Mirrored)
@@ -127,6 +132,9 @@ namespace TWP_Shared
                 }
                 else
                 {
+                    SoundManager.StopLoop(SoundLoop.Tracing);
+                    SoundManager.StopLoop(SoundLoop.PathComplete);
+
                     // Check if line head is in the end point
                     foreach (var endPoint in endPoints)
                         if (endPoint.IntercetionPercent(line.Head) > 0.4f)
