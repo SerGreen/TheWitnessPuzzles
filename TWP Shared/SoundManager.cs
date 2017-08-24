@@ -17,13 +17,13 @@ namespace TWP_Shared
 
         private static readonly Dictionary<Enum, float> defaultVolumes = new Dictionary<Enum, float>()
         {
-            { Sound.StartTracing,           1f },
-            { Sound.AbortTracing,           1f },
-            { Sound.Failure,                1f },
-            { Sound.Success,                1f },
-            { Sound.PotentialFailure,       1f },
-            { Sound.FinishTracing,          1f },
-            { Sound.AbortFinishTracing,     1f },
+            { Sound.StartTracing,           0.4f },
+            { Sound.AbortTracing,           0.4f },
+            { Sound.Failure,                0.5f },
+            { Sound.Success,                0.7f },
+            { Sound.PotentialFailure,       0.7f },
+            { Sound.FinishTracing,          0.8f },
+            { Sound.AbortFinishTracing,     0.9f },
             { Sound.EliminatorApply,        1f },
             { Sound.MenuEnter,              0.4f },
             { Sound.MenuEscape,             0.4f },

@@ -39,7 +39,8 @@ namespace TWP_Shared
                 TextureProvider["img/twp_sun"]
             };
             currentSymbol = texSymbols[rnd.Next(texSymbols.Count)];
-            fadeOut = new FadeOutAnimation(60, 150);
+            //fadeOut = new FadeOutAnimation(60, 150);
+            fadeOut = new FadeOutAnimation(60, 20);
             Action fadeOutCallback = null;
             fadeOutCallback = () => {
                 currentSymbol = null;

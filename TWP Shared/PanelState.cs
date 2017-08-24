@@ -13,7 +13,8 @@ namespace TWP_Shared
         ErrorBlink = 4,
         LineFade = 8,
         EliminationStarted = 16,
-        EliminationFinished = 32
+        EliminationFinished = 32,
+        FinishTracing = 64
     }
 
     class PanelState
@@ -112,7 +113,7 @@ namespace TWP_Shared
             fadeOutTime = 0;
             errorBlinkTime = 0;
             blinkOpacityDown = true;
-            State = PanelStates.Solved | (State & (PanelStates.EliminationFinished | PanelStates.EliminationStarted));
+            State = PanelStates.Solved | (State & (PanelStates.EliminationFinished | PanelStates.EliminationStarted | PanelStates.FinishTracing));
         }
 
         public void ResetToNeutral()
@@ -135,6 +136,14 @@ namespace TWP_Shared
         {
             State |= PanelStates.EliminationFinished;
             eliminationFadeTime = 0;
+        }
+
+        public void SetFinishTracing(bool state)
+        {
+            if (state)
+                State |= PanelStates.FinishTracing;
+            else
+                State &= ~PanelStates.FinishTracing;
         }
     }
 }

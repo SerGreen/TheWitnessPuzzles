@@ -74,6 +74,18 @@ namespace TWP_Shared
             MoveLine(GetMoveVector());
             panelState.Update();
 
+            bool lineAtEndpoint = IsLineAtEndPoint();
+            if (lineAtEndpoint && !panelState.State.HasFlag(PanelStates.FinishTracing))
+            {
+                panelState.SetFinishTracing(true);
+                SoundManager.PlayOnce(Sound.FinishTracing);
+            }
+            else if(!lineAtEndpoint && panelState.State.HasFlag(PanelStates.FinishTracing) && !(panelState.State.HasFlag(PanelStates.Solved) || panelState.State.HasFlag(PanelStates.ErrorHappened)))
+            {
+                panelState.SetFinishTracing(false);
+                SoundManager.PlayOnce(Sound.AbortFinishTracing);
+            }
+
             if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
                 drawDebug = !drawDebug;
 
@@ -88,12 +100,13 @@ namespace TWP_Shared
                 //if (btnRandom.Contains(tap.Value))
                 //    LoadNewPanel(PanelGenerator.GeneratePanel());
 
-                if (line == null || panelState.State.HasFlag(PanelStates.Solved))
+                if (line == null || panelState.State.HasFlag(PanelStates.Solved) || panelState.State.HasFlag(PanelStates.EliminationStarted))
                 {
                     foreach (Rectangle startPoint in startPoints)
                         if (startPoint.Contains(tap.Value))
                         {
                             panelState.ResetToNeutral();
+                            SoundManager.PlayOnce(Sound.StartTracing);
                             line = new SolutionLine(startPoint.Center - (new Point(renderer.LineWidth / 2)), renderer.LineWidth, startPoint);
                             if (panel is SymmetryPuzzle symPanel)
                                 if (symPanel.Y_Mirrored)
@@ -135,6 +148,7 @@ namespace TWP_Shared
                             // If there are eliminated errors, initialize elimination process
                             if (eliminatedErrors.Count() > 0)
                             {
+                                SoundManager.PlayOnce(Sound.PotentialFailure);
                                 // Draw all errors in red as for now
                                 renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
 
@@ -148,6 +162,7 @@ namespace TWP_Shared
                                 Action handler = null;
                                 handler = () =>
                                 {
+                                    SoundManager.PlayOnce(Sound.EliminatorApply);
                                     // Re-draw true errors in red and eliminated errors separately
                                     renderer.RenderErrorsToTexture(errorsBlinkTexture, trueErrors, false);
                                     renderer.RenderErrorsToTexture(eliminatedErrorsTexture, eliminatedErrors, true);
@@ -157,12 +172,14 @@ namespace TWP_Shared
                                     {
                                         // Setting success will stop lines fading process, but retain eliminated errors intact
                                         panelState.SetSuccess();
+                                        SoundManager.PlayOnce(Sound.Success);
                                     }
                                     else
                                     {
                                         // If there are true errors => delete the lines
                                         // They will continue to fade out and errors will continue to blink
                                         line = lineMirror = null;
+                                        SoundManager.PlayOnce(Sound.Failure);
                                     }
 
                                     // Don't forget to unsubscribe ffs!
@@ -177,6 +194,7 @@ namespace TWP_Shared
                                 if (trueErrors.Count() == 0)
                                 {
                                     panelState.SetSuccess();
+                                    SoundManager.PlayOnce(Sound.Success);
                                 }
                                 else
                                 {
@@ -185,6 +203,7 @@ namespace TWP_Shared
                                     renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
                                     panelState.InvokeFadeOut(true);
                                     line = lineMirror = null;
+                                    SoundManager.PlayOnce(Sound.Failure);
                                 }
                             }
 
@@ -196,12 +215,13 @@ namespace TWP_Shared
                     RenderLinesToTexture();
                     panelState.InvokeFadeOut(false);
                     line = lineMirror = null;
+                    SoundManager.PlayOnce(Sound.AbortTracing);
                 }
             }
         }
         private void MoveLine(Vector2 moveVector)   
         {
-            if (line != null)
+            if (line != null && !panelState.State.HasFlag(PanelStates.EliminationStarted))
             {
                 if (moveVector != Vector2.Zero)
                 {
@@ -271,6 +291,7 @@ namespace TWP_Shared
         }
         private Point? GetTapPosition() => InputManager.GetTapPosition();
         private Vector2 GetMoveVector() => InputManager.GetDragVector();
+        private bool IsLineAtEndPoint() => line != null ? endPoints.Any(x => x.IntercetionPercent(line.Head) > 0.4f) : false;
 
         #region ===== RENDER REGION =====
         public override void Draw(SpriteBatch spriteBatch)
