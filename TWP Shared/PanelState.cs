@@ -27,7 +27,7 @@ namespace TWP_Shared
         public float LineFadeOpacity => fadeOutTime / (State.HasFlag(PanelStates.ErrorHappened) ? fadeOutErrorMaxTime : fadeOutNeutralMaxTime);
         public bool IsFading => fadeOutTime > 0;
 
-        const int errorBlinkMaxTime = 600;
+        const int errorBlinkMaxTime = 800;
         int errorBlinkTime = 0;
         public float BlinkOpacity { get; private set; } = 1f;
         float blinkSpeed = 0.1f;

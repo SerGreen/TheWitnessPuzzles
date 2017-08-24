@@ -15,9 +15,9 @@ namespace TWP_Shared
 
         GraphicsDevice GraphicsDevice;
 
-        Color backgroundColor = Color.CornflowerBlue;
-        Color wallColor = Color.DarkSlateGray;
-        Color borderColor = Color.DimGray;
+        public Color BackgroundColor { get; set; } = Color.CornflowerBlue;
+        public Color WallColor { get; set; } = Color.DarkSlateGray;
+        public Color BorderColor { get; set; } = Color.DimGray;
 
         Puzzle panel = null;
         Point screenSize;
@@ -75,7 +75,7 @@ namespace TWP_Shared
         }
         public bool SetPanel(Puzzle newPanel)
         {
-            if(!panel.Equals(newPanel))
+            if(panel == null || !panel.Equals(newPanel))
             {
                 Walls.Clear();
                 StartPoints.Clear();
@@ -87,148 +87,153 @@ namespace TWP_Shared
             return false;
         }
 
-        private void InitializePanel()
+        private bool InitializePanel()
         {
-            PuzzleDimensions = new Point(panel.Width, panel.Height);
-
-            // Calculation of puzzle sizes for current screen size
-            int width = screenSize.X;
-            int height = screenSize.Y;
-
-            int maxPuzzleDimension = Math.Max(PuzzleDimensions.X, PuzzleDimensions.Y);
-
-            int screenMinSize = Math.Min(width, height);
-            int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
-            LineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
-            BlockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
-            HalfLineWidthPoint = new Point(LineWidth / 2);
-            LineWidthPoint = new Point(LineWidth);
-            BlockSizePoint = new Point(BlockWidth);
-
-            int endAppendixLength = (int) (BlockWidth * endPointLegth);
-
-            int puzzleWidth = LineWidth * (PuzzleDimensions.X + 1) + BlockWidth * PuzzleDimensions.X;
-            int puzzleHeight = LineWidth * (PuzzleDimensions.Y + 1) + BlockWidth * PuzzleDimensions.Y;
-
-            int xMargin = (width - puzzleWidth) / 2;
-            int yMargin = (height - puzzleHeight) / 2;
-            Point margins = new Point(xMargin, yMargin);
-
-            PuzzleConfig = new Rectangle(xMargin, yMargin, puzzleWidth, puzzleHeight);
-
-            NodePadding = LineWidth + BlockWidth;
-
-            // Creating walls hitboxes
-            CreateHorizontalWalls(false);   // Top walls
-            CreateHorizontalWalls(true);    // Bottom walls
-            CreateVerticalWalls(false);     // Left walls
-            CreateVerticalWalls(true);      // Right walls
-
-            for (int i = 0; i < PuzzleDimensions.X; i++)
-                for (int j = 0; j < PuzzleDimensions.Y; j++)
-                    Walls.Add(new Rectangle(xMargin + LineWidth * (i + 1) + BlockWidth * i, yMargin + LineWidth * (j + 1) + BlockWidth * j, BlockWidth, BlockWidth));
-
-            // Creating walls for broken edges
-            var brokenEdges = panel.Edges.Where(x => x.State == EdgeState.Broken);
-            foreach (Edge edge in brokenEdges)
+            if (panel != null)
             {
-                Point nodeA = NodeIdToPoint(edge.Id % 100).Multiply(NodePadding) + margins;
-                Point nodeB = NodeIdToPoint(edge.Id / 100).Multiply(NodePadding) + margins;
-                Point middle = (nodeA + nodeB).Divide(2);
-                Walls.Add(new Rectangle(middle, new Point(LineWidth)));
-            }
+                PuzzleDimensions = new Point(panel.Width, panel.Height);
 
-            // Creating hitboxes for starting nodes
-            foreach (Point start in GetStartNodes())
-                StartPoints.Add(new Rectangle(xMargin + start.X * NodePadding - LineWidth, yMargin + start.Y * NodePadding - LineWidth, LineWidth * 3, LineWidth * 3));
-            
-            #region === Inner methods region ===
-            // Returns a coef k: Total free space in pixels * k = puzzle size in pixels
-            float PuzzleSpaceRatio(float puzzleDimension) => (float) (-0.0005 * Math.Pow(puzzleDimension, 4) + 0.0082 * Math.Pow(puzzleDimension, 3) - 0.0439 * Math.Pow(puzzleDimension, 2) + 0.1011 * puzzleDimension + 0.6875);
-            // Returns a coef k: Puzzle size in pixels * k = block size in pixels
-            float BlockSizeRatio(float puzzleDimension) => (float) (0.8563 * Math.Pow(puzzleDimension, -1.134));
-            // Returns a coef k: Puzzle size in pixels * k = line width in pixels
-            float LineSizeRatio(float puzzleDimension) => -0.0064f * puzzleDimension + 0.0859f;
+                // Calculation of puzzle sizes for current screen size
+                int width = screenSize.X;
+                int height = screenSize.Y;
 
-            IEnumerable<Point> GetStartNodes() => panel.Nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
-            IEnumerable<Point> GetEndNodesTop()
-            {
-                for (int i = 1; i < panel.Width; i++)
-                    if (panel.Nodes[i].State == NodeState.Exit)
-                        yield return new Point(i, 0);
-            }
-            IEnumerable<Point> GetEndNodesBot()
-            {
-                for (int i = 1; i < panel.Width; i++)
+                int maxPuzzleDimension = Math.Max(PuzzleDimensions.X, PuzzleDimensions.Y);
+
+                int screenMinSize = Math.Min(width, height);
+                int puzzleMaxSize = (int) (screenMinSize * PuzzleSpaceRatio(maxPuzzleDimension));
+                LineWidth = (int) (puzzleMaxSize * LineSizeRatio(maxPuzzleDimension));
+                BlockWidth = (int) (puzzleMaxSize * BlockSizeRatio(maxPuzzleDimension));
+                HalfLineWidthPoint = new Point(LineWidth / 2);
+                LineWidthPoint = new Point(LineWidth);
+                BlockSizePoint = new Point(BlockWidth);
+
+                int endAppendixLength = (int) (BlockWidth * endPointLegth);
+
+                int puzzleWidth = LineWidth * (PuzzleDimensions.X + 1) + BlockWidth * PuzzleDimensions.X;
+                int puzzleHeight = LineWidth * (PuzzleDimensions.Y + 1) + BlockWidth * PuzzleDimensions.Y;
+
+                int xMargin = (width - puzzleWidth) / 2;
+                int yMargin = (height - puzzleHeight) / 2;
+                Point margins = new Point(xMargin, yMargin);
+
+                PuzzleConfig = new Rectangle(xMargin, yMargin, puzzleWidth, puzzleHeight);
+
+                NodePadding = LineWidth + BlockWidth;
+
+                // Creating walls hitboxes
+                CreateHorizontalWalls(false);   // Top walls
+                CreateHorizontalWalls(true);    // Bottom walls
+                CreateVerticalWalls(false);     // Left walls
+                CreateVerticalWalls(true);      // Right walls
+
+                for (int i = 0; i < PuzzleDimensions.X; i++)
+                    for (int j = 0; j < PuzzleDimensions.Y; j++)
+                        Walls.Add(new Rectangle(xMargin + LineWidth * (i + 1) + BlockWidth * i, yMargin + LineWidth * (j + 1) + BlockWidth * j, BlockWidth, BlockWidth));
+
+                // Creating walls for broken edges
+                var brokenEdges = panel.Edges.Where(x => x.State == EdgeState.Broken);
+                foreach (Edge edge in brokenEdges)
                 {
-                    int index = panel.Height * (panel.Width + 1) + i;
-                    if (panel.Nodes[index].State == NodeState.Exit)
-                        yield return new Point(i, panel.Height);
+                    Point nodeA = NodeIdToPoint(edge.Id % 100).Multiply(NodePadding) + margins;
+                    Point nodeB = NodeIdToPoint(edge.Id / 100).Multiply(NodePadding) + margins;
+                    Point middle = (nodeA + nodeB).Divide(2);
+                    Walls.Add(new Rectangle(middle, new Point(LineWidth)));
                 }
-            }
-            IEnumerable<Point> GetEndNodesLeft()
-            {
-                for (int j = 0; j < panel.Height + 1; j++)
-                {
-                    int index = j * (panel.Width + 1);
-                    if (panel.Nodes[index].State == NodeState.Exit)
-                        yield return new Point(0, j);
-                }
-            }
-            IEnumerable<Point> GetEndNodesRight()
-            {
-                for (int j = 0; j < panel.Height + 1; j++)
-                {
-                    int index = j * (panel.Width + 1) + panel.Width;
-                    if (panel.Nodes[index].State == NodeState.Exit)
-                        yield return new Point(panel.Width, j);
-                }
-            }
-            void CreateHorizontalWalls(bool isBottom)
-            {
-                int yStartPoint = isBottom ? yMargin + puzzleHeight : 0;
-                var ends = isBottom ? GetEndNodesBot() : GetEndNodesTop();
 
-                if (ends.Count() == 0)
-                    Walls.Add(new Rectangle(0, yStartPoint, width, yMargin));
-                else
-                {
-                    Walls.Add(new Rectangle(0, yStartPoint + (isBottom ? endAppendixLength : 0), width, yMargin - endAppendixLength));
+                // Creating hitboxes for starting nodes
+                foreach (Point start in GetStartNodes())
+                    StartPoints.Add(new Rectangle(xMargin + start.X * NodePadding - LineWidth, yMargin + start.Y * NodePadding - LineWidth, LineWidth * 3, LineWidth * 3));
 
-                    int lastXPoint = 0;
-                    foreach (Point endPoint in ends)
+                #region === Inner methods region ===
+                // Returns a coef k: Total free space in pixels * k = puzzle size in pixels
+                float PuzzleSpaceRatio(float puzzleDimension) => (float) (-0.0005 * Math.Pow(puzzleDimension, 4) + 0.0082 * Math.Pow(puzzleDimension, 3) - 0.0439 * Math.Pow(puzzleDimension, 2) + 0.1011 * puzzleDimension + 0.6875);
+                // Returns a coef k: Puzzle size in pixels * k = block size in pixels
+                float BlockSizeRatio(float puzzleDimension) => (float) (0.8563 * Math.Pow(puzzleDimension, -1.134));
+                // Returns a coef k: Puzzle size in pixels * k = line width in pixels
+                float LineSizeRatio(float puzzleDimension) => -0.0064f * puzzleDimension + 0.0859f;
+
+                IEnumerable<Point> GetStartNodes() => panel.Nodes.Where(x => x.State == NodeState.Start).Select(x => NodeIdToPoint(x.Id));
+                IEnumerable<Point> GetEndNodesTop()
+                {
+                    for (int i = 1; i < panel.Width; i++)
+                        if (panel.Nodes[i].State == NodeState.Exit)
+                            yield return new Point(i, 0);
+                }
+                IEnumerable<Point> GetEndNodesBot()
+                {
+                    for (int i = 1; i < panel.Width; i++)
                     {
-                        int x = xMargin + endPoint.X * (NodePadding);
-                        Walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), x - lastXPoint, endAppendixLength));
-                        EndPoints.Add(new EndPoint(new Rectangle(x, isBottom ? yStartPoint + endAppendixLength - LineWidth : (yMargin - endAppendixLength), LineWidth, LineWidth), isBottom ? Facing.Down : Facing.Up));
-                        lastXPoint = x + LineWidth;
+                        int index = panel.Height * (panel.Width + 1) + i;
+                        if (panel.Nodes[index].State == NodeState.Exit)
+                            yield return new Point(i, panel.Height);
                     }
-                    Walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), width - lastXPoint, endAppendixLength));
                 }
-            }
-            void CreateVerticalWalls(bool isRight)
-            {
-                int xStartPoint = isRight ? xMargin + puzzleWidth : 0;
-                var ends = isRight ? GetEndNodesRight() : GetEndNodesLeft();
-
-                if (ends.Count() == 0)
-                    Walls.Add(new Rectangle(xStartPoint, 0, xMargin, height));
-                else
+                IEnumerable<Point> GetEndNodesLeft()
                 {
-                    Walls.Add(new Rectangle(xStartPoint + (isRight ? endAppendixLength : 0), 0, xMargin - endAppendixLength, height));
-
-                    int lastYPoint = 0;
-                    foreach (Point endPoint in ends)
+                    for (int j = 0; j < panel.Height + 1; j++)
                     {
-                        int y = yMargin + endPoint.Y * (NodePadding);
-                        Walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, y - lastYPoint));
-                        EndPoints.Add(new EndPoint(new Rectangle(isRight ? xStartPoint + endAppendixLength - LineWidth : xMargin - endAppendixLength, y, LineWidth, LineWidth), isRight ? Facing.Right : Facing.Left));
-                        lastYPoint = y + LineWidth;
+                        int index = j * (panel.Width + 1);
+                        if (panel.Nodes[index].State == NodeState.Exit)
+                            yield return new Point(0, j);
                     }
-                    Walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, height - lastYPoint));
                 }
+                IEnumerable<Point> GetEndNodesRight()
+                {
+                    for (int j = 0; j < panel.Height + 1; j++)
+                    {
+                        int index = j * (panel.Width + 1) + panel.Width;
+                        if (panel.Nodes[index].State == NodeState.Exit)
+                            yield return new Point(panel.Width, j);
+                    }
+                }
+                void CreateHorizontalWalls(bool isBottom)
+                {
+                    int yStartPoint = isBottom ? yMargin + puzzleHeight : 0;
+                    var ends = isBottom ? GetEndNodesBot() : GetEndNodesTop();
+
+                    if (ends.Count() == 0)
+                        Walls.Add(new Rectangle(0, yStartPoint, width, yMargin));
+                    else
+                    {
+                        Walls.Add(new Rectangle(0, yStartPoint + (isBottom ? endAppendixLength : 0), width, yMargin - endAppendixLength));
+
+                        int lastXPoint = 0;
+                        foreach (Point endPoint in ends)
+                        {
+                            int x = xMargin + endPoint.X * (NodePadding);
+                            Walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), x - lastXPoint, endAppendixLength));
+                            EndPoints.Add(new EndPoint(new Rectangle(x, isBottom ? yStartPoint + endAppendixLength - LineWidth : (yMargin - endAppendixLength), LineWidth, LineWidth), isBottom ? Facing.Down : Facing.Up));
+                            lastXPoint = x + LineWidth;
+                        }
+                        Walls.Add(new Rectangle(lastXPoint, isBottom ? yStartPoint : (yMargin - endAppendixLength), width - lastXPoint, endAppendixLength));
+                    }
+                }
+                void CreateVerticalWalls(bool isRight)
+                {
+                    int xStartPoint = isRight ? xMargin + puzzleWidth : 0;
+                    var ends = isRight ? GetEndNodesRight() : GetEndNodesLeft();
+
+                    if (ends.Count() == 0)
+                        Walls.Add(new Rectangle(xStartPoint, 0, xMargin, height));
+                    else
+                    {
+                        Walls.Add(new Rectangle(xStartPoint + (isRight ? endAppendixLength : 0), 0, xMargin - endAppendixLength, height));
+
+                        int lastYPoint = 0;
+                        foreach (Point endPoint in ends)
+                        {
+                            int y = yMargin + endPoint.Y * (NodePadding);
+                            Walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, y - lastYPoint));
+                            EndPoints.Add(new EndPoint(new Rectangle(isRight ? xStartPoint + endAppendixLength - LineWidth : xMargin - endAppendixLength, y, LineWidth, LineWidth), isRight ? Facing.Right : Facing.Left));
+                            lastYPoint = y + LineWidth;
+                        }
+                        Walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, height - lastYPoint));
+                    }
+                }
+                #endregion 
+                return true;
             }
-            #endregion
+            return false;
         }
         private Point NodeIdToPoint(int nodeId)
         {
@@ -244,21 +249,21 @@ namespace TWP_Shared
                 // Set the render target
                 GraphicsDevice.SetRenderTarget(canvas);
 
-                GraphicsDevice.Clear(backgroundColor);
+                GraphicsDevice.Clear(BackgroundColor);
                 spriteBatch.Begin(SpriteSortMode.Deferred);
 
                 foreach (var wall in Walls)
-                    spriteBatch.Draw(texPixel, wall, wallColor);
+                    spriteBatch.Draw(texPixel, wall, WallColor);
 
                 DrawRoundedCorners(spriteBatch);
 
                 foreach (var end in EndPoints)
-                    end.Draw(spriteBatch, wallColor, texEndPoint);
+                    end.Draw(spriteBatch, WallColor, texEndPoint);
 
                 foreach (var start in StartPoints)
                 {
                     float scale = (float) start.Width / texCircle.Width;
-                    spriteBatch.Draw(texCircle, start.Center.ToVector2(), null, backgroundColor, 0, texCircle.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
+                    spriteBatch.Draw(texCircle, start.Center.ToVector2(), null, BackgroundColor, 0, texCircle.Bounds.Center.ToVector2(), scale, SpriteEffects.None, 0);
                 }
 
                 DrawAllRules(spriteBatch);
@@ -302,21 +307,21 @@ namespace TWP_Shared
         private void DrawRoundedCorners(SpriteBatch spriteBatch)
         {
             if (panel.TopLeftNode.State != NodeState.Exit)
-                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location, LineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.None, 0);
+                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location, LineWidthPoint), null, WallColor, 0, Vector2.Zero, SpriteEffects.None, 0);
             if (panel.TopRightNode.State != NodeState.Exit)
-                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location + new Point(PuzzleConfig.Width - LineWidth, 0), LineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.FlipHorizontally, 0);
+                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location + new Point(PuzzleConfig.Width - LineWidth, 0), LineWidthPoint), null, WallColor, 0, Vector2.Zero, SpriteEffects.FlipHorizontally, 0);
             if (panel.BottomLeftNode.State != NodeState.Exit)
-                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location + new Point(0, PuzzleConfig.Height - LineWidth), LineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.FlipVertically, 0);
+                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location + new Point(0, PuzzleConfig.Height - LineWidth), LineWidthPoint), null, WallColor, 0, Vector2.Zero, SpriteEffects.FlipVertically, 0);
             if (panel.BottomRightNode.State != NodeState.Exit)
-                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location + PuzzleConfig.Size - LineWidthPoint, LineWidthPoint), null, wallColor, 0, Vector2.Zero, SpriteEffects.FlipHorizontally | SpriteEffects.FlipVertically, 0);
+                spriteBatch.Draw(texCorner, new Rectangle(PuzzleConfig.Location + PuzzleConfig.Size - LineWidthPoint, LineWidthPoint), null, WallColor, 0, Vector2.Zero, SpriteEffects.FlipHorizontally | SpriteEffects.FlipVertically, 0);
         }
         private void DrawBorders(SpriteBatch spriteBatch)
         {
             int borderWidth = (int) (Math.Min(screenSize.X, screenSize.Y) * bordersWidth);
-            spriteBatch.Draw(texPixel, new Rectangle(0, 0, screenSize.X, borderWidth), borderColor);
-            spriteBatch.Draw(texPixel, new Rectangle(0, 0, borderWidth, screenSize.Y), borderColor);
-            spriteBatch.Draw(texPixel, new Rectangle(screenSize.X - borderWidth, 0, borderWidth, screenSize.Y), borderColor);
-            spriteBatch.Draw(texPixel, new Rectangle(0, screenSize.Y - borderWidth, screenSize.X, borderWidth), borderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(0, 0, screenSize.X, borderWidth), BorderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(0, 0, borderWidth, screenSize.Y), BorderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(screenSize.X - borderWidth, 0, borderWidth, screenSize.Y), BorderColor);
+            spriteBatch.Draw(texPixel, new Rectangle(0, screenSize.Y - borderWidth, screenSize.X, borderWidth), BorderColor);
         }
         private void DrawAllRules(SpriteBatch sb)
         {

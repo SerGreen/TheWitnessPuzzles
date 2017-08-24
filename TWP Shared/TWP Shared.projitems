@@ -9,6 +9,7 @@
     <Import_RootNamespace>TWP_Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)EditorGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EndPoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)FadeInAnimation.cs" />

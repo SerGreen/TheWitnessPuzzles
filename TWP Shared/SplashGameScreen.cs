@@ -68,7 +68,7 @@ namespace TWP_Shared
 
             TextTouchButton btnEditor = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight)), font, "Editor", texPixel);
             btnEditor.Click += () => {
-                //ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
+                ScreenManager.Instance.AddScreen<EditorGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 

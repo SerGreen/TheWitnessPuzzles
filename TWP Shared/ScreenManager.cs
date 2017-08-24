@@ -75,6 +75,15 @@ namespace TWP_Shared
             CurrentScreen = screen;
         }
 
+        public void GoBack()
+        {
+            if(screenStack.Count > 1)
+            {
+                screenStack.Pop();
+                CurrentScreen = screenStack.Peek();
+            }
+        }
+
         public void Initialize(GraphicsDevice device)
         {
             Device = device;

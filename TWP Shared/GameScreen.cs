@@ -22,8 +22,7 @@ namespace TWP_Shared
             TextureProvider = textureProvider;
             FontProvider = fontProvider;
         }
-
-        public virtual void Initialize() { }
+        
         public virtual void Update(GameTime gameTime) { }
         public virtual void Draw(SpriteBatch spriteBatch) { }
     }

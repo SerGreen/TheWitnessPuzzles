@@ -26,7 +26,7 @@ namespace TWP_Shared
             { Sound.AbortFinishTracing,     0.2f },
             { Sound.EliminatorApply,        0.8f },
             { Sound.MenuEnter,              0.4f },
-            { Sound.MenuEscape,             0.4f },
+            { Sound.MenuEscape,             1f },
             { SoundLoop.PathComplete,       0.06f },
             { SoundLoop.ScintStartPoint,    1f },
             { SoundLoop.ScintEndPoint,      1f },
