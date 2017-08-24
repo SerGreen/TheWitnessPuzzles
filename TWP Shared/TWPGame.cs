@@ -105,16 +105,14 @@ namespace TWP_Shared
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
             ScreenManager.Instance.LoadContent(Content);
+            SoundManager.LoadContent(Content);
 
             InitializeAfterContentIsLoaded();
         }
 
         protected virtual void InitializeAfterContentIsLoaded()
         {
-            ScreenManager.Instance.AddScreen(new SplashGameScreen(ScreenManager.Instance.ScreenSize, GraphicsDevice));
-
-            if (ScreenManager.Instance.CurrentScreen is PanelGameScreen panelScreen)
-                panelScreen.LoadNewPanel(CreateTestPanel());
+            ScreenManager.Instance.AddScreen<SplashGameScreen>();
         }
 
         /// <summary>
@@ -132,6 +130,9 @@ namespace TWP_Shared
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+
+            if (InputManager.IsKeyPressed(Keys.Enter))
+                ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, PanelGenerator.GeneratePanel());
 
             ScreenManager.Instance.Update(gameTime);
             InputManager.Update();

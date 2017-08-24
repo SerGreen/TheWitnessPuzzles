@@ -25,9 +25,8 @@ namespace TWP_Shared
 
         RenderTarget2D backgroundTexture;
 
-        public SplashGameScreen(Point screenSize, GraphicsDevice device) : base(screenSize, device) { }
-
-        public override void LoadContent(Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider)
+        public SplashGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider) 
+            : base(screenSize, device, TextureProvider, FontProvider)
         {
             font = FontProvider["font/fnt_constantia36"];
 
@@ -56,20 +55,20 @@ namespace TWP_Shared
 
             texPixel = TextureProvider["img/twp_pixel"];
             fadeIn = new FadeInAnimation(60);
-
-            base.LoadContent(TextureProvider, FontProvider);
         }
 
         private void SpawnButtons()
         {
             TextTouchButton btnStart = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, 0), new Point(menuBounds.Width, menuButtonHeight)), font, "Start", texPixel);
             btnStart.Click += () => {
-                ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
+                ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, PanelGenerator.GeneratePanel());
+                SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
             TextTouchButton btnEditor = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight)), font, "Editor", texPixel);
             btnEditor.Click += () => {
                 //ScreenManager.Instance.AddScreen(new PanelGameScreen(ScreenSize, GraphicsDevice), false, true);
+                SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
             buttons.Add(btnStart);

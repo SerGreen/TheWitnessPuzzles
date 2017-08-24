@@ -173,79 +173,79 @@
 
 #begin sfx/eliminator_apply.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/eliminator_apply.ogg
 
 #begin sfx/panel_abort_finish_tracing.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_abort_finish_tracing.ogg
 
 #begin sfx/panel_abort_tracing.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_abort_tracing.ogg
 
 #begin sfx/panel_failure.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_failure.ogg
 
 #begin sfx/panel_finish_tracing.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_finish_tracing.ogg
 
 #begin sfx/panel_path_complete.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_path_complete.ogg
 
 #begin sfx/panel_potential_failure.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_potential_failure.ogg
 
 #begin sfx/panel_scint_endpoint.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_scint_endpoint.ogg
 
 #begin sfx/panel_scint_startpoint.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_scint_startpoint.ogg
 
 #begin sfx/panel_start_tracing.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_start_tracing.ogg
 
 #begin sfx/panel_success.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/panel_success.ogg
 
 #begin sfx/menu_escape.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/menu_escape.ogg
 
 #begin sfx/menu_enter.ogg
 /importer:OggImporter
-/processor:SongProcessor
+/processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:sfx/menu_enter.ogg
 

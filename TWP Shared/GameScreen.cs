@@ -12,15 +12,18 @@ namespace TWP_Shared
         protected ContentManager Content;
         protected Point ScreenSize;
         protected GraphicsDevice GraphicsDevice;
+        protected Dictionary<string, Texture2D> TextureProvider;
+        protected Dictionary<string, SpriteFont> FontProvider;
 
-        public GameScreen(Point screenSize, GraphicsDevice device)
+        public GameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider)
         {
             GraphicsDevice = device;
             ScreenSize = screenSize;
+            TextureProvider = textureProvider;
+            FontProvider = fontProvider;
         }
 
         public virtual void Initialize() { }
-        public virtual void LoadContent(Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider) { }
         public virtual void Update(GameTime gameTime) { }
         public virtual void Draw(SpriteBatch spriteBatch) { }
     }

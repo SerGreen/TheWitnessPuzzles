@@ -18,9 +18,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)InputManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PanelRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SoundManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SplashGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TextTouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TouchButton.cs" />

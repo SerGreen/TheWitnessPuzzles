@@ -17,8 +17,8 @@ namespace TWP_Shared
         public Point ScreenSize { get; set; }
         Stack<GameScreen> screenStack = new Stack<GameScreen>();
         public GameScreen CurrentScreen { get; private set; }
-        Dictionary<string, Texture2D> TextureProvider = new Dictionary<string, Texture2D>();
-        Dictionary<string, SpriteFont> FontProvider = new Dictionary<string, SpriteFont>();
+        public Dictionary<string, Texture2D> TextureProvider { get; private set; } = new Dictionary<string, Texture2D>();
+        public Dictionary<string, SpriteFont> FontProvider { get; private set; } = new Dictionary<string, SpriteFont>();
         readonly static string[] texturesToLoad = 
         {
             "img/twp_pixel",
@@ -43,33 +43,36 @@ namespace TWP_Shared
         FadeTransition transitionAnimation = new FadeTransition(15, 20, 10);
         Texture2D texPixel;
 
-        public void AddScreen(GameScreen screen, bool replaceCurrent = false, bool doFadeAnimation = false)
+        public void AddScreen<TScreen>(bool replaceCurrent = false, bool doFadeAnimation = false, object data = null) where TScreen : GameScreen
         {
             if (doFadeAnimation)
             {
                 Action callback = null;
                 callback = () =>
                 {
-                    _addScreen(screen, replaceCurrent);
+                    _addScreen<TScreen>(replaceCurrent, data);
                     transitionAnimation.FadeOutComplete -= callback;
                 };
                 transitionAnimation.FadeOutComplete += callback;
                 transitionAnimation.Restart();
             }
             else
-                _addScreen(screen, replaceCurrent);
+                _addScreen<TScreen>(replaceCurrent, data);
         }
 
-        private void _addScreen(GameScreen screen, bool replaceCurrent)
+        private void _addScreen<TScreen>(bool replaceCurrent, object data) where TScreen : GameScreen
         {
+            GameScreen screen;
+
+            if (typeof(TScreen) == typeof(PanelGameScreen))
+                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider);
+            else
+                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider);
+
             if (replaceCurrent)
                 screenStack.Pop();
             screenStack.Push(screen);
             CurrentScreen = screen;
-            CurrentScreen.LoadContent(TextureProvider, FontProvider);
-
-            if (screen is PanelGameScreen pgs)
-                pgs.LoadNewPanel(PanelGenerator.GeneratePanel());
         }
 
         public void Initialize(GraphicsDevice device)
@@ -104,9 +107,6 @@ namespace TWP_Shared
         {
             CurrentScreen?.Update(gameTime);
             transitionAnimation.Update();
-
-            if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.Enter))
-                AddScreen(new PanelGameScreen(ScreenSize, Device), true, true);
         }
         public void Draw(SpriteBatch spriteBatch)
         {
