@@ -8,12 +8,15 @@ using static System.Math;
 
 namespace TWP_Shared
 {
-    public class PanelGenerator
+    public class FirstPanelGenerator : PanelGenerator
     {
+        public static FirstPanelGenerator Instance = new FirstPanelGenerator();
+        private FirstPanelGenerator() { }
+
         readonly static Random randomNumberGenerator = new Random();
         readonly static List<Color> colorPalette = new List<Color>() { Color.Aqua, Color.Magenta, Color.Lime, Color.Blue, Color.Red, Color.Yellow, Color.White, Color.Black, Color.Violet };
 
-        public static Puzzle GeneratePanel(int? seed = null)
+        public override Puzzle GeneratePanel(int? seed = null)
         {
             Random rnd = seed.HasValue ? new Random(seed.Value) : randomNumberGenerator;
             Puzzle panel = null;
@@ -28,7 +31,7 @@ namespace TWP_Shared
             return panel;
         }
 
-        private static Puzzle GenerateUnsafePanel(Random rnd)
+        private Puzzle GenerateUnsafePanel(Random rnd)
         {
             int panelDifficulty = 0;
 

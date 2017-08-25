@@ -9,6 +9,7 @@
     <Import_RootNamespace>TWP_Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)DependencyInjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EditorGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EndPoint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods.cs" />
@@ -17,10 +18,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)FadeTransition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)InputManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BasePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelGameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PanelGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)FirstPanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ReversePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SoundManager.cs" />

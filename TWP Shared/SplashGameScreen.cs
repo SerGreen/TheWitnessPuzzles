@@ -62,7 +62,7 @@ namespace TWP_Shared
         {
             TextTouchButton btnStart = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, 0), new Point(menuBounds.Width, menuButtonHeight)), font, "Start", texPixel);
             btnStart.Click += () => {
-                ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, PanelGenerator.GeneratePanel());
+                ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, DI.Get<PanelGenerator>().GeneratePanel());
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 

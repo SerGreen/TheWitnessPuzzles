@@ -132,7 +132,7 @@ namespace TheWitnessPuzzles
         }
 
         private List<List<Node>> mirrorSolutions;
-        protected override List<List<int>> GetAllPossibleLines()
+        public override List<List<int>> GetAllPossibleLines(Node startNode = null)
         {
             mirrorSolutions = new List<List<Node>>();
             return base.GetAllPossibleLines();

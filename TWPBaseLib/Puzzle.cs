@@ -385,15 +385,21 @@ namespace TheWitnessPuzzles
         
         public event Action<float> GetAllSolutionsProgressUpdate;
 
-        protected virtual List<List<int>> GetAllPossibleLines()
+        // Returns all lines that you can possibly draw on this panel
+        // If startNode is not specified then it generates lines for all start nodes
+        public virtual List<List<int>> GetAllPossibleLines(Node startNode = null)
         {
             List<List<Node>> solutions = new List<List<Node>>();
             List<List<Node>> finishedSolutions = new List<List<Node>>();
 
             // Get the list of exit nodes
             var endNodes = GAPL_GetEndNodes();
-            // Initiate one line from every start node
-            GAPL_AddStartNodes(solutions, Nodes.Where(x => x.State == NodeState.Start));
+            // Inititate line from specified startNode
+            if (startNode != null)
+                GAPL_AddStartNodes(solutions, new Node[] { startNode });
+            else
+                // Initiate one line from every start node
+                GAPL_AddStartNodes(solutions, Nodes.Where(x => x.State == NodeState.Start));
 
             // Loop until all lines will get to the exit nodes
             bool allFinished = false;

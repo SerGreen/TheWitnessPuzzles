@@ -132,7 +132,7 @@ namespace TWP_Shared
                 Exit();
 
             if (InputManager.IsKeyPressed(Keys.Enter))
-                ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, CreateTestPanel());
+                ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, DI.Get<PanelGenerator>().GeneratePanel());
 
             ScreenManager.Instance.Update(gameTime);
             InputManager.Update();
