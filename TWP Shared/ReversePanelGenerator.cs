@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
-using TheWitnessPuzzles;
 using System.Linq;
+using TheWitnessPuzzles;
 
 namespace TWP_Shared
 {
@@ -19,13 +19,16 @@ namespace TWP_Shared
         {
             Random rnd = seed.HasValue ? new Random(seed.Value) : randomNumberGenerator;
             Puzzle panel = null;
+            SymmetryPuzzle symPanel = null;
+
+            Color mainColor = Color.Black, mirrorColor = Color.Black;
 
             // Generate random panel size
             int panelHeight = rnd.Next(2, 8);
             int panelWidth = rnd.Next(Math.Max(2, panelHeight - 2), Math.Min(8, panelHeight + 2));
             bool symmetry = false;
             bool ySymmetry = false;
-
+            
             // Panel can be symmetric only if it's big enough
             if (panelWidth >= 4 && panelHeight >= 4 && rnd.NextDouble() > 0.3)
             {
@@ -34,9 +37,15 @@ namespace TWP_Shared
                     ySymmetry = true;
             }
 
-            panel = symmetry 
-                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry) 
+            panel = symmetry
+                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, Color.Aqua, Color.Yellow) 
                 : new Puzzle(panelWidth, panelHeight);
+            if (symmetry)
+            {
+                symPanel = panel as SymmetryPuzzle;
+                mainColor = symPanel.MainColor;
+                mirrorColor = symPanel.MirrorColor;
+            }
 
             // Amount of nodes in one row (1 more than width in blocks)
             int width1 = panelWidth + 1;
@@ -101,12 +110,12 @@ namespace TWP_Shared
 
             int startPoint = startPoints[rnd.Next(startPoints.Count)];
             int endPoint = endPoints[rnd.Next(endPoints.Count)];
-
+            
             // If panel is X-Symmetric, we can't cross the line of symmetry
             // Therefor we should check that our start and end nodes are on the same side
             if(symmetry && !ySymmetry)
             {
-                float lineOfSymmetry = width1 / 2f;
+                float lineOfSymmetry = panelWidth / 2f;
                 int startNodeX = startPoint % width1;
                 int endNodeX = endPoint % width1;
                 // If the start node and the end node are lying on the different sides across the line of symmetry => swap the end node to the mirror one
@@ -115,10 +124,72 @@ namespace TWP_Shared
             }
 
             List<int> randomSolution = GetRandomSolutionLine(startPoint, endPoint);
-            // TODO
+            panel.SetSolution(randomSolution);
 
-            foreach (int node in randomSolution.Skip(1).Take(randomSolution.Count - 2))
-                panel.Nodes.First(x => x.Id == node).SetState(NodeState.Marked);
+            num = rnd.NextDouble();
+            int amountOfHexagonMarks = num > 0.6 ? (num > 0.65 ? (num > 0.85 ? (num > 0.92 ? (num > 0.97 ? 6 : 4) : 3) : 2) : 1) : 0;
+            int amountOfMarkedNodes = (int) (amountOfHexagonMarks * (0.3 + 0.7 * rnd.NextDouble()));
+            int amountOfMarkedEdges = amountOfHexagonMarks - amountOfMarkedNodes;
+
+            var allSolutionNodes = panel.SolutionNodes.ToList();
+            amountOfMarkedNodes = Math.Min(amountOfMarkedNodes, allSolutionNodes.Count);
+            var mainsolutionNodes = symPanel?.MainSolutionNodes;
+            var mirSolutionNodes = symPanel?.MirrorSolutionNodes;
+            for (int i = 0; i < amountOfMarkedNodes; i++)
+            {
+                int index;
+                bool acceptable;
+                do
+                {
+                    // Node should be Normal state
+                    index = rnd.Next(allSolutionNodes.Count);
+                    acceptable = allSolutionNodes[index].State == NodeState.Normal;
+                }
+                while (!acceptable);
+                if (symmetry)
+                {
+                    bool applyColor = rnd.NextDouble() > 0.65;
+                    if (applyColor)
+                        if (mainsolutionNodes.Contains(allSolutionNodes[index]))
+                            allSolutionNodes[index].SetStateAndColor(NodeState.Marked, mainColor);
+                        else
+                            allSolutionNodes[index].SetStateAndColor(NodeState.Marked, mirrorColor);
+                    else
+                        allSolutionNodes[index].SetState(NodeState.Marked);
+                }
+                else
+                    allSolutionNodes[index].SetState(NodeState.Marked);
+            }
+
+            var allSolutionEdges = panel.SolutionEdges.ToList();
+            amountOfMarkedEdges = Math.Min(amountOfMarkedEdges, allSolutionEdges.Count);
+            var mainsolutionEdges = symPanel?.MainSolutionEdges;
+            var mirSolutionEdges = symPanel?.MirrorSolutionEdges;
+            for (int i = 0; i < amountOfMarkedEdges; i++)
+            {
+                int index;
+                bool acceptable;
+                do
+                {
+                    // Edge should not be Marked or Broken
+                    index = rnd.Next(allSolutionEdges.Count);
+                    acceptable = allSolutionEdges[index].State == EdgeState.Normal;
+                }
+                while (!acceptable);
+                if (symmetry)
+                {
+                    bool applyColor = rnd.NextDouble() > 0.65;
+                    if (applyColor)
+                        if (mainsolutionEdges.Contains(allSolutionEdges[index]))
+                            allSolutionEdges[index].SetStateAndColor(EdgeState.Marked, mainColor);
+                        else
+                            allSolutionEdges[index].SetStateAndColor(EdgeState.Marked, mirrorColor);
+                    else
+                        allSolutionEdges[index].SetState(EdgeState.Marked);
+                }
+                else
+                    allSolutionEdges[index].SetState(EdgeState.Marked);
+            }
 
             return panel;
 
