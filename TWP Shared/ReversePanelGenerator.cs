@@ -99,28 +99,31 @@ namespace TWP_Shared
             foreach (int end in endPoints)
                 panel.Nodes[end].SetState(NodeState.Exit);
 
-            int startIndex = startPoints[rnd.Next(startPoints.Count)];
-            var allLines = panel.GetAllPossibleLines(panel.Nodes.First(x => x.Id == startIndex));
+            int startPoint = startPoints[rnd.Next(startPoints.Count)];
+            int endPoint = endPoints[rnd.Next(endPoints.Count)];
+
+            // If panel is X-Symmetric, we can't cross the line of symmetry
+            // Therefor we should check that our start and end nodes are on the same side
+            if(symmetry && !ySymmetry)
+            {
+                float lineOfSymmetry = width1 / 2f;
+                int startNodeX = startPoint % width1;
+                int endNodeX = endPoint % width1;
+                // If the start node and the end node are lying on the different sides across the line of symmetry => swap the end node to the mirror one
+                if (Math.Sign(lineOfSymmetry - startNodeX) != Math.Sign(lineOfSymmetry - endNodeX))
+                    endPoint = GetMirrorNodeID(endPoint);
+            }
+
+            List<int> randomSolution = GetRandomSolutionLine(startPoint, endPoint);
             // TODO
 
+            foreach (int node in randomSolution.Skip(1).Take(randomSolution.Count - 2))
+                panel.Nodes.First(x => x.Id == node).SetState(NodeState.Marked);
 
             return panel;
 
             #region == Methods ==
 
-            List<int> GetNodeNeighbours(int nodeID)
-            {
-                List<int> neighbours = new List<int>();
-                if (nodeID < width1)
-                    neighbours.Add(nodeID + width1);
-                if (nodeID >= panelHeight * width1)
-                    neighbours.Add(nodeID - width1);
-                if(nodeID % width1 == 0)
-                    neighbours.Add(nodeID + 1);
-                if ((nodeID + 1) % width1 == 0)
-                    neighbours.Add(nodeID - 1);
-                return neighbours;
-            }
             int GetMirrorNodeID(int nodeID)
             {
                 if (ySymmetry)
@@ -136,6 +139,106 @@ namespace TWP_Shared
                         if (i == 0 || i == panelWidth || j == 0 || j == panelHeight)
                             res.Add(j * width1 + i);
                 return res;
+            }
+
+            List<int> GetRandomSolutionLine(int startNode, int endNode)
+            {
+                // This is the solution line
+                List<int> line = new List<int>();
+                // This contains nodes from mirror line if present
+                List<int> mirrorLine = new List<int>();
+                // Alternative neighbour nodes of [i] node
+                List<List<int>> forkRoad = new List<List<int>>();
+
+                AddNodeToSolution(startNode);
+
+                // Loop until we get our line to the end node
+                while (line[line.Count - 1] != endNode)
+                {
+                    int last = line[line.Count - 1];
+
+                    // If the last node has forks, it means that we were here before and returned back to this node
+                    if (forkRoad.Count == line.Count)
+                    {
+                        // If there are available forks => pick one randomly and try it
+                        if (forkRoad[forkRoad.Count - 1].Count > 0)
+                        {
+                            int nextNodeIndex = rnd.Next(forkRoad[forkRoad.Count - 1].Count);
+                            AddNodeToSolution(forkRoad[forkRoad.Count - 1][nextNodeIndex]);
+                            forkRoad[forkRoad.Count - 1].RemoveAt(nextNodeIndex);
+                            continue;
+                        }
+                        // If we've tried all the forks already => delete last node and its forks and go back to the previous node
+                        else
+                        {
+                            RemoveLastNodeFromSolution();
+                            forkRoad.RemoveAt(forkRoad.Count - 1);
+                            continue;
+                        }
+                    }
+                    // If the last node does not have forks yet => we're first time here
+                    else
+                    {
+                        // Get all nodes we can go to from current last node
+                        var neighbours = GetAllViableNeighbours(last);
+
+                        // If we have options to move
+                        if (neighbours.Count > 0)
+                        {
+                            // Randomly choose the next node
+                            int nextNodeIndex = rnd.Next(neighbours.Count);
+                            // Add it to the solution line
+                            AddNodeToSolution(neighbours[nextNodeIndex]);
+                            // Remove it from other neighbours and add them to the fork roads
+                            neighbours.RemoveAt(nextNodeIndex);
+                            forkRoad.Add(neighbours);
+                            continue;
+                        }
+                        // If we are in dead end
+                        else
+                        {
+                            // Delete the last node from the solution and move on to try other forks of the previous node
+                            RemoveLastNodeFromSolution();
+                            continue;
+                        }
+                    }
+                }
+
+                return line;
+
+                List<int> GetAllViableNeighbours(int nodeID)
+                {
+                    IEnumerable<int> neighbours = GetNodeNeighbours(nodeID);
+                    neighbours = neighbours.Except(line).Except(mirrorLine);
+                    if (symmetry)
+                        neighbours = neighbours.Where(x => x != GetMirrorNodeID(x));
+                    return neighbours.ToList();
+                }
+                List<int> GetNodeNeighbours(int nodeID)
+                {
+                    List<int> neighbours = new List<int>();
+                    if (nodeID > panelWidth)
+                        neighbours.Add(nodeID - width1);
+                    if (nodeID < panelHeight * width1)
+                        neighbours.Add(nodeID + width1);
+                    if (nodeID % width1 != 0)
+                        neighbours.Add(nodeID - 1);
+                    if ((nodeID + 1) % width1 != 0)
+                        neighbours.Add(nodeID + 1);
+                    return neighbours;
+                }
+                void AddNodeToSolution(int nodeID)
+                {
+                    line.Add(nodeID);
+                    if (symmetry)
+                        mirrorLine.Add(GetMirrorNodeID(nodeID));
+                }
+                void RemoveLastNodeFromSolution()
+                {
+                    line.RemoveAt(line.Count - 1);
+                    if (symmetry)
+                        mirrorLine.RemoveAt(mirrorLine.Count - 1);
+                }
             }
 
             #endregion
