@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TheWitnessPuzzles
 {
-    interface IColorable
+    public interface IColorable
     {
         Color? Color { get; }
         bool HasColor { get; }

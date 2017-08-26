@@ -104,126 +104,129 @@ namespace TWP_Shared
                 //if (btnRandom.Contains(tap.Value))
                 //    LoadNewPanel(PanelGenerator.GeneratePanel());
 
-                if (line == null || panelState.State.HasFlag(PanelStates.Solved) || panelState.State.HasFlag(PanelStates.EliminationStarted))
+                if (!(panelState.State.HasFlag(PanelStates.EliminationStarted) && !panelState.State.HasFlag(PanelStates.EliminationFinished)))
                 {
-                    foreach (Rectangle startPoint in startPoints)
-                        if (startPoint.Contains(tap.Value))
-                        {
-                            panelState.ResetToNeutral();
-                            SoundManager.PlayOnce(Sound.StartTracing);
-                            SoundManager.PlayLoop(SoundLoop.Tracing);
-                            line = new SolutionLine(startPoint.Center - (new Point(renderer.LineWidth / 2)), renderer.LineWidth, startPoint);
-                            if (panel is SymmetryPuzzle symPanel)
-                                if (symPanel.Y_Mirrored)
-                                {
-                                    Point mirPoint = renderer.PuzzleConfig.Location + renderer.PuzzleConfig.Location + renderer.PuzzleConfig.Size - startPoint.Center - (new Point(renderer.LineWidth / 2));
-                                    Rectangle mirStartPoint = startPoints.Find(x => x.Contains(mirPoint));
-                                    lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), renderer.LineWidth, mirStartPoint);
-                                }
-                                else
-                                {
-                                    Point mirPoint = new Point(renderer.PuzzleConfig.Location.X * 2 + renderer.PuzzleConfig.Size.X - startPoint.Center.X - renderer.LineWidth / 2, startPoint.Center.Y - renderer.LineWidth / 2);
-                                    Rectangle mirStartPoint = startPoints.Find(x => x.Contains(mirPoint));
-                                    lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), renderer.LineWidth, mirStartPoint);
-                                }
-
-                            break;
-                        }
-                }
-                else
-                {
-                    SoundManager.StopLoop(SoundLoop.Tracing);
-                    SoundManager.StopLoop(SoundLoop.PathComplete);
-
-                    // Check if line head is in the end point
-                    foreach (var endPoint in endPoints)
-                        if (endPoint.IntercetionPercent(line.Head) > 0.4f)
-                        {
-                            // Place line head rignt in the end, nice and tight
-                            Point headOffset = endPoint.Rectangle.Location - line.Head.Location;
-                            MoveLine(headOffset.ToVector2());
-
-                            // Retrieve Solution from the line and check for errors
-                            List<Error> errors = null;
-                            List<int> solution = line.GetSolution(panel.Width, renderer.PuzzleConfig.Location, renderer.NodePadding);
-                            if (panel.SetSolution(solution))
-                                errors = panel.CheckForErrors();
-
-                            // Split errors into true errors and the ones, that are eliminated by respective rules
-                            var trueErrors = errors.Where(x => x.IsEliminated == false).ToList();
-                            var eliminatedErrors = errors.Where(x => x.IsEliminated == true).ToList();
-
-                            // If there are eliminated errors, initialize elimination process
-                            if (eliminatedErrors.Count() > 0)
+                    if (line == null || panelState.State.HasFlag(PanelStates.Solved))
+                    {
+                        foreach (Rectangle startPoint in startPoints)
+                            if (startPoint.Contains(tap.Value))
                             {
-                                SoundManager.PlayOnce(Sound.PotentialFailure);
-                                // Draw all errors in red as for now
-                                renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
+                                panelState.ResetToNeutral();
+                                SoundManager.PlayOnce(Sound.StartTracing);
+                                SoundManager.PlayLoop(SoundLoop.Tracing);
+                                line = new SolutionLine(startPoint.Center - (new Point(renderer.LineWidth / 2)), renderer.LineWidth, startPoint);
+                                if (panel is SymmetryPuzzle symPanel)
+                                    if (symPanel.Y_Mirrored)
+                                    {
+                                        Point mirPoint = renderer.PuzzleConfig.Location + renderer.PuzzleConfig.Location + renderer.PuzzleConfig.Size - startPoint.Center - (new Point(renderer.LineWidth / 2));
+                                        Rectangle mirStartPoint = startPoints.Find(x => x.Contains(mirPoint));
+                                        lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), renderer.LineWidth, mirStartPoint);
+                                    }
+                                    else
+                                    {
+                                        Point mirPoint = new Point(renderer.PuzzleConfig.Location.X * 2 + renderer.PuzzleConfig.Size.X - startPoint.Center.X - renderer.LineWidth / 2, startPoint.Center.Y - renderer.LineWidth / 2);
+                                        Rectangle mirStartPoint = startPoints.Find(x => x.Contains(mirPoint));
+                                        lineMirror = new SolutionLine(RectifyLinePosition(mirPoint), renderer.LineWidth, mirStartPoint);
+                                    }
 
-                                // Begin black line fade out as if there was an error
-                                RenderLinesToTexture();
-                                panelState.InvokeFadeOut(true);
-                                // And start elimination timer
-                                panelState.InitializeElimination();
+                                break;
+                            }
+                    }
+                    else
+                    {
+                        SoundManager.StopLoop(SoundLoop.Tracing);
+                        SoundManager.StopLoop(SoundLoop.PathComplete);
 
-                                // This event will be executed a few seconds later, after elimination is complete
-                                Action handler = null;
-                                handler = () =>
+                        // Check if line head is in the end point
+                        foreach (var endPoint in endPoints)
+                            if (endPoint.IntercetionPercent(line.Head) > 0.4f)
+                            {
+                                // Place line head rignt in the end, nice and tight
+                                Point headOffset = endPoint.Rectangle.Location - line.Head.Location;
+                                MoveLine(headOffset.ToVector2());
+
+                                // Retrieve Solution from the line and check for errors
+                                List<Error> errors = null;
+                                List<int> solution = line.GetSolution(panel.Width, renderer.PuzzleConfig.Location, renderer.NodePadding);
+                                if (panel.SetSolution(solution))
+                                    errors = panel.CheckForErrors();
+
+                                // Split errors into true errors and the ones, that are eliminated by respective rules
+                                var trueErrors = errors.Where(x => x.IsEliminated == false).ToList();
+                                var eliminatedErrors = errors.Where(x => x.IsEliminated == true).ToList();
+
+                                // If there are eliminated errors, initialize elimination process
+                                if (eliminatedErrors.Count() > 0)
                                 {
-                                    SoundManager.PlayOnce(Sound.EliminatorApply);
+                                    SoundManager.PlayOnce(Sound.PotentialFailure);
+                                    // Draw all errors in red as for now
+                                    renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
+
+                                    // Begin black line fade out as if there was an error
+                                    RenderLinesToTexture();
+                                    panelState.InvokeFadeOut(true);
+                                    // And start elimination timer
+                                    panelState.InitializeElimination();
+
+                                    // This event will be executed a few seconds later, after elimination is complete
+                                    Action handler = null;
+                                    handler = () =>
+                                    {
+                                        SoundManager.PlayOnce(Sound.EliminatorApply);
                                     // Re-draw true errors in red and eliminated errors separately
                                     renderer.RenderErrorsToTexture(errorsBlinkTexture, trueErrors, false);
-                                    renderer.RenderErrorsToTexture(eliminatedErrorsTexture, eliminatedErrors, true);
+                                        renderer.RenderErrorsToTexture(eliminatedErrorsTexture, eliminatedErrors, true);
 
                                     // If there are no true errors, then panel is solved
                                     if (trueErrors.Count() == 0)
-                                    {
+                                        {
                                         // Setting success will stop lines fading process, but retain eliminated errors intact
+                                        panelState.SetSuccess();
+                                            SoundManager.PlayOnce(Sound.Success);
+                                        }
+                                        else
+                                        {
+                                        // If there are true errors => delete the lines
+                                        // They will continue to fade out and errors will continue to blink
+                                        line = lineMirror = null;
+                                            SoundManager.PlayOnce(Sound.Failure);
+                                        }
+
+                                    // Don't forget to unsubscribe ffs!
+                                    panelState.EliminationFinished -= handler;
+                                    };
+                                    panelState.EliminationFinished += handler;
+                                }
+                                // If there are no eliminated errors, everything happens instantly
+                                else
+                                {
+                                    // If there are no true errors, then panel is solved
+                                    if (trueErrors.Count() == 0)
+                                    {
                                         panelState.SetSuccess();
                                         SoundManager.PlayOnce(Sound.Success);
                                     }
                                     else
                                     {
-                                        // If there are true errors => delete the lines
-                                        // They will continue to fade out and errors will continue to blink
+                                        // If there are true errors => start fading process and delete the lines
+                                        RenderLinesToTexture();
+                                        renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
+                                        panelState.InvokeFadeOut(true);
                                         line = lineMirror = null;
                                         SoundManager.PlayOnce(Sound.Failure);
                                     }
+                                }
 
-                                    // Don't forget to unsubscribe ffs!
-                                    panelState.EliminationFinished -= handler;
-                                };
-                                panelState.EliminationFinished += handler;
-                            }
-                            // If there are no eliminated errors, everything happens instantly
-                            else
-                            {
-                                // If there are no true errors, then panel is solved
-                                if (trueErrors.Count() == 0)
-                                {
-                                    panelState.SetSuccess();
-                                    SoundManager.PlayOnce(Sound.Success);
-                                }
-                                else
-                                {
-                                    // If there are true errors => start fading process and delete the lines
-                                    RenderLinesToTexture();
-                                    renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
-                                    panelState.InvokeFadeOut(true);
-                                    line = lineMirror = null;
-                                    SoundManager.PlayOnce(Sound.Failure);
-                                }
+                                return;
                             }
 
-                            return;
-                        }
-
-                    // If we looked through every endpoint and line head is not in any of them
-                    // Then simply delete lines and fade them out without errors
-                    RenderLinesToTexture();
-                    panelState.InvokeFadeOut(false);
-                    line = lineMirror = null;
-                    SoundManager.PlayOnce(Sound.AbortTracing);
+                        // If we looked through every endpoint and line head is not in any of them
+                        // Then simply delete lines and fade them out without errors
+                        RenderLinesToTexture();
+                        panelState.InvokeFadeOut(false);
+                        line = lineMirror = null;
+                        SoundManager.PlayOnce(Sound.AbortTracing);
+                    } 
                 }
             }
         }

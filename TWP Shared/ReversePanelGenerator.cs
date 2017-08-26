@@ -48,7 +48,7 @@ namespace TWP_Shared
                 symPanel = panel as SymmetryPuzzle;
                 mainColor = symPanel.MainColor;
                 mirrorColor = symPanel.MirrorColor;
-            } 
+            }
             #endregion
 
             // Amount of nodes in one row (1 more than width in blocks)
@@ -113,15 +113,15 @@ namespace TWP_Shared
             }
 
             foreach (int end in endPoints)
-                panel.Nodes[end].SetState(NodeState.Exit); 
+                panel.Nodes[end].SetState(NodeState.Exit);
             #endregion
 
             int startPoint = startPoints[rnd.Next(startPoints.Count)];
             int endPoint = endPoints[rnd.Next(endPoints.Count)];
-            
+
             // If panel is X-Symmetric, we can't cross the line of symmetry
             // Therefore we should check that our start and end nodes are on the same side
-            if(symmetry && !ySymmetry)
+            if (symmetry && !ySymmetry)
             {
                 float lineOfSymmetry = panelWidth / 2f;
                 int startNodeX = startPoint % width1;
@@ -153,28 +153,24 @@ namespace TWP_Shared
             var mirSolutionNodes = symPanel?.MirrorSolutionNodes;
             for (int i = 0; i < amountOfMarkedNodes; i++)
             {
-                int index;
-                bool acceptable;
-                do
+                var acceptableNodes = allSolutionNodes.Where(x => x.State == NodeState.Normal).ToList();
+                if (acceptableNodes.Count > 0)
                 {
-                    // Node should be Normal state
-                    index = rnd.Next(allSolutionNodes.Count);
-                    acceptable = allSolutionNodes[index].State == NodeState.Normal;
-                }
-                while (!acceptable);
-                if (symmetry)
-                {
-                    bool applyColor = rnd.NextDouble() > 0.65;
-                    if (applyColor)
-                        if (mainsolutionNodes.Contains(allSolutionNodes[index]))
-                            allSolutionNodes[index].SetStateAndColor(NodeState.Marked, mainColor);
+                    int index = rnd.Next(acceptableNodes.Count);
+                    if (symmetry)
+                    {
+                        bool applyColor = rnd.NextDouble() > 0.65;
+                        if (applyColor)
+                            if (mainsolutionNodes.Contains(acceptableNodes[index]))
+                                acceptableNodes[index].SetStateAndColor(NodeState.Marked, mainColor);
+                            else
+                                acceptableNodes[index].SetStateAndColor(NodeState.Marked, mirrorColor);
                         else
-                            allSolutionNodes[index].SetStateAndColor(NodeState.Marked, mirrorColor);
+                            acceptableNodes[index].SetState(NodeState.Marked);
+                    }
                     else
-                        allSolutionNodes[index].SetState(NodeState.Marked);
+                        acceptableNodes[index].SetState(NodeState.Marked);
                 }
-                else
-                    allSolutionNodes[index].SetState(NodeState.Marked);
             }
             #endregion
 
@@ -207,24 +203,16 @@ namespace TWP_Shared
             #endregion
             #endregion
 
-            bool uniqueLayout = false;
-
             // Generate amount of broken edges
             #region Broken edges
-            if (amountOfHexagonMarks == 0 && allSolutionNodes.Count > 10 && panel.Width * panel.Height >= 20 && rnd.NextDouble() > 0.4)
-                uniqueLayout = true;
-
             num = rnd.NextDouble();
             int amountOfBrokenEdges;
-            if (uniqueLayout)
-                amountOfBrokenEdges = (int) (panel.Edges.Except(allSolutionEdges).Count() * (num > 0.6 ? 0.8f : 0.5f));
-            else
-                // 0 for small panels and 0..6 for bigger panels
-                amountOfBrokenEdges = panelWidth >= 3 && panelHeight >= 3
-                                    ? panelWidth >= 5 || panelHeight >= 5
-                    ? num > 0.3 ? (num > 0.45 ? (num > 0.65 ? (num > 0.77 ? (num > 0.87 ? (num > 0.94 ? 6 : 5) : 4) : 3) : 2) : 1) : 0
-                    : num > 0.5 ? (num > 0.7 ? (num > 0.85 ? (num > 0.95 ? 4 : 3) : 2) : 1) : 0
-                    : 0;
+            // 0 for small panels and 0..6 for bigger panels
+            amountOfBrokenEdges = panelWidth >= 3 && panelHeight >= 3
+                                ? panelWidth >= 5 || panelHeight >= 5
+                ? num > 0.3 ? (num > 0.45 ? (num > 0.65 ? (num > 0.77 ? (num > 0.87 ? (num > 0.94 ? 6 : 5) : 4) : 3) : 2) : 1) : 0
+                : num > 0.5 ? (num > 0.7 ? (num > 0.85 ? (num > 0.95 ? 4 : 3) : 2) : 1) : 0
+                : 0;
 
             // Spawn broken edges
             for (int i = 0; i < amountOfBrokenEdges; i++)
@@ -236,151 +224,222 @@ namespace TWP_Shared
             }
             #endregion
 
+            float usedRuleTypesCount = 0;
+            if (amountOfMarkedNodes + amountOfMarkedEdges > 0)
+                usedRuleTypesCount++;
+            if (amountOfBrokenEdges > 0)
+                usedRuleTypesCount++;
 
-            if (!uniqueLayout)
+            List<Color> colors = new List<Color>();
+            num = rnd.NextDouble();
+            int amountOfColors = num > 0.6 ? (num > 0.8 ? (num > 0.94 ? 5 : 4) : 3) : 2;
+            for (int i = 0; i < amountOfColors; i++)
             {
-                float usedRuleTypesCount = 0;
-                if (amountOfMarkedNodes + amountOfMarkedEdges > 0)
-                    usedRuleTypesCount++;
-                if (amountOfBrokenEdges > 0)
-                    usedRuleTypesCount++;
-
-                List<Color> colors = new List<Color>();
-                num = rnd.NextDouble();
-                int amountOfColors = num > 0.6 ? (num > 0.8 ? (num > 0.94 ? 5 : 4) : 3) : 2;
-                for (int i = 0; i < amountOfColors; i++)
+                int index = -1;
+                bool acceptable = false;
+                while (!acceptable)
                 {
-                    int index = -1;
-                    bool acceptable = false;
-                    while (!acceptable)
-                    {
-                        index = rnd.Next(colorPalette.Count);
-                        acceptable = !colors.Contains(colorPalette[index]);
-                    }
-                    colors.Add(colorPalette[index]);
+                    index = rnd.Next(colorPalette.Count);
+                    acceptable = !colors.Contains(colorPalette[index]);
+                }
+                colors.Add(colorPalette[index]);
+            }
+
+            List<Sector> sectors = panel.GetSectors();
+
+            // Colored square rule
+            #region Colored Squares
+            num = rnd.NextDouble();
+            int amountOfColoredSquares = num > 0.5 ? (num > 0.55 ? (num > 0.62 ? (num > 76 ? (num > 86 ? (num > 92 ? (num > 96 ? 8 : 7) : 6) : 5) : 4) : 3) : 2) : 0;
+            if (amountOfColoredSquares > 0)
+            {
+                List<(int amount, Color color)> squaresInSector = new List<(int, Color)>();
+                int squaresLeft = amountOfColoredSquares;
+                int colorsUsed = 0;
+                for (int i = 0; i < sectors.Count; i++)
+                {
+                    int amount = squaresLeft > 0
+                        ? i < sectors.Count - 1
+                            ? Math.Min(rnd.Next(1, squaresLeft), sectors[i].Blocks.Count)
+                            : Math.Min(squaresLeft, sectors[i].Blocks.Count)
+                        : 0;
+                    squaresLeft -= amount;
+
+                    Color col = colors.Count == colorsUsed
+                        ? colors[rnd.Next(colors.Count)]
+                        : colors[colorsUsed++];
+
+                    squaresInSector.Add((amount, col));
                 }
 
-                List<Sector> sectors = panel.GetSectors();
-
-                // Colored square rule
-                #region Colored Squares
-                num = rnd.NextDouble();
-                int amountOfColoredSquares = num > 0.5 ? (num > 0.55 ? (num > 0.62 ? (num > 76 ? (num > 86 ? (num > 92 ? (num > 96 ? 8 : 7) : 6) : 5) : 4) : 3) : 2) : 0;
-                if (amountOfColoredSquares > 0)
+                // Spawn colored squares
+                for (int i = 0; i < sectors.Count; i++)
                 {
-                    List<(int amount, Color color)> squaresInSector = new List<(int, Color)>();
-                    int squaresLeft = amountOfColoredSquares;
-                    int colorsUsed = 0;
-                    for (int i = 0; i < sectors.Count; i++)
+                    for (int j = 0; j < squaresInSector[i].amount; j++)
                     {
-                        int amount = squaresLeft > 0
-                            ? i < sectors.Count - 1
-                                ? Math.Min(rnd.Next(1, squaresLeft), sectors[i].Blocks.Count)
-                                : Math.Min(squaresLeft, sectors[i].Blocks.Count)
-                            : 0;
-                        squaresLeft -= amount;
-
-                        Color col = colors.Count == colorsUsed
-                            ? colors[rnd.Next(colors.Count)]
-                            : colors[colorsUsed++];
-
-                        squaresInSector.Add((amount, col));
-                    }
-
-                    // Spawn colored squares
-                    for (int i = 0; i < sectors.Count; i++)
-                    {
-                        for (int j = 0; j < squaresInSector[i].amount; j++)
+                        int index;
+                        bool acceptable;
+                        do
                         {
-                            int index;
-                            bool acceptable;
-                            do
-                            {
-                                index = rnd.Next(sectors[i].Blocks.Count);
-                                acceptable = sectors[i].Blocks[index].Rule == null;
-                            }
-                            while (!acceptable);
-                            sectors[i].Blocks[index].Rule = new ColoredSquareRule(squaresInSector[i].color);
+                            index = rnd.Next(sectors[i].Blocks.Count);
+                            acceptable = sectors[i].Blocks[index].Rule == null;
                         }
+                        while (!acceptable);
+                        sectors[i].Blocks[index].Rule = new ColoredSquareRule(squaresInSector[i].color);
                     }
                 }
-                #endregion
-                usedRuleTypesCount += amountOfColoredSquares > 0 ? 1 : 0;
+            }
+            #endregion
+            usedRuleTypesCount += amountOfColoredSquares > 0 ? 1 : 0;
 
 
-                // Triangle rules
-                #region Triangles
-                num = rnd.NextDouble();
-                int amountOfTriangles = usedRuleTypesCount <= 2
-                    ? num > 0.5 ? (num > 0.7 ? (num > 0.9 ? 5 : 4) : 3) : 2
-                    : num > 0.5 ? (num > 0.75 ? (num > 95 ? 3 : 2) : 1) : 0;
+            //  Sun rules
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                var freeBlocks = sectors[i].Blocks.Where(x => x.Rule == null).ToList();
+                var coloredBlocks = sectors[i].Blocks.Where(x => x.Rule is IColorable).ToList();
 
-                for (int i = 0; i < amountOfTriangles; i++)
+                if (((freeBlocks.Count > 0  && coloredBlocks.Count ==  1)  || (freeBlocks.Count  > 1))  &&  rnd.NextDouble() > 0.5)
                 {
-                    // Get all blocks near solution line without rules
-                    var acceptableBlocks = panel.Blocks.Where(x => x.Rule == null && x.Edges.Intersect(allSolutionEdges).Count() > 0).ToList();
-                    if (acceptableBlocks.Count == 0)
-                        break;
+                    Color? blocksColor = null;
+                    if (coloredBlocks.Count > 0)
+                        blocksColor = (coloredBlocks[0].Rule as IColorable).Color;
 
-                    int index = rnd.Next(acceptableBlocks.Count);
-                    acceptableBlocks[index].Rule = new TriangleRule(acceptableBlocks[index].Edges.Intersect(allSolutionEdges).Count());
+                    if (coloredBlocks.Count == 1)
+                    {
+                        int index = rnd.Next(freeBlocks.Count);
+                        freeBlocks[index].Rule = new SunPairRule(blocksColor ?? colors[rnd.Next(colors.Count)]);
+                    }
+                    else
+                    {
+                        Color col;
+                        if (coloredBlocks.Count == 0)
+                            col = colors[rnd.Next(colors.Count)];
+                        else
+                            do
+                                col = colors[rnd.Next(colors.Count)];
+                            while (col == blocksColor);
+
+                        int indexA = rnd.Next(freeBlocks.Count);
+                        int indexB;
+                        do
+                            indexB = rnd.Next(freeBlocks.Count);
+                        while (indexB == indexA);
+                        
+                        freeBlocks[indexA].Rule = new SunPairRule(col);
+                        freeBlocks[indexB].Rule = new SunPairRule(col);
+                    }
                 }
-                #endregion
+            }
 
-                // Elimination rules
-                #region Elimination
-                num = rnd.NextDouble();
-                int eliminatorsAmount = num > 0.8 ? (num > 0.97 ? 2 : 1) : 0;
-                for (int i = 0; i < eliminatorsAmount; i++)
+            // Triangle rules
+            #region Triangles
+            num = rnd.NextDouble();
+            int amountOfTriangles = usedRuleTypesCount <= 2
+                ? num > 0.5 ? (num > 0.7 ? (num > 0.9 ? 5 : 4) : 3) : 2
+                : num > 0.5 ? (num > 0.75 ? (num > 95 ? 3 : 2) : 1) : 0;
+
+            for (int i = 0; i < amountOfTriangles; i++)
+            {
+                // Get all blocks near solution line without rules
+                var acceptableBlocks = panel.Blocks.Where(x => x.Rule == null && x.Edges.Intersect(allSolutionEdges).Count() > 0).ToList();
+                if (acceptableBlocks.Count == 0)
+                    break;
+
+                int index = rnd.Next(acceptableBlocks.Count);
+                acceptableBlocks[index].Rule = new TriangleRule(acceptableBlocks[index].Edges.Intersect(allSolutionEdges).Count());
+            }
+            #endregion
+
+            // Elimination rules
+            #region Elimination
+            num = rnd.NextDouble();
+            int eliminatorsAmount = num > 0.8 ? (num > 0.97 ? 2 : 1) : 0;
+            for (int i = 0; i < eliminatorsAmount; i++)
+            {
+                // Get sectors that have 1 or more free blocks
+                var acceptableSectors = sectors.Where(x => x.Blocks.Where(z => z.Rule == null).Count() >= 1).ToList();
+                Sector sec = acceptableSectors[rnd.Next(acceptableSectors.Count)];
+                int freeBlocksCount = sec.Blocks.Where(z => z.Rule == null).Count();
+                bool isHexagon = freeBlocksCount > 1
+                    ? rnd.NextDouble() > 0.9
+                    : true;
+
+                if (freeBlocksCount >= 3 && colors.Count > 1 && rnd.NextDouble() > 0.5)
                 {
-                    // Get sectors that have 1 or more free blocks
-                    var acceptableSectors = sectors.Where(x => x.Blocks.Where(z => z.Rule == null).Count() >= 1).ToList();
-                    Sector sec = acceptableSectors[rnd.Next(acceptableSectors.Count)];
-                    bool isHexagon = sec.Blocks.Where(z => z.Rule == null).Count() > 1
-                        ? rnd.NextDouble() > 0.9
-                        : true;
+                    var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
+                    int indexA = rnd.Next(secBlocks.Count);
+                    int indexB;
+                    do
+                    {
+                        indexB = rnd.Next(secBlocks.Count);
+                    }
+                    while (indexB == indexA);
 
+                    Color elimCol = colors[rnd.Next(colors.Count)];
+                    Color col;
+                    do
+                    {
+                        col = colors[rnd.Next(colors.Count)];
+                    }
+                    while (col == elimCol);
+                    
+                    secBlocks[indexA].Rule = new EliminationRule(elimCol);
+                    secBlocks[indexB].Rule = new SunPairRule(col);
+                }
+                else
+                {
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
                     int index = rnd.Next(secBlocks.Count);
                     secBlocks[index].Rule = new EliminationRule();
+                }
 
-                    if (isHexagon)
+                if (isHexagon)
+                {
+                    bool isNode = rnd.NextDouble() > 0.5;
+                    if (isNode)
                     {
-                        bool isNode = rnd.NextDouble() > 0.5;
-                        if (isNode)
+                        var secNodes = sec.Blocks.SelectMany(x => x.Nodes).Where(x => x.State == NodeState.Normal).Distinct().Except(allSolutionNodes).ToList();
+                        if (secNodes.Count > 0)
                         {
-                            var secNodes = sec.Blocks.SelectMany(x => x.Nodes).Where(x => x.State == NodeState.Normal).Distinct().Except(allSolutionNodes).ToList();
-                            if (secNodes.Count > 0)
-                            {
-                                index = rnd.Next(secNodes.Count);
-                                secNodes[index].SetState(NodeState.Marked);
-                            }
-                        }
-                        else
-                        {
-                            var secEdges = sec.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).ToList();
-                            if (secEdges.Count > 0)
-                            {
-                                index = rnd.Next(secEdges.Count);
-                                secEdges[index].SetState(EdgeState.Marked);
-                            }
+                            int index = rnd.Next(secNodes.Count);
+                            secNodes[index].SetState(NodeState.Marked);
                         }
                     }
                     else
                     {
-                        secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
-                        index = rnd.Next(secBlocks.Count);
-                        int ruleType = rnd.Next(3);
-                        if (ruleType == 0)
-                            secBlocks[index].Rule = new ColoredSquareRule(colors[rnd.Next(colors.Count)]);
-                        else if (ruleType == 1)
-                            secBlocks[index].Rule = new SunPairRule(colors[rnd.Next(colors.Count)]);
-                        else if (ruleType == 2)
-                            secBlocks[index].Rule = new TriangleRule(rnd.Next(1, 4));
+                        var secEdges = sec.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).ToList();
+                        if (secEdges.Count > 0)
+                        {
+                            int index = rnd.Next(secEdges.Count);
+                            secEdges[index].SetState(EdgeState.Marked);
+                        }
                     }
                 }
-                #endregion 
+                else
+                {
+                    var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
+                    int index = rnd.Next(secBlocks.Count);
+                    int ruleType = rnd.Next(3);
+                    if (ruleType == 0)
+                        secBlocks[index].Rule = new ColoredSquareRule(colors[rnd.Next(colors.Count)]);
+                    else if (ruleType == 1)
+                    {
+                        Color? squareCol = sec.Blocks.Select(x => x.Rule).OfType<ColoredSquareRule>().FirstOrDefault()?.Color;
+                        Color? sunCol = sec.Blocks.Select(x => x.Rule).OfType<SunPairRule>().FirstOrDefault()?.Color;
+                        Color? col;
+                        do
+                        {
+                            col = colors[rnd.Next(colors.Count)];
+                        }
+                        while ((squareCol != null && col == squareCol) || (sunCol != null && col == sunCol));
+                        secBlocks[index].Rule = new SunPairRule(col ?? colors[rnd.Next(colors.Count)]);
+                    }
+                    else if (ruleType == 2)
+                        secBlocks[index].Rule = new TriangleRule(rnd.Next(1, 4));
+                }
             }
+            #endregion 
 
             return panel;
 
@@ -421,7 +480,7 @@ namespace TWP_Shared
                 while (line[line.Count - 1] != endNode || line.Count <= 4 || (panelWidth * panelHeight >= 12 && line.Count <= 6))
                 {
                     iteration++;
-                    if (iteration > 500000 && failsafeSolution != null)
+                    if (iteration > 5000 && failsafeSolution != null)
                         return failsafeSolution;
 
                     int last = line[line.Count - 1];
