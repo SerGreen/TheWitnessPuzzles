@@ -64,6 +64,27 @@ namespace TWP_Shared
 
             return panel;
         }
+        private Puzzle CreateTestPanel2()
+        {
+            Puzzle panel = new SymmetryPuzzle(7, 4, true, Color.Aqua, Color.Yellow);
+            panel.Nodes[16].SetState(NodeState.Start);
+            panel.Nodes[23].SetState(NodeState.Start);
+            panel.Nodes[3].SetState(NodeState.Exit);
+            panel.Nodes[36].SetState(NodeState.Exit);
+            panel.Nodes[34].SetState(NodeState.Marked);
+            panel.Edges.Find(x => x.Id == 1819)?.SetState(EdgeState.Marked);
+            panel.Edges.Find(x => x.Id == 1920)?.SetState(EdgeState.Marked);
+            panel.Grid[0, 2].Rule = new ColoredSquareRule(Color.Yellow);
+            panel.Grid[2, 0].Rule = new ColoredSquareRule(Color.Aqua);
+            panel.Grid[4, 0].Rule = new ColoredSquareRule(Color.Yellow);
+            panel.Grid[6, 1].Rule = new ColoredSquareRule(Color.Yellow);
+            panel.Grid[3, 3].Rule = new SunPairRule(Color.Yellow);
+            panel.Grid[2, 2].Rule = new EliminationRule();
+            panel.Grid[3, 2].Rule = new EliminationRule();
+            panel.Grid[6, 0].Rule = new TriangleRule(1);
+            panel.Grid[5, 1].Rule = new TriangleRule(2);
+            return panel;
+        }
 
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.

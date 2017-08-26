@@ -120,7 +120,7 @@ namespace TheWitnessPuzzles
             while (newSector?.Count != prevCount)
             {
                 prevCount = newSector.Count;
-                var addition = unusedBlocksList.Where(z => newSector.SelectMany(x => x.Edges).Intersect(z.Edges).Count() > 0);
+                var addition = unusedBlocksList.Where(z => newSector.SelectMany(x => x.Edges).Intersect(z.Edges).Count() > 0).ToList();
                 newSector.AddRange(addition);
                 unusedBlocksList.RemoveAll(x => addition.Contains(x));
             }
