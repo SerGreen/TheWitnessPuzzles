@@ -129,9 +129,7 @@ namespace TWP_Shared
 
                 symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
                 symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
-
-                //spriteBatch.Draw(currentSymbol, symbolPosition, null, Color.White, 0, currentSymbol.Bounds.Center.ToVector2(), symbolScale, SpriteEffects.None, 0);
-
+                
                 float menuWidth = ScreenSize.X * 0.8f;
                 float menuHeight = secondLinePosition.Y + secondLineSize.Y * 2;
                 menuButtonHeight = (int) (firstLineSize.Y * 0.8f);

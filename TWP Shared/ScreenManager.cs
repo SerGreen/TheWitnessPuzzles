@@ -30,7 +30,9 @@ namespace TWP_Shared
             "img/twp_square",
             "img/twp_sun",
             "img/twp_elimination",
-            "img/twp_triangle1..3"
+            "img/twp_triangle1..3",
+            "img/twp_tetris",
+            "img/twp_tetris_sub"
         };
         readonly static string[] fontsToLoad =
         {

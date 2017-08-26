@@ -12,6 +12,7 @@ namespace TWP_Shared
     {
         static readonly float bordersWidth = 0.03f; // Size of the border frame, % of total screen min(width, height)
         static readonly float endPointLegth = 0.3f; // Size of ending appendix at the end point, % of the block width
+        static readonly Random rnd = new Random();
 
         GraphicsDevice GraphicsDevice;
 
@@ -29,6 +30,8 @@ namespace TWP_Shared
         Texture2D texPixel, texCircle, texCorner, texHexagon, texSquare, texSun, texElimination;
         Texture2D[] texEndPoint = new Texture2D[2];
         Texture2D[] texTriangle = new Texture2D[3];
+        Texture2D[] texTetris = new Texture2D[2];
+        Dictionary<int, RenderTarget2D> renderedTetrisTextures = new Dictionary<int, RenderTarget2D>();
         
         public Point PuzzleDimensions { get; private set; }     // Size of the puzzle in blocks
         public Rectangle PuzzleConfig { get; private set; }     // Location on screen and size of the puzzle in pixels
@@ -38,6 +41,7 @@ namespace TWP_Shared
         public int BlockWidth { get; private set; }             // Size of the block in pixels
         public Point BlockSizePoint { get; private set; }       // Point with X and Y set to the blockWidth
         public int NodePadding { get; private set; }            // Distance between two nodes on screen in pixel, is equal to (lineWidth + blockWidth)
+        private Point tetrisTextureSize;
 
         public PanelRenderer(Puzzle panel, Point screenSize, Dictionary<string, Texture2D> TextureProvider, GraphicsDevice graphicsDevice)
         {
@@ -61,6 +65,8 @@ namespace TWP_Shared
             texElimination = TextureProvider["img/twp_elimination"];
             for (int i = 0; i < 3; i++)
                 texTriangle[i] = TextureProvider[$"img/twp_triangle{i + 1}"];
+            texTetris[0] = TextureProvider["img/twp_tetris"];
+            texTetris[1] = TextureProvider["img/twp_tetris_sub"];
         }
 
         public bool SetScreenSize(Point newScreenSize)
@@ -80,6 +86,7 @@ namespace TWP_Shared
                 Walls.Clear();
                 StartPoints.Clear();
                 EndPoints.Clear();
+                renderedTetrisTextures.Clear();
                 panel = newPanel;
                 InitializePanel();
                 return true;
@@ -143,6 +150,9 @@ namespace TWP_Shared
                 // Creating hitboxes for starting nodes
                 foreach (Point start in GetStartNodes())
                     StartPoints.Add(new Rectangle(xMargin + start.X * NodePadding - LineWidth, yMargin + start.Y * NodePadding - LineWidth, LineWidth * 3, LineWidth * 3));
+
+                // Generate textures for tetris rules
+                CreateTetrisRuleTextures();
 
                 #region === Inner methods region ===
                 // Returns a coef k: Total free space in pixels * k = puzzle size in pixels
@@ -230,6 +240,45 @@ namespace TWP_Shared
                         Walls.Add(new Rectangle(isRight ? xStartPoint : (xMargin - endAppendixLength), lastYPoint, endAppendixLength, height - lastYPoint));
                     }
                 }
+                void CreateTetrisRuleTextures()
+                {
+                    // Render shape into texture for each tetris rule
+                    var tetrisBlocks = panel.Blocks.Where(x => x.Rule is TetrisRule).ToList();
+                    if (tetrisBlocks.Count > 0)
+                    {
+                        int maxDimension = tetrisBlocks.Select(x => x.Rule as TetrisRule).Select(x => Math.Max(x.Shape.GetLength(0), x.Shape.GetLength(1))).Max();
+                        if (maxDimension < 3)
+                            maxDimension++;
+                        tetrisTextureSize = new Point((maxDimension + 1) * texTetris[0].Width);
+                        foreach (Block block in tetrisBlocks)
+                        {
+                            TetrisRule rule = block.Rule as TetrisRule;
+                            bool[,] shape = rule.Shape;
+                            // If shape is rotatable, then rotate it randomly before render
+                            if (rule is TetrisRotatableRule r)
+                                shape = RotateShapeCW(shape, rnd.Next(0, 4));
+                            // Draw shape on a texture
+                            RenderTarget2D texture = CreateTetrisTexture(shape, rule is TetrisRotatableRule, rule.IsSubtractive);
+                            // Save it to the dictionary
+                            renderedTetrisTextures.Add(block.Id, texture);
+                        }
+                    }
+                }
+                bool[,] RotateShapeCW(bool[,] originalShape, int times = 1)
+                {
+                    times %= 4;
+                    if (times == 0)
+                        return originalShape;
+
+                    int w = originalShape.GetLength(0);
+                    int h = originalShape.GetLength(1);
+                    bool[,] newShape = new bool[h, w];
+                    for (int i = 0; i < w; i++)
+                        for (int j = h - 1; j >= 0; j--)
+                            newShape[h - j - 1, i] = originalShape[i, j];
+
+                    return RotateShapeCW(newShape, times - 1);
+                }
                 #endregion 
                 return true;
             }
@@ -297,6 +346,7 @@ namespace TWP_Shared
                 DrawSuns(spriteBatch, blocks, fillColor);
                 DrawEliminations(spriteBatch, blocks, fillColor);
                 DrawTriangles(spriteBatch, blocks, fillColor);
+                DrawTetrises(spriteBatch, blocks, fillColor);
 
                 spriteBatch.End();
                 // Drop the render target
@@ -333,6 +383,7 @@ namespace TWP_Shared
             DrawSuns(sb, allBlocks);
             DrawEliminations(sb, allBlocks);
             DrawTriangles(sb, allBlocks);
+            DrawTetrises(sb, allBlocks);
         }
         private void DrawMarkedNodes(SpriteBatch spriteBatch, IEnumerable<Node> allNodes, Color? fillColor = null)
         {
@@ -390,6 +441,50 @@ namespace TWP_Shared
                 int texIndex = (block.Rule as TriangleRule).Power - 1;
                 spriteBatch.Draw(texTriangle[texIndex], new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), BlockSizePoint), fillColor ?? Color.Gold);
             }
+        }
+        private void DrawTetrises(SpriteBatch spriteBatch, IEnumerable<Block> allBlocks, Color? fillColor = null)
+        {
+            var tetrisBlocks = allBlocks.Where(x => x.Rule is TetrisRule);
+            foreach (var block in tetrisBlocks)
+            {
+                RenderTarget2D texture = renderedTetrisTextures[block.Id];
+                TetrisRule rule = block.Rule as TetrisRule;
+                spriteBatch.Draw(texture, new Rectangle(BlockPositionToOnScreenLocation(block.X, block.Y), BlockSizePoint), fillColor ?? rule.Color ?? (rule.IsSubtractive ? Color.Blue : Color.Gold));
+            }
+        }
+        private RenderTarget2D CreateTetrisTexture(bool[,] shape, bool isRotatable, bool isSubtractive)
+        {
+            int texW = texTetris[0].Width;
+            int shapeW = shape.GetLength(0);
+            int shapeH = shape.GetLength(1);
+            int xMargin = (tetrisTextureSize.X - shapeW * texW) / 2;
+            int yMargin = (tetrisTextureSize.Y - shapeH * texW) / 2;
+            RenderTarget2D canvas = new RenderTarget2D(GraphicsDevice, tetrisTextureSize.X, tetrisTextureSize.Y);
+            GraphicsDevice.SetRenderTarget(canvas);
+            GraphicsDevice.Clear(Color.Transparent);
+            SpriteBatch batch = new SpriteBatch(GraphicsDevice);
+            batch.Begin();
+
+            for (int i = 0; i < shapeW; i++)
+                for (int j = 0; j < shapeH; j++)
+                    if (shape[i, j] == true)
+                        batch.Draw(texTetris[isSubtractive ? 1 : 0], new Vector2(xMargin + i * texW, yMargin + j * texW), Color.White);
+
+            batch.End();
+
+            if(isRotatable)
+            {
+                RenderTarget2D canvasRotated = new RenderTarget2D(GraphicsDevice, canvas.Width, canvas.Height);
+                GraphicsDevice.SetRenderTarget(canvasRotated);
+                GraphicsDevice.Clear(Color.Transparent);
+                batch.Begin();
+                batch.Draw(canvas, canvasRotated.Bounds.Center.ToVector2(), null, Color.White, MathHelper.ToRadians(-30), canvas.Bounds.Center.ToVector2(), 1f, SpriteEffects.None, 0);
+                batch.End();
+                canvas = canvasRotated;
+            }
+
+            GraphicsDevice.SetRenderTarget(null);
+            return canvas;   
         }
     }
 }
