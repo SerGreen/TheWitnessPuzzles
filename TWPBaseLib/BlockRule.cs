@@ -129,10 +129,10 @@ namespace TheWitnessPuzzles
         {
             IsSubtractive = subtractive;
             Color = color;
-            Shape = new bool[shape.GetLength(1), shape.GetLength(0)];
+            Shape = new bool[shape.GetLength(0), shape.GetLength(1)];
             for (int i = 0; i < Width; i++)
                 for (int j = 0; j < Height; j++)
-                    Shape[i, j] = shape[j, i];
+                    Shape[i, j] = shape[i, j];
 
             _totalBlocks = 0;
             for (int i = 0; i < Width; i++)
@@ -150,14 +150,39 @@ namespace TheWitnessPuzzles
 
         public TetrisRotatableRule RotateCW()
         {
-            bool[,] newShape = new bool[Height, Width];
-            for (int i = 0; i < Width; i++)
-                for (int j = Height - 1; j >= 0; j--)
-                    newShape[Height - j - 1, i] = Shape[i, j];
+            bool[,] newShape = RotateShapeCW(Shape);
 
             var clone = this.MemberwiseClone() as TetrisRotatableRule;
             clone.Shape = newShape;
             return clone;
+        }
+
+        public static bool[,] RotateShapeCW(bool[,] originalShape, int times = 1)
+        {
+            times %= 4;
+            if (times == 0)
+                return originalShape;
+
+            int w = originalShape.GetLength(0);
+            int h = originalShape.GetLength(1);
+            bool[,] newShape = new bool[h, w];
+            for (int i = 0; i < w; i++)
+                for (int j = h - 1; j >= 0; j--)
+                    newShape[h - j - 1, i] = originalShape[i, j];
+
+            return RotateShapeCW(newShape, times - 1);
+        }
+
+        public static bool AreShapesIdentical(bool[,] shapeA, bool[,] shapeB)
+        {
+            if (shapeA.GetLength(0) != shapeB.GetLength(0) || shapeA.GetLength(1) != shapeB.GetLength(1))
+                return false;
+
+            for (int x = 0; x < shapeA.GetLength(0); x++)
+                for (int y = 0; y < shapeA.GetLength(1); y++)
+                    if (shapeA[x, y] != shapeB[x, y])
+                        return false;
+            return true;
         }
     }
 

@@ -256,28 +256,13 @@ namespace TWP_Shared
                             bool[,] shape = rule.Shape;
                             // If shape is rotatable, then rotate it randomly before render
                             if (rule is TetrisRotatableRule r)
-                                shape = RotateShapeCW(shape, rnd.Next(0, 4));
+                                shape = TetrisRotatableRule.RotateShapeCW(shape, rnd.Next(0, 4));
                             // Draw shape on a texture
                             RenderTarget2D texture = CreateTetrisTexture(shape, rule is TetrisRotatableRule, rule.IsSubtractive);
                             // Save it to the dictionary
                             renderedTetrisTextures.Add(block.Id, texture);
                         }
                     }
-                }
-                bool[,] RotateShapeCW(bool[,] originalShape, int times = 1)
-                {
-                    times %= 4;
-                    if (times == 0)
-                        return originalShape;
-
-                    int w = originalShape.GetLength(0);
-                    int h = originalShape.GetLength(1);
-                    bool[,] newShape = new bool[h, w];
-                    for (int i = 0; i < w; i++)
-                        for (int j = h - 1; j >= 0; j--)
-                            newShape[h - j - 1, i] = originalShape[i, j];
-
-                    return RotateShapeCW(newShape, times - 1);
                 }
                 #endregion 
                 return true;

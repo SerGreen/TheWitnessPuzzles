@@ -7,14 +7,24 @@ using TheWitnessPuzzles;
 
 namespace TWP_Shared
 {
+    /// <summary>
+    /// 
+    ///                                     !!! DISCLAIMER !!!
+    ///                       This class is bad. I mean really really REALLY bad.
+    ///                 I'm not even sure that i understand how and why it works myself
+    ///                      It is impossible to read. It is impossible to maintain.
+    ///                                 But hey, at least it works...
+    /// 
+    /// </summary>
     public class ReversePanelGenerator : PanelGenerator
     {
         public static ReversePanelGenerator Instance = new ReversePanelGenerator();
         private ReversePanelGenerator() { }
 
         readonly static Random randomNumberGenerator = new Random();
-        readonly static List<Color> colorPalette = new List<Color>() { Color.Aqua, Color.Magenta, Color.Lime, Color.Blue, Color.OrangeRed, Color.Yellow, Color.White, Color.Black, Color.Purple };
+        readonly static List<Color> colorPalette = new List<Color>() { Color.Aqua, Color.Magenta, Color.Lime, Color.Blue, Color.OrangeRed, Color.Yellow, Color.White, Color.Black };
 
+        // Yeah, i know, it's a method 700+ lines big...
         public override Puzzle GeneratePanel(int? seed = null)
         {
             Random rnd = seed.HasValue ? new Random(seed.Value) : randomNumberGenerator;
@@ -351,6 +361,156 @@ namespace TWP_Shared
             }
             #endregion
 
+            // Tetris rules
+            for (int i = 0; i < sectors.Count; i++)
+            {
+                int totalBlocks = sectors[i].Blocks.Count;
+                var freeBlocks = GetFreeSectorBlocks();
+
+                // If all tetrominos will be this size, we still have enough free blocks to fit them in
+                // Tetrominos can grow larger than minimum size though
+                // For empty sector the number is 1
+                // But we don't really want a large sector with five or more tetris rules, even if we have five or more free blocks, so here comes the limit
+                int tetrominoMinSize = (int) Math.Ceiling((double) totalBlocks / Math.Min(4, freeBlocks.Count));
+                int tetrominoTrueMinSize = (int) Math.Ceiling((double) totalBlocks / freeBlocks.Count);
+
+                // Create tetrominos only if sector is good sized and expected size of one tetromino is not too big
+                if (totalBlocks > 1 && totalBlocks < 14 && tetrominoMinSize <= 4 && rnd.NextDouble() > 0.2)
+                {
+                    List<Block> unusedBlocks = new List<Block>(sectors[i].Blocks);
+
+                    // By default we are not gonna create subtractive shapes
+                    int subtractiveQuota = 0;
+                    int subtractiveTetrominoSize = -1;
+
+                    // If we have plenty of free space, we can spawn subtractive shape
+                    if(tetrominoTrueMinSize <= 2 && freeBlocks.Count > 1 && totalBlocks < 18)
+                    {
+                        subtractiveQuota++;
+                        // Compensate subtractive tetromino with bigger regular ones
+                        if (tetrominoMinSize != tetrominoTrueMinSize)
+                            tetrominoMinSize++;
+                        // Average size of subtractive shape should be about the amount of freed space by the increase of tetrominoMinSize
+                        // Every block yields one bit of space, but also we need one free block to store subtractive tetromino, so it's (Count - 1)
+                        // But also we wouldn't want a shape much bigger than 4 bits
+                        int subtractiveTetrominoAvgSize = Math.Min(4, freeBlocks.Count - 1);
+                        // Exact size of subtractive tetromino
+                        subtractiveTetrominoSize = MathHelper.Clamp(rnd.Next(subtractiveTetrominoAvgSize - 1, subtractiveTetrominoAvgSize + 2), 1, 5);
+                    }
+                    
+                    // Loop untill we use all sector blocks
+                    while (unusedBlocks.Count > 0)
+                    {
+                        // Just a precaution. May happen, but extremely rarely, when RNGesus is really mad at us
+                        if(freeBlocks.Count == 0)
+                        {
+                            // Undo all spawned tetris rules in sector
+                            var tetrisBlocks = sectors[i].Blocks.Where(x => x.Rule is TetrisRule);
+                            foreach (var block in tetrisBlocks)
+                                block.Rule = null;
+                            break;
+                        }
+                        
+                        List<Block> tetrominoBlocks = new List<Block>();
+
+                        // Decide if new tetromino will be subtractive
+                        bool isSubtractiveTetromino = false;
+                        if(subtractiveQuota > 0)
+                        {
+                            isSubtractiveTetromino = true;
+                            subtractiveQuota--;
+                        }
+
+                        CreateTetrominoShape(isSubtractiveTetromino);
+
+                        // Turn tetromino blocks into bool[,] shape
+                        int tetroMinX = tetrominoBlocks.Min(x => x.X);
+                        int tetroMaxX = tetrominoBlocks.Max(x => x.X);
+                        int tetroMinY = tetrominoBlocks.Min(x => x.Y);
+                        int tetroMaxY = tetrominoBlocks.Max(x => x.Y);
+                        bool[,] shape = new bool[tetroMaxX - tetroMinX + 1, tetroMaxY - tetroMinY + 1];
+                        foreach (Block block in tetrominoBlocks)
+                            shape[block.X - tetroMinX, block.Y - tetroMinY] = true;
+
+                        // Randomly make shape rotatable
+                        bool rotatable = false;
+                        if (rnd.NextDouble() > 0.85 && !TetrisRotatableRule.AreShapesIdentical(shape, TetrisRotatableRule.RotateShapeCW(shape)))
+                            rotatable = true;
+
+                        // Choose random free block to plant the new tetris rule
+                        Block tetrisBlock = freeBlocks[rnd.Next(freeBlocks.Count)];
+                        if (rotatable)
+                            tetrisBlock.Rule = new TetrisRotatableRule(shape, isSubtractiveTetromino);
+                        else
+                            tetrisBlock.Rule = new TetrisRule(shape, isSubtractiveTetromino);
+                        
+                        // Update free blocks
+                        freeBlocks = GetFreeSectorBlocks();
+
+                        // Repeat untill all unused blocks will be used in tetris rules
+                        continue;
+
+                        // == Inner methods ==
+                        void AddBlockToTetromino(Block block, bool isSubtractive = false)
+                        {
+                            tetrominoBlocks.Add(block);
+                            if (isSubtractive)
+                                unusedBlocks.Add(block);
+                            else
+                                unusedBlocks.Remove(block);
+                        }
+                        void CreateTetrominoShape(bool isSubtractive)
+                        {
+                            if (isSubtractive)
+                                // Take random unused block as first tetromino
+                                AddBlockToTetromino(unusedBlocks[rnd.Next(unusedBlocks.Count)], true);
+                            else
+                                // Take first unused block as the first bit of tetromino
+                                AddBlockToTetromino(unusedBlocks[0]);
+
+                            // Do minimum amount of cycles and then shape has some chance to grow bigger (the smaller shape the bigger chance; for 4-sized shape it's 10%)
+                            // But if shape is subtractive then do exact amount of cycles
+                            for (int k = 1; isSubtractive ? k < subtractiveTetrominoSize : (k < tetrominoMinSize || rnd.Next(6 + tetrominoMinSize) == 0); k++)
+                            {
+                                // Get all blocks that are next to current shape
+                                // For subtractive shape use not only unused blocks, but all of them
+                                var sourceBlocks = isSubtractive ? panel.Blocks : unusedBlocks;
+                                var neighbours = sourceBlocks.Where(x => x.Edges.Intersect(tetrominoBlocks.SelectMany(z => z.Edges)).Count() > 0 && !tetrominoBlocks.Contains(x)).ToList();
+                                if (neighbours.Count == 0)
+                                    break;
+
+                                // Take one random neighbour block
+                                Block neighbour = null;
+                                bool acceptable;
+                                int retries = 8;
+                                do
+                                {
+                                    neighbour = neighbours[rnd.Next(neighbours.Count)];
+                                    int minX = tetrominoBlocks.Min(x => x.X);
+                                    int maxX = tetrominoBlocks.Max(x => x.X);
+                                    int minY = tetrominoBlocks.Min(x => x.Y);
+                                    int maxY = tetrominoBlocks.Max(x => x.Y);
+                                    // This neighbour block is not acceptable if it would make tetromino bigger than 4x4 bits
+                                    acceptable = !(maxX - minX + 1 >= 4 && (neighbour.X < minX || neighbour.X > maxX)) || (maxY - minY + 1 >= 4 && (neighbour.Y < minY || neighbour.Y > maxY));
+                                    retries--;
+                                }
+                                while (!acceptable && retries > 0);
+
+                                // If we used all retries and couldn't find acceptable block to add to tetromino, 
+                                // then don't, just finalize current tetromino and move on to next one
+                                if (!acceptable)
+                                    break;
+
+                                AddBlockToTetromino(neighbour, isSubtractive);
+                            }
+                        }
+                    }
+                }
+
+                // Method to update free blocks
+                List<Block> GetFreeSectorBlocks() => sectors[i].Blocks.Where(x => x.Rule == null).ToList();
+            }
+
             // Elimination rules
             #region Elimination
             num = rnd.NextDouble();
@@ -359,35 +519,50 @@ namespace TWP_Shared
             {
                 // Get sectors that have 1 or more free blocks
                 var acceptableSectors = sectors.Where(x => x.Blocks.Where(z => z.Rule == null).Count() >= 1).ToList();
+                if (acceptableSectors.Count == 0)
+                    break;
+
                 Sector sec = acceptableSectors[rnd.Next(acceptableSectors.Count)];
                 int freeBlocksCount = sec.Blocks.Where(z => z.Rule == null).Count();
                 bool isHexagon = freeBlocksCount > 1
                     ? rnd.NextDouble() > 0.9
                     : true;
 
-                if (freeBlocksCount >= 3 && colors.Count > 1 && rnd.NextDouble() > 0.5)
+                bool coloredEliminationSpawned = false;
+                // Colored eliminator can spawn alongside the sun block and only if sector has exactly one colored square without suns of the same color
+                // Sun will be colored like the square and eliminator will have different color
+                if (freeBlocksCount >= 3 && colors.Count > 1/* && rnd.NextDouble() > 0.5*/)
                 {
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
-                    int indexA = rnd.Next(secBlocks.Count);
-                    int indexB;
-                    do
+                    var squareSecBlocks = secBlocks.Where(x => x.Rule is ColoredSquareRule).ToList();
+                    if (squareSecBlocks.Count == 1)
                     {
-                        indexB = rnd.Next(secBlocks.Count);
-                    }
-                    while (indexB == indexA);
+                        Color squareCol = (squareSecBlocks[0].Rule as ColoredSquareRule).Color.Value;
+                        if (secBlocks.Where(x => x.Rule is IColorable icol && icol.Color == squareCol).Count() == 1)
+                        {
+                            int indexA = rnd.Next(secBlocks.Count);
+                            int indexB;
+                            do
+                            {
+                                indexB = rnd.Next(secBlocks.Count);
+                            }
+                            while (indexB == indexA);
 
-                    Color elimCol = colors[rnd.Next(colors.Count)];
-                    Color col;
-                    do
-                    {
-                        col = colors[rnd.Next(colors.Count)];
+                            Color elimCol;
+                            do
+                            {
+                                elimCol = colors[rnd.Next(colors.Count)];
+                            }
+                            while (elimCol == squareCol);
+
+                            secBlocks[indexA].Rule = new EliminationRule(elimCol);
+                            secBlocks[indexB].Rule = new SunPairRule(squareCol);
+                            coloredEliminationSpawned = true;
+                        }
                     }
-                    while (col == elimCol);
-                    
-                    secBlocks[indexA].Rule = new EliminationRule(elimCol);
-                    secBlocks[indexB].Rule = new SunPairRule(col);
                 }
-                else
+
+                if(!coloredEliminationSpawned)
                 {
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
                     int index = rnd.Next(secBlocks.Count);

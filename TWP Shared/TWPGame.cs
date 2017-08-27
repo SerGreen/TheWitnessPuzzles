@@ -84,8 +84,8 @@ namespace TWP_Shared
             panel.Grid[6, 0].Rule = new TriangleRule(1);
             panel.Grid[5, 1].Rule = new TriangleRule(2);
 
-            panel.Grid[5, 2].Rule = new TetrisRotatableRule(new bool[,] { { false, false, true }, { true, true, true } });
-            panel.Grid[4, 3].Rule = new TetrisRule(new bool[,] { { false, true, false }, { true, true, true } });
+            panel.Grid[5, 2].Rule = new TetrisRotatableRule(new bool[,] { { false, true }, {false, true }, { true, true } });
+            panel.Grid[4, 3].Rule = new TetrisRule(new bool[,] { { false, true }, { true, true }, { false, true } });
             panel.Grid[5, 0].Rule = new TetrisRule(new bool[,] { { true } }, true);
 
             return panel;
@@ -158,7 +158,7 @@ namespace TWP_Shared
                 Exit();
 
             if (InputManager.IsKeyPressed(Keys.Enter))
-                ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, CreateTestPanel2() /*DI.Get<PanelGenerator>().GeneratePanel()*/);
+                ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, DI.Get<PanelGenerator>().GeneratePanel());
 
             ScreenManager.Instance.Update(gameTime);
             InputManager.Update();
