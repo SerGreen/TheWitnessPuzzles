@@ -75,7 +75,12 @@ float4 Box4(float4 p0, float4 p1, float4 p2, float4 p3)
 //Extracts the pixels we want to blur
 float4 ExtractPS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_TARGET0
 {
-	float4 color = ScreenTexture.Sample(LinearSampler, texCoord);
+	#if SM4
+		float2 halfPixel = 0;
+	#else
+		float2 halfPixel = InverseResolution / 2;
+	#endif
+	float4 color = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);
 
 	float avg = (color.r + color.g + color.b) / 3;
 
@@ -90,7 +95,12 @@ float4 ExtractPS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_TA
 //Extracts the pixels we want to blur, but considers luminance instead of average rgb
 float4 ExtractLuminancePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_TARGET0
 {
-    float4 color = ScreenTexture.Sample(LinearSampler, texCoord);
+	#if SM4
+		float2 halfPixel = 0;
+	#else
+		float2 halfPixel = InverseResolution / 2;
+	#endif
+    float4 color = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);
 
     float luminance = color.r * 0.21f + color.g * 0.72f + color.b * 0.07f;
 
@@ -107,20 +117,25 @@ float4 ExtractLuminancePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0
 float4 DownsamplePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_TARGET0
 {
     float2 offset = float2(StreakLength * InverseResolution.x, 1 * InverseResolution.y);
+	#if SM4
+		float2 halfPixel = 0;
+	#else
+		float2 halfPixel = InverseResolution / 2;
+	#endif
         
-    float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, -2) * offset);
-    float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0,-2)*offset);
-    float4 c2 = ScreenTexture.Sample(LinearSampler, texCoord + float2(2, -2) * offset);
-    float4 c3 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset);
-    float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, -1) * offset);
-    float4 c5 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, 0) * offset);
-    float4 c6 = ScreenTexture.Sample(LinearSampler, texCoord);
-    float4 c7 = ScreenTexture.Sample(LinearSampler, texCoord + float2(2, 0) * offset);
-    float4 c8 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 1) * offset);
-    float4 c9 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 1) * offset);
-    float4 c10 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, 2) * offset);
-    float4 c11 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, 2) * offset);
-    float4 c12 = ScreenTexture.Sample(LinearSampler, texCoord + float2(2, 2) * offset);
+    float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, -2) * offset + halfPixel);
+    float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0,-2)*offset + halfPixel);
+    float4 c2 = ScreenTexture.Sample(LinearSampler, texCoord + float2(2, -2) * offset + halfPixel);
+    float4 c3 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset + halfPixel);
+    float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, -1) * offset + halfPixel);
+    float4 c5 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, 0) * offset + halfPixel);
+    float4 c6 = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);
+    float4 c7 = ScreenTexture.Sample(LinearSampler, texCoord + float2(2, 0) * offset + halfPixel);
+    float4 c8 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 1) * offset + halfPixel);
+    float4 c9 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 1) * offset + halfPixel);
+    float4 c10 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, 2) * offset + halfPixel);
+    float4 c11 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, 2) * offset + halfPixel);
+    float4 c12 = ScreenTexture.Sample(LinearSampler, texCoord + float2(2, 2) * offset + halfPixel);
 
     return Box4(c0, c1, c5, c6) * 0.125f +
     Box4(c1, c2, c6, c7) * 0.125f +
@@ -134,15 +149,20 @@ float4 UpsamplePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_T
 {
     float2 offset = float2(StreakLength * InverseResolution.x, 1 * InverseResolution.y) * Radius;
 
-    float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset);
-    float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, -1) * offset);
-    float4 c2 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, -1) * offset);
-    float4 c3 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 0) * offset);
-    float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord);
-    float4 c5 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 0) * offset);
-    float4 c6 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1,1) * offset);
-    float4 c7 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, 1) * offset);
-    float4 c8 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 1) * offset);
+	#if SM4
+		float2 halfPixel = 0;
+	#else
+		float2 halfPixel = InverseResolution / 2;
+	#endif
+    float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset + halfPixel);
+    float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, -1) * offset + halfPixel);
+    float4 c2 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, -1) * offset + halfPixel);
+    float4 c3 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 0) * offset + halfPixel);
+    float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);
+    float4 c5 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 0) * offset + halfPixel);
+    float4 c6 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1,1) * offset + halfPixel);
+    float4 c7 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, 1) * offset + halfPixel);
+    float4 c8 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 1) * offset + halfPixel);
 
     //Tentfilter  0.0625f    
     return 0.0625f * (c0 + 2 * c1 + c2 + 2 * c3 + 4 * c4 + 2 * c5 + c6 + 2 * c7 + c8) * Strength + float4(0, 0,0,0); //+ 0.5f * ScreenTexture.Sample(c_texture, texCoord);
@@ -152,21 +172,26 @@ float4 UpsamplePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_T
 //Upsample to the former MIP, blur in the process, change offset depending on luminance
 float4 UpsampleLuminancePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_TARGET0
 {
-    float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord);  //middle one
+	#if SM4
+		float2 halfPixel = 0;
+	#else
+		float2 halfPixel = InverseResolution / 2;
+	#endif
+    float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);  //middle one
  
     /*float luminance = c4.r * 0.21f + c4.g * 0.72f + c4.b * 0.07f;
     luminance = max(luminance, 0.4f);
 */
 	float2 offset = float2(StreakLength * InverseResolution.x, 1 * InverseResolution.y) * Radius; /// luminance;
 
-    float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset);
-    float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, -1) * offset);
-    float4 c2 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, -1) * offset);
-    float4 c3 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 0) * offset);
-    float4 c5 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 0) * offset);
-    float4 c6 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 1) * offset);
-    float4 c7 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, 1) * offset);
-    float4 c8 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 1) * offset);
+	float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset + halfPixel);
+	float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, -1) * offset + halfPixel);
+	float4 c2 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, -1) * offset + halfPixel);
+	float4 c3 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 0) * offset + halfPixel);
+	float4 c5 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 0) * offset + halfPixel);
+	float4 c6 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, 1) * offset + halfPixel);
+	float4 c7 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, 1) * offset + halfPixel);
+	float4 c8 = ScreenTexture.Sample(LinearSampler, texCoord + float2(1, 1) * offset + halfPixel);
  
     return 0.0625f * (c0 + 2 * c1 + c2 + 2 * c3 + 4 * c4 + 2 * c5 + c6 + 2 * c7 + c8) * Strength + float4(0, 0, 0, 0); //+ 0.5f * ScreenTexture.Sample(c_texture, texCoord);
 
@@ -180,8 +205,13 @@ technique Extract
 {
 	pass Pass1
 	{
-		VertexShader = compile vs_4_0 VertexShaderFunction();
-		PixelShader = compile ps_4_0 ExtractPS();
+		#if SM4
+			VertexShader = compile vs_4_0 VertexShaderFunction();
+			PixelShader = compile ps_4_0 ExtractPS();
+		#else
+			VertexShader = compile vs_3_0 VertexShaderFunction();
+			PixelShader = compile ps_3_0 ExtractPS();
+		#endif
 	}
 }
 
@@ -189,8 +219,13 @@ technique ExtractLuminance
 {
 	pass Pass1
 	{
-		VertexShader = compile vs_4_0 VertexShaderFunction();
-		PixelShader = compile ps_4_0 ExtractLuminancePS();
+		#if SM4
+			VertexShader = compile vs_4_0 VertexShaderFunction();
+			PixelShader = compile ps_4_0 ExtractLuminancePS();
+		#else
+			VertexShader = compile vs_3_0 VertexShaderFunction();
+			PixelShader = compile ps_3_0 ExtractLuminancePS();
+		#endif
 	}
 }
 
@@ -198,8 +233,13 @@ technique Downsample
 {
     pass Pass1
     {
-		VertexShader = compile vs_4_0 VertexShaderFunction();
-        PixelShader = compile ps_4_0 DownsamplePS();
+		#if SM4
+			VertexShader = compile vs_4_0 VertexShaderFunction();
+			PixelShader = compile ps_4_0 DownsamplePS();
+		#else
+			VertexShader = compile vs_3_0 VertexShaderFunction();
+			PixelShader = compile ps_3_0 DownsamplePS();
+		#endif
     }
 }
 
@@ -207,8 +247,13 @@ technique Upsample
 {
     pass Pass1
     {
-		VertexShader = compile vs_4_0 VertexShaderFunction();
-        PixelShader = compile ps_4_0 UpsamplePS();
+		#if SM4
+			VertexShader = compile vs_4_0 VertexShaderFunction();
+			PixelShader = compile ps_4_0 UpsamplePS();
+		#else
+			VertexShader = compile vs_3_0 VertexShaderFunction();
+			PixelShader = compile ps_3_0 UpsamplePS();
+		#endif
     }
 }
 
@@ -217,7 +262,12 @@ technique UpsampleLuminance
 {
     pass Pass1
     {
-		VertexShader = compile vs_4_0 VertexShaderFunction();
-        PixelShader = compile ps_4_0 UpsampleLuminancePS();
+		#if SM4
+			VertexShader = compile vs_4_0 VertexShaderFunction();
+			PixelShader = compile ps_4_0 UpsampleLuminancePS();
+		#else
+			VertexShader = compile vs_3_0 VertexShaderFunction();
+			PixelShader = compile ps_3_0 UpsampleLuminancePS();
+		#endif
     }
 }

@@ -9,13 +9,12 @@ namespace TWP_Shared
 {
     public abstract class GameScreen
     {
-        protected ContentManager Content;
         protected Point ScreenSize;
         protected GraphicsDevice GraphicsDevice;
         protected Dictionary<string, Texture2D> TextureProvider;
         protected Dictionary<string, SpriteFont> FontProvider;
 
-        public GameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider)
+        public GameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content)
         {
             GraphicsDevice = device;
             ScreenSize = screenSize;

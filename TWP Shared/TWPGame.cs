@@ -26,6 +26,33 @@ namespace TWP_Shared
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
+
+
+
+            //if (isMobile)
+            //{
+            //    graphics.IsFullScreen = true;
+            //    graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
+            //    graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
+            //    graphics.SupportedOrientations = DisplayOrientation.Portrait;
+            //    TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
+            //    //graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            //    graphics.ApplyChanges();
+            //    //graphics.CreateDevice();
+            //    //GraphicsDevice.Viewport = new Viewport(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
+            //}
+            //else
+            //{
+            //    IsMouseVisible = true;
+            //    graphics.PreferredBackBufferWidth = 320;
+            //    graphics.PreferredBackBufferHeight = 480;
+            //    graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            //    graphics.ApplyChanges();
+            //}
+
+            
+            //ScreenManager.Instance.Initialize(GraphicsDevice, Content);
+            //ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
         }
 
         private Puzzle CreateTestPanel()
@@ -99,25 +126,29 @@ namespace TWP_Shared
         /// </summary>
         protected override void Initialize()
         {
-            ScreenManager.Instance.Initialize(GraphicsDevice);
-
             if (isMobile)
             {
                 graphics.IsFullScreen = true;
-                graphics.PreferredBackBufferWidth = ScreenManager.Instance.ScreenSize.X;
-                graphics.PreferredBackBufferHeight = ScreenManager.Instance.ScreenSize.Y;
+                graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
+                graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
                 graphics.SupportedOrientations = DisplayOrientation.Portrait;
                 TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
+                //graphics.GraphicsProfile = GraphicsProfile.HiDef;
+                graphics.ApplyChanges();
+                //graphics.CreateDevice();
+                //GraphicsDevice.Viewport = new Viewport(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
             }
             else
             {
                 IsMouseVisible = true;
                 graphics.PreferredBackBufferWidth = 320;
                 graphics.PreferredBackBufferHeight = 480;
+                graphics.GraphicsProfile = GraphicsProfile.HiDef;
+                graphics.ApplyChanges();
             }
 
-            graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            graphics.ApplyChanges();
+
+            ScreenManager.Instance.Initialize(GraphicsDevice, Content);
             ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
 
             base.Initialize();
@@ -131,7 +162,7 @@ namespace TWP_Shared
         {
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
-            ScreenManager.Instance.LoadContent(Content);
+            ScreenManager.Instance.LoadContent();
             SoundManager.LoadContent(Content);
 
             InitializeAfterContentIsLoaded();
@@ -139,6 +170,7 @@ namespace TWP_Shared
 
         protected virtual void InitializeAfterContentIsLoaded()
         {
+
             ScreenManager.Instance.AddScreen<SplashGameScreen>();
         }
 

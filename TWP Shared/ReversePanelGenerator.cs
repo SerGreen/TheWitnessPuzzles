@@ -374,6 +374,7 @@ namespace TWP_Shared
                 // But we don't really want a large sector with five or more tetris rules, even if we have five or more free blocks, so here comes the limit
                 int tetrominoMinSize = (int) Math.Ceiling((double) totalBlocks / Math.Min(4, freeBlocks.Count));
                 int tetrominoTrueMinSize = (int) Math.Ceiling((double) totalBlocks / freeBlocks.Count);
+                int exprectedTetrominosAmount = (int) Math.Ceiling((double) totalBlocks / tetrominoMinSize);
 
                 // Create tetrominos only if sector is good sized and expected size of one tetromino is not too big
                 if (totalTetrisRulesAdded < 5 && totalBlocks > 1 && totalBlocks < 14 && tetrominoMinSize <= 4 && rnd.NextDouble() > 0.2)
@@ -385,7 +386,7 @@ namespace TWP_Shared
                     int subtractiveTetrominoSize = -1;
 
                     // If we have plenty of free space, we can spawn subtractive shape
-                    if(tetrominoTrueMinSize <= 2 && freeBlocks.Count > 1 && totalBlocks < 18)
+                    if(tetrominoTrueMinSize <= 2 && freeBlocks.Count > 1 && totalBlocks < 18 && exprectedTetrominosAmount <= 3)
                     {
                         subtractiveQuota++;
                         // Compensate subtractive tetromino with bigger regular ones
@@ -598,20 +599,29 @@ namespace TWP_Shared
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
                     int index = rnd.Next(secBlocks.Count);
                     int ruleType = rnd.Next(3);
-                    if (ruleType == 0)
-                        secBlocks[index].Rule = new ColoredSquareRule(colors[rnd.Next(colors.Count)]);
-                    else if (ruleType == 1)
+                    
+                    Color? squareCol = sec.Blocks.Select(x => x.Rule).OfType<ColoredSquareRule>().FirstOrDefault()?.Color;
+                    Color? sunCol = sec.Blocks.Select(x => x.Rule).OfType<SunPairRule>().FirstOrDefault()?.Color;
+
+                    // Create colored square
+                    if (ruleType == 0 && squareCol != null && colors.Count > 1)
                     {
-                        Color? squareCol = sec.Blocks.Select(x => x.Rule).OfType<ColoredSquareRule>().FirstOrDefault()?.Color;
-                        Color? sunCol = sec.Blocks.Select(x => x.Rule).OfType<SunPairRule>().FirstOrDefault()?.Color;
-                        Color? col;
+                        Color col;
                         do
-                        {
                             col = colors[rnd.Next(colors.Count)];
-                        }
-                        while ((squareCol != null && col == squareCol) || (sunCol != null && col == sunCol));
-                        secBlocks[index].Rule = new SunPairRule(col ?? colors[rnd.Next(colors.Count)]);
+                        while (col == squareCol.Value);
+                        secBlocks[index].Rule = new ColoredSquareRule(col);
                     }
+                    // Create sun
+                    else if (ruleType == 1 && ((squareCol != null && sunCol != null && colors.Count > 2) || ((squareCol == null || sunCol == null) && colors.Count > 1)))
+                    {
+                        Color col;
+                        do
+                            col = colors[rnd.Next(colors.Count)];
+                        while ((squareCol != null && col == squareCol) || (sunCol != null && col == sunCol));
+                        secBlocks[index].Rule = new SunPairRule(col);
+                    }
+                    // Create triangle
                     else if (ruleType == 2)
                         secBlocks[index].Rule = new TriangleRule(rnd.Next(1, 4));
                 }

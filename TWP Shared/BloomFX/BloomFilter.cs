@@ -559,7 +559,8 @@ namespace BloomFX
             }
 
             //Note the final step could be done as a blend to the final texture.
-            
+
+            _graphicsDevice.SetRenderTarget(null);
             return _bloomRenderTarget2DMip0;
         }
 

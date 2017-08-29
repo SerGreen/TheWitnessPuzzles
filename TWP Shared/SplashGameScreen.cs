@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Content;
 
 namespace TWP_Shared
 {
@@ -25,8 +26,8 @@ namespace TWP_Shared
 
         RenderTarget2D backgroundTexture;
 
-        public SplashGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider) 
-            : base(screenSize, device, TextureProvider, FontProvider)
+        public SplashGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
+            : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
             font = FontProvider["font/fnt_constantia36"];
 

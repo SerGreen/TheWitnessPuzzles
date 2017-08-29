@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using Microsoft.Xna.Framework.Graphics;
 using TheWitnessPuzzles;
+using Microsoft.Xna.Framework.Content;
 
 namespace TWP_Shared
 {
@@ -30,8 +31,8 @@ namespace TWP_Shared
         Rectangle[] vDimensions = new Rectangle[6];
         Rectangle[,] dimMatrix = new Rectangle[7, 7];
 
-        public EditorGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider) 
-            : base(screenSize, device, textureProvider, fontProvider)
+        public EditorGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
+            : base(screenSize, device, textureProvider, fontProvider, Content)
         {
             renderer = new PanelRenderer(null, screenSize, textureProvider, GraphicsDevice)
             {

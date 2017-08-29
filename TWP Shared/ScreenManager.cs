@@ -66,11 +66,11 @@ namespace TWP_Shared
         {
             GameScreen screen;
 
-            if (typeof(TScreen) == typeof(PanelGameScreen))
-                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider);
-            else
-                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider);
-            //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider);
+            //if (typeof(TScreen) == typeof(PanelGameScreen))
+            //    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider, Content);
+            //else
+            //    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
+            screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);
 
             if (replaceCurrent)
                 screenStack.Pop();
@@ -87,14 +87,13 @@ namespace TWP_Shared
             }
         }
 
-        public void Initialize(GraphicsDevice device)
+        public void Initialize(GraphicsDevice device, ContentManager contentManager)
         {
             Device = device;
-        }
-        public void LoadContent(ContentManager contentManager)
-        {
             Content = contentManager;
-
+        }
+        public void LoadContent()
+        {
             // Load all textures from the list
             foreach (string texName in texturesToLoad)
             {

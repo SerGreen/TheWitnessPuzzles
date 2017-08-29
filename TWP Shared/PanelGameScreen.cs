@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework;
 using TheWitnessPuzzles;
 using System.Linq;
 using BloomFX;
+using Microsoft.Xna.Framework.Content;
 
 namespace TWP_Shared
 {
@@ -35,8 +36,8 @@ namespace TWP_Shared
 
         BloomFilter bloomFilter;
 
-        public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider) 
-            : base(screenSize, device, TextureProvider, FontProvider)
+        public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
+            : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
             if (panel == null)
                 panel = new Puzzle(2, 2);
@@ -53,7 +54,7 @@ namespace TWP_Shared
 
             // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
-            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24, 1, RenderTargetUsage.PreserveContents);
             lineFadeTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
@@ -62,6 +63,7 @@ namespace TWP_Shared
             bloomFilter = new BloomFilter();
             bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
             bloomFilter.BloomPreset = BloomFilter.BloomPresets.Focussed;
+            bloomFilter.BloomThreshold = 0;
 
             renderer.RenderPanelToTexture(backgroundTexture);
         }
@@ -324,10 +326,10 @@ namespace TWP_Shared
             spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
             
             RenderLinesToTexture(lineTexture);
-            Texture2D bloom = bloomFilter.Draw(lineTexture, ScreenSize.X, ScreenSize.Y);
-            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, panelState.State.HasFlag(PanelStates.Solved) ? Color.White : Color.LightGray);
-            spriteBatch.Draw(bloom, GraphicsDevice.Viewport.Bounds, Color.White);
+            AddBloomToTexture(lineTexture);
 
+            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, panelState.State.HasFlag(PanelStates.Solved) ? Color.White : Color.LightGray);
+            
             if (panelState.State.HasFlag(PanelStates.FinishTracing) && lineFadeTexture != null)
                 spriteBatch.Draw(lineFadeTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.FinishTracingBlinkOpacity);
 
@@ -367,6 +369,39 @@ namespace TWP_Shared
                 DrawLines(spriteBatch, fillColor);
                 spriteBatch.End();
                 // Drop the render target
+                GraphicsDevice.SetRenderTarget(null);
+            }
+        }
+        private void AddBloomToTexture(RenderTarget2D canvas)
+        {
+            Texture2D bloom = bloomFilter.Draw(canvas, ScreenSize.X, ScreenSize.Y);
+            
+            using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
+            {
+                GraphicsDevice.SetRenderTarget(lineTexture);
+
+                var blendState = new BlendState
+                {
+                    AlphaBlendFunction = BlendFunction.ReverseSubtract,
+                    AlphaDestinationBlend = Blend.One,
+                    AlphaSourceBlend = Blend.SourceAlpha,
+                    BlendFactor = Color.White,
+                    ColorBlendFunction = BlendFunction.Add,
+                    ColorDestinationBlend = Blend.One,
+                    ColorSourceBlend = Blend.SourceAlpha,
+                    //ColorWriteChannels = ColorWriteChannels.All,
+                    //ColorWriteChannels1 = ColorWriteChannels.All,
+                    //ColorWriteChannels2 = ColorWriteChannels.All,
+                    //ColorWriteChannels3 = ColorWriteChannels.All,
+                    MultiSampleMask = -1
+                };
+
+                spriteBatch.Begin(SpriteSortMode.Texture, blendState);
+
+                spriteBatch.Draw(bloom, canvas.Bounds, Color.White);
+                //spriteBatch.Draw(texPixel, new Rectangle(100, 100, 80, 80), Color.Black);
+
+                spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);
             }
         }
