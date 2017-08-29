@@ -51,7 +51,7 @@ namespace TWP_Shared
             fadeOut.FadeComplete += fadeOutCallback;
             fadeOut.Restart();
             
-            backgroundTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
+            backgroundTexture = new RenderTarget2D(GraphicsDevice, ScreenSize.X, screenSize.Y);
             RenderBackgroundToTexture();
 
             texPixel = TextureProvider["img/twp_pixel"];

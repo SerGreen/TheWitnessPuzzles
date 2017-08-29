@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Xna.Framework;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -16,6 +17,8 @@ namespace TheWitnessPuzzles
         /// Panel height in blocks (normally 2 to 7)
         /// </summary>
         public int Height { get; }
+
+        public virtual Color MainColor { get; }
 
         /// <summary>
         /// Panel blocks in two-dimensional array
@@ -78,10 +81,11 @@ namespace TheWitnessPuzzles
             return true;
         }
 
-        public Puzzle(int width, int height)
+        public Puzzle(int width, int height, Color? lineColor = null)
         {
             Width = width;
             Height = height;
+            MainColor = lineColor ?? Color.White;
 
             Nodes = new Node[(width + 1) * (height + 1)];
             Grid = new Block[width, height];

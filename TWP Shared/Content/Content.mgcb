@@ -279,3 +279,9 @@
 /processorParam:TextureFormat=Color
 /build:img/twp_tetris.png
 
+#begin fx/Bloom.fx
+/importer:EffectImporter
+/processor:EffectProcessor
+/processorParam:DebugMode=Auto
+/build:fx/Bloom.fx
+

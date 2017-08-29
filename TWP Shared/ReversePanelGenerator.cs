@@ -362,6 +362,7 @@ namespace TWP_Shared
             #endregion
 
             // Tetris rules
+            int totalTetrisRulesAdded = 0;
             for (int i = 0; i < sectors.Count; i++)
             {
                 int totalBlocks = sectors[i].Blocks.Count;
@@ -375,7 +376,7 @@ namespace TWP_Shared
                 int tetrominoTrueMinSize = (int) Math.Ceiling((double) totalBlocks / freeBlocks.Count);
 
                 // Create tetrominos only if sector is good sized and expected size of one tetromino is not too big
-                if (totalBlocks > 1 && totalBlocks < 14 && tetrominoMinSize <= 4 && rnd.NextDouble() > 0.2)
+                if (totalTetrisRulesAdded < 5 && totalBlocks > 1 && totalBlocks < 14 && tetrominoMinSize <= 4 && rnd.NextDouble() > 0.2)
                 {
                     List<Block> unusedBlocks = new List<Block>(sectors[i].Blocks);
 
@@ -443,6 +444,7 @@ namespace TWP_Shared
                             tetrisBlock.Rule = new TetrisRotatableRule(shape, isSubtractiveTetromino);
                         else
                             tetrisBlock.Rule = new TetrisRule(shape, isSubtractiveTetromino);
+                        totalTetrisRulesAdded++;
                         
                         // Update free blocks
                         freeBlocks = GetFreeSectorBlocks();

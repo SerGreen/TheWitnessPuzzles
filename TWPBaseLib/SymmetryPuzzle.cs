@@ -11,7 +11,7 @@ namespace TheWitnessPuzzles
     public class SymmetryPuzzle : Puzzle
     {
         public bool Y_Mirrored { get; }
-        public Color MainColor { get; }
+        public override Color MainColor { get; }
         public Color MirrorColor { get; }
         private readonly int MaxNodeID;
         private readonly int WidthPlus1;

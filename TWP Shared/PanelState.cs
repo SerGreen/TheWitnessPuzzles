@@ -29,9 +29,13 @@ namespace TWP_Shared
 
         const int errorBlinkMaxTime = 800;
         int errorBlinkTime = 0;
-        public float BlinkOpacity { get; private set; } = 1f;
-        float blinkSpeed = 0.1f;
-        bool blinkOpacityDown = true;
+        public float ErrorBlinkOpacity { get; private set; } = 1f;
+        float errorBlinkSpeed = 0.1f;
+        bool errorBlinkOpacityDown = true;
+
+        public float FinishTracingBlinkOpacity { get; private set; } = 0f;
+        float finishTracingBlinkSpeed = 0.05f;
+        bool finishTracingBlinkOpacityDown = false;
 
         const int eliminationTimeMax = 70;
         int eliminationTime = 0;
@@ -58,22 +62,22 @@ namespace TWP_Shared
                     State &= ~PanelStates.LineFade;
             }
 
-            if(errorBlinkTime > 0 || (errorBlinkTime == 0 && BlinkOpacity > 0))
+            if(errorBlinkTime > 0 || (errorBlinkTime == 0 && ErrorBlinkOpacity > 0))
             {
                 if (errorBlinkTime > 0)
                     errorBlinkTime--;
 
-                if (blinkOpacityDown)
+                if (errorBlinkOpacityDown)
                 {
-                    BlinkOpacity = Math.Max(0, BlinkOpacity - blinkSpeed);
-                    if (BlinkOpacity == 0)
-                        blinkOpacityDown = false;
+                    ErrorBlinkOpacity = Math.Max(0, ErrorBlinkOpacity - errorBlinkSpeed);
+                    if (ErrorBlinkOpacity == 0)
+                        errorBlinkOpacityDown = false;
                 }
                 else
                 {
-                    BlinkOpacity = Math.Min(1f, BlinkOpacity + blinkSpeed);
-                    if (BlinkOpacity == 1f)
-                        blinkOpacityDown = true;
+                    ErrorBlinkOpacity = Math.Min(1f, ErrorBlinkOpacity + errorBlinkSpeed);
+                    if (ErrorBlinkOpacity == 1f)
+                        errorBlinkOpacityDown = true;
                 }
 
                 if (errorBlinkTime == 0)
@@ -89,17 +93,41 @@ namespace TWP_Shared
 
             if(eliminationFadeTime < eliminationFadeTimeMax)
                 eliminationFadeTime++;
+
+            if(State.HasFlag(PanelStates.FinishTracing))
+            {
+                if(finishTracingBlinkOpacityDown)
+                {
+                    FinishTracingBlinkOpacity -= finishTracingBlinkSpeed;
+                    if(FinishTracingBlinkOpacity <= 0)
+                    {
+                        FinishTracingBlinkOpacity = 0;
+                        finishTracingBlinkOpacityDown = false;
+                    }
+                }
+                else
+                {
+                    FinishTracingBlinkOpacity += finishTracingBlinkSpeed;
+                    if(FinishTracingBlinkOpacity >= 1f)
+                    {
+                        FinishTracingBlinkOpacity = 1f;
+                        finishTracingBlinkOpacityDown = true;
+                    }
+                }
+            }
         }
 
         public void InvokeFadeOut(bool isError)
         {
+            State &= ~PanelStates.FinishTracing;
+
             if(isError)
             {
                 State |= PanelStates.ErrorHappened | PanelStates.ErrorBlink | PanelStates.LineFade;
                 fadeOutTime = fadeOutErrorMaxTime;
                 errorBlinkTime = errorBlinkMaxTime;
-                BlinkOpacity = 1f;
-                blinkOpacityDown = true;
+                ErrorBlinkOpacity = 1f;
+                errorBlinkOpacityDown = true;
             }
             else
             {
@@ -112,18 +140,21 @@ namespace TWP_Shared
         {
             fadeOutTime = 0;
             errorBlinkTime = 0;
-            blinkOpacityDown = true;
-            State = PanelStates.Solved | (State & (PanelStates.EliminationFinished | PanelStates.EliminationStarted | PanelStates.FinishTracing));
+            errorBlinkOpacityDown = true;
+            State = PanelStates.Solved | (State & (PanelStates.EliminationFinished | PanelStates.EliminationStarted));
         }
 
         public void ResetToNeutral()
         {
             State = PanelStates.None;
             fadeOutTime = 0;
+            ErrorBlinkOpacity = 1f;
             errorBlinkTime = 0;
-            blinkOpacityDown = true;
+            errorBlinkOpacityDown = true;
             eliminationFadeTime = eliminationFadeTimeMax;
             eliminationTime = 0;
+            FinishTracingBlinkOpacity = 0;
+            finishTracingBlinkOpacityDown = false;
         }
 
         public void InitializeElimination()
@@ -141,9 +172,15 @@ namespace TWP_Shared
         public void SetFinishTracing(bool state)
         {
             if (state)
+            {
                 State |= PanelStates.FinishTracing;
+                FinishTracingBlinkOpacity = 0;
+                finishTracingBlinkOpacityDown = false;
+            }
             else
+            {
                 State &= ~PanelStates.FinishTracing;
+            }
         }
     }
 }

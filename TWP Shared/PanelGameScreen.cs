@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework;
 using TheWitnessPuzzles;
 using System.Linq;
+using BloomFX;
 
 namespace TWP_Shared
 {
@@ -27,10 +28,13 @@ namespace TWP_Shared
         Texture2D texPixel, texCircle;
         
         RenderTarget2D backgroundTexture;
-        RenderTarget2D linesFadeTexture;
+        RenderTarget2D lineTexture;
+        RenderTarget2D lineFadeTexture;
         RenderTarget2D errorsBlinkTexture;
         RenderTarget2D eliminatedErrorsTexture;
-        
+
+        BloomFilter bloomFilter;
+
         public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider) 
             : base(screenSize, device, TextureProvider, FontProvider)
         {
@@ -48,10 +52,16 @@ namespace TWP_Shared
             fntDebug = FontProvider["font/fnt_constantia12"];
 
             // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
-            backgroundTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
-            linesFadeTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
-            errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
-            eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
+            backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            lineFadeTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+
+            // Load bloom shader
+            bloomFilter = new BloomFilter();
+            bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
+            bloomFilter.BloomPreset = BloomFilter.BloomPresets.Focussed;
 
             renderer.RenderPanelToTexture(backgroundTexture);
         }
@@ -74,20 +84,24 @@ namespace TWP_Shared
             MoveLine(GetMoveVector());
             panelState.Update();
 
-            // If line touched end point => Produce sound
-            bool lineAtEndpoint = IsLineAtEndPoint();
-            if (lineAtEndpoint && !panelState.State.HasFlag(PanelStates.FinishTracing))
+            if (!panelState.State.HasFlag(PanelStates.ErrorHappened) && !panelState.State.HasFlag(PanelStates.Solved))
             {
-                panelState.SetFinishTracing(true);
-                SoundManager.PlayOnce(Sound.FinishTracing);
-                SoundManager.PlayLoop(SoundLoop.PathComplete);
-            }
-            // If line left end point => Produce another sound
-            else if(!lineAtEndpoint && panelState.State.HasFlag(PanelStates.FinishTracing) && !(panelState.State.HasFlag(PanelStates.Solved) || panelState.State.HasFlag(PanelStates.ErrorHappened)))
-            {
-                panelState.SetFinishTracing(false);
-                SoundManager.PlayOnce(Sound.AbortFinishTracing);
-                SoundManager.StopLoop(SoundLoop.PathComplete);
+                // If line touched end point => Produce sound
+                bool lineAtEndpoint = IsLineAtEndPoint();
+                if (lineAtEndpoint && !panelState.State.HasFlag(PanelStates.FinishTracing))
+                {
+                    panelState.SetFinishTracing(true);
+                    RenderLinesToTexture(lineFadeTexture, Color.White);
+                    SoundManager.PlayOnce(Sound.FinishTracing);
+                    SoundManager.PlayLoop(SoundLoop.PathComplete);
+                }
+                // If line left end point => Produce another sound
+                else if (!lineAtEndpoint && panelState.State.HasFlag(PanelStates.FinishTracing))
+                {
+                    panelState.SetFinishTracing(false);
+                    SoundManager.PlayOnce(Sound.AbortFinishTracing);
+                    SoundManager.StopLoop(SoundLoop.PathComplete);
+                }
             }
 
             if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
@@ -163,7 +177,7 @@ namespace TWP_Shared
                                     renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
 
                                     // Begin black line fade out as if there was an error
-                                    RenderLinesToTexture();
+                                    RenderLinesToTexture(lineFadeTexture);
                                     panelState.InvokeFadeOut(true);
                                     // And start elimination timer
                                     panelState.InitializeElimination();
@@ -209,7 +223,7 @@ namespace TWP_Shared
                                     else
                                     {
                                         // If there are true errors => start fading process and delete the lines
-                                        RenderLinesToTexture();
+                                        RenderLinesToTexture(lineFadeTexture);
                                         renderer.RenderErrorsToTexture(errorsBlinkTexture, errors, false);
                                         panelState.InvokeFadeOut(true);
                                         line = lineMirror = null;
@@ -222,7 +236,7 @@ namespace TWP_Shared
 
                         // If we looked through every endpoint and line head is not in any of them
                         // Then simply delete lines and fade them out without errors
-                        RenderLinesToTexture();
+                        RenderLinesToTexture(lineFadeTexture);
                         panelState.InvokeFadeOut(false);
                         line = lineMirror = null;
                         SoundManager.PlayOnce(Sound.AbortTracing);
@@ -308,13 +322,20 @@ namespace TWP_Shared
         public override void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
-            DrawLines(spriteBatch);
+            
+            RenderLinesToTexture(lineTexture);
+            Texture2D bloom = bloomFilter.Draw(lineTexture, ScreenSize.X, ScreenSize.Y);
+            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, panelState.State.HasFlag(PanelStates.Solved) ? Color.White : Color.LightGray);
+            spriteBatch.Draw(bloom, GraphicsDevice.Viewport.Bounds, Color.White);
 
-            if (panelState.State.HasFlag(PanelStates.LineFade) && linesFadeTexture != null)
-                spriteBatch.Draw(linesFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State.HasFlag(PanelStates.ErrorHappened) ? Color.Black : Color.White) * panelState.LineFadeOpacity);
+            if (panelState.State.HasFlag(PanelStates.FinishTracing) && lineFadeTexture != null)
+                spriteBatch.Draw(lineFadeTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.FinishTracingBlinkOpacity);
+
+            if (panelState.State.HasFlag(PanelStates.LineFade) && lineFadeTexture != null)
+                spriteBatch.Draw(lineFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State.HasFlag(PanelStates.ErrorHappened) ? Color.Black : Color.White) * panelState.LineFadeOpacity);
 
             if (panelState.State.HasFlag(PanelStates.ErrorBlink) && errorsBlinkTexture != null)
-                spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.BlinkOpacity);
+                spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.ErrorBlinkOpacity);
 
             if (panelState.State.HasFlag(PanelStates.EliminationFinished) && eliminatedErrorsTexture != null)
                 spriteBatch.Draw(eliminatedErrorsTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.EliminationFadeOpacity);
@@ -325,25 +346,25 @@ namespace TWP_Shared
             base.Draw(spriteBatch);
         }
         
-        private void DrawLines(SpriteBatch spriteBatch)
+        private void DrawLines(SpriteBatch spriteBatch, Color? fillColor = null)
         {
             if (line != null)
-                line.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MainColor : Color.White);
+                line.Draw(spriteBatch, texCircle, texPixel, fillColor ?? panel.MainColor);
 
             if (lineMirror != null)
-                lineMirror.Draw(spriteBatch, texCircle, texPixel, panel is SymmetryPuzzle sym ? sym.MirrorColor : Color.White);
+                lineMirror.Draw(spriteBatch, texCircle, texPixel, fillColor ?? (panel as SymmetryPuzzle).MirrorColor);
         }
-        private void RenderLinesToTexture()
+        private void RenderLinesToTexture(RenderTarget2D canvas, Color? fillColor = null)
         {
             using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
             {
                 // Set the render target
-                GraphicsDevice.SetRenderTarget(linesFadeTexture);
+                GraphicsDevice.SetRenderTarget(canvas);
 
                 // Draw the lines
                 GraphicsDevice.Clear(Color.Transparent);
                 spriteBatch.Begin(SpriteSortMode.Texture);
-                DrawLines(spriteBatch);
+                DrawLines(spriteBatch, fillColor);
                 spriteBatch.End();
                 // Drop the render target
                 GraphicsDevice.SetRenderTarget(null);

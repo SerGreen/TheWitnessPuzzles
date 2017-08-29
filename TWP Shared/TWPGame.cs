@@ -116,6 +116,7 @@ namespace TWP_Shared
                 graphics.PreferredBackBufferHeight = 480;
             }
 
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.ApplyChanges();
             ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
 

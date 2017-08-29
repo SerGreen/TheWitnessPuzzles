@@ -9,6 +9,7 @@
     <Import_RootNamespace>TWP_Shared</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DependencyInjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EditorGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)EndPoint.cs" />
@@ -23,6 +24,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)FirstPanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)PanelState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)BloomFX\QuadRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ReversePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
@@ -34,5 +36,8 @@
   </ItemGroup>
   <ItemGroup>
     <MonoGameContentReference Include="$(MSBuildThisFileDirectory)Content\Content.mgcb" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="$(MSBuildThisFileDirectory)BloomFX\" />
   </ItemGroup>
 </Project>

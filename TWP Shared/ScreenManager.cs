@@ -70,6 +70,7 @@ namespace TWP_Shared
                 screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider);
             else
                 screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider);
+            //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider);
 
             if (replaceCurrent)
                 screenStack.Pop();

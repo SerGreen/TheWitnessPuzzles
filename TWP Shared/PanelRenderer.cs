@@ -447,25 +447,27 @@ namespace TWP_Shared
             RenderTarget2D canvas = new RenderTarget2D(GraphicsDevice, tetrisTextureSize.X, tetrisTextureSize.Y);
             GraphicsDevice.SetRenderTarget(canvas);
             GraphicsDevice.Clear(Color.Transparent);
-            SpriteBatch batch = new SpriteBatch(GraphicsDevice);
-            batch.Begin();
-
-            for (int i = 0; i < shapeW; i++)
-                for (int j = 0; j < shapeH; j++)
-                    if (shape[i, j] == true)
-                        batch.Draw(texTetris[isSubtractive ? 1 : 0], new Vector2(xMargin + i * texW, yMargin + j * texW), Color.White);
-
-            batch.End();
-
-            if(isRotatable)
+            using (SpriteBatch batch = new SpriteBatch(GraphicsDevice))
             {
-                RenderTarget2D canvasRotated = new RenderTarget2D(GraphicsDevice, canvas.Width, canvas.Height);
-                GraphicsDevice.SetRenderTarget(canvasRotated);
-                GraphicsDevice.Clear(Color.Transparent);
                 batch.Begin();
-                batch.Draw(canvas, canvasRotated.Bounds.Center.ToVector2(), null, Color.White, MathHelper.ToRadians(-30), canvas.Bounds.Center.ToVector2(), 1f, SpriteEffects.None, 0);
+
+                for (int i = 0; i < shapeW; i++)
+                    for (int j = 0; j < shapeH; j++)
+                        if (shape[i, j] == true)
+                            batch.Draw(texTetris[isSubtractive ? 1 : 0], new Vector2(xMargin + i * texW, yMargin + j * texW), Color.White);
+
                 batch.End();
-                canvas = canvasRotated;
+
+                if (isRotatable)
+                {
+                    RenderTarget2D canvasRotated = new RenderTarget2D(GraphicsDevice, canvas.Width, canvas.Height);
+                    GraphicsDevice.SetRenderTarget(canvasRotated);
+                    GraphicsDevice.Clear(Color.Transparent);
+                    batch.Begin();
+                    batch.Draw(canvas, canvasRotated.Bounds.Center.ToVector2(), null, Color.White, MathHelper.ToRadians(-30), canvas.Bounds.Center.ToVector2(), 1f, SpriteEffects.None, 0);
+                    batch.End();
+                    canvas = canvasRotated;
+                }
             }
 
             GraphicsDevice.SetRenderTarget(null);
