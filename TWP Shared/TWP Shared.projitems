@@ -10,28 +10,28 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)DependencyInjector.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)EditorGameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)EndPoint.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ExtensionMethods.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)FadeInAnimation.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)FadeOutAnimation.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)FadeTransition.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)InputManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)BasePanelGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PanelGameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)FirstPanelGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PanelRenderer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)PanelState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SupportClasses\DependencyInjector.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\EditorGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\EndPoint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SupportClasses\ExtensionMethods.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Animations\FadeInAnimation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Animations\FadeOutAnimation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Animations\FadeTransition.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\GameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SupportClasses\InputManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PanelGenerators\BasePanelGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PanelGenerators\FirstPanelGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\QuadRenderer.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ReversePanelGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)ScreenManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)SolutionLine.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)SoundManager.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)SplashGameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)TextTouchButton.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)TouchButton.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)PanelGenerators\ReversePanelGenerator.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\ScreenManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\SolutionLine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)SupportClasses\SoundManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SplashGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Buttons\TextTouchButton.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Buttons\TouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TWPGame.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -39,5 +39,10 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="$(MSBuildThisFileDirectory)BloomFX\" />
+    <Folder Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Animations\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Buttons\" />
+    <Folder Include="$(MSBuildThisFileDirectory)SupportClasses\" />
+    <Folder Include="$(MSBuildThisFileDirectory)PanelGenerators\" />
   </ItemGroup>
 </Project>
