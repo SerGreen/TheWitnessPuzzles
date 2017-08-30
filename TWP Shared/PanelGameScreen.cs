@@ -62,8 +62,9 @@ namespace TWP_Shared
             // Load bloom shader
             bloomFilter = new BloomFilter();
             bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
-            bloomFilter.BloomPreset = BloomFilter.BloomPresets.Focussed;
+            bloomFilter.BloomPreset = BloomFilter.BloomPresets.Cheap;
             bloomFilter.BloomThreshold = 0;
+            bloomFilter.BloomStrengthMultiplier = 0.5f;
 
             renderer.RenderPanelToTexture(backgroundTexture);
         }
@@ -326,13 +327,11 @@ namespace TWP_Shared
             spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
             
             RenderLinesToTexture(lineTexture);
-            AddBloomToTexture(lineTexture);
-
-            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, panelState.State.HasFlag(PanelStates.Solved) ? Color.White : Color.LightGray);
+            AddCompleteTracingBlink();
+            if (!(panelState.State.HasFlag(PanelStates.EliminationStarted) && !panelState.State.HasFlag(PanelStates.EliminationFinished)))
+                AddBloomToTexture(lineTexture);
+            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, panelState.State.HasFlag(PanelStates.Solved) ? Color.White : new Color(230, 230, 230));
             
-            if (panelState.State.HasFlag(PanelStates.FinishTracing) && lineFadeTexture != null)
-                spriteBatch.Draw(lineFadeTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.FinishTracingBlinkOpacity);
-
             if (panelState.State.HasFlag(PanelStates.LineFade) && lineFadeTexture != null)
                 spriteBatch.Draw(lineFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State.HasFlag(PanelStates.ErrorHappened) ? Color.Black : Color.White) * panelState.LineFadeOpacity);
 
@@ -372,18 +371,44 @@ namespace TWP_Shared
                 GraphicsDevice.SetRenderTarget(null);
             }
         }
+        private void AddCompleteTracingBlink()
+        {
+            if (panelState.State.HasFlag(PanelStates.FinishTracing) && lineFadeTexture != null)
+                using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
+                {
+                    var blendState = new BlendState
+                    {
+                        AlphaBlendFunction = BlendFunction.Add,
+                        AlphaDestinationBlend = Blend.DestinationAlpha,
+                        AlphaSourceBlend = Blend.SourceAlpha,
+                        BlendFactor = Color.White,
+                        ColorBlendFunction = BlendFunction.Add,
+                        ColorDestinationBlend = Blend.One,
+                        ColorSourceBlend = Blend.SourceAlpha,
+                        MultiSampleMask = -1
+                    };
+
+                    GraphicsDevice.SetRenderTarget(lineTexture);
+                    spriteBatch.Begin(SpriteSortMode.Deferred, blendState);
+
+                    spriteBatch.Draw(lineFadeTexture, lineTexture.Bounds, Color.White * panelState.FinishTracingBlinkOpacity);
+
+                    spriteBatch.End();
+                    GraphicsDevice.SetRenderTarget(null);
+                }
+        }
         private void AddBloomToTexture(RenderTarget2D canvas)
         {
             Texture2D bloom = bloomFilter.Draw(canvas, ScreenSize.X, ScreenSize.Y);
             
             using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
             {
-                GraphicsDevice.SetRenderTarget(lineTexture);
+                GraphicsDevice.SetRenderTarget(canvas);
 
                 var blendState = new BlendState
                 {
-                    AlphaBlendFunction = BlendFunction.ReverseSubtract,
-                    AlphaDestinationBlend = Blend.One,
+                    AlphaBlendFunction = BlendFunction.Min,
+                    AlphaDestinationBlend = Blend.DestinationAlpha,
                     AlphaSourceBlend = Blend.SourceAlpha,
                     BlendFactor = Color.White,
                     ColorBlendFunction = BlendFunction.Add,
@@ -396,10 +421,9 @@ namespace TWP_Shared
                     MultiSampleMask = -1
                 };
 
-                spriteBatch.Begin(SpriteSortMode.Texture, blendState);
+                spriteBatch.Begin(SpriteSortMode.Deferred, blendState);
 
                 spriteBatch.Draw(bloom, canvas.Bounds, Color.White);
-                //spriteBatch.Draw(texPixel, new Rectangle(100, 100, 80, 80), Color.Black);
 
                 spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);

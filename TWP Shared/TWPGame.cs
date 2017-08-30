@@ -27,32 +27,12 @@ namespace TWP_Shared
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
 
-
-
-            //if (isMobile)
-            //{
-            //    graphics.IsFullScreen = true;
-            //    graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
-            //    graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
-            //    graphics.SupportedOrientations = DisplayOrientation.Portrait;
-            //    TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
-            //    //graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            //    graphics.ApplyChanges();
-            //    //graphics.CreateDevice();
-            //    //GraphicsDevice.Viewport = new Viewport(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
-            //}
-            //else
-            //{
-            //    IsMouseVisible = true;
-            //    graphics.PreferredBackBufferWidth = 320;
-            //    graphics.PreferredBackBufferHeight = 480;
-            //    graphics.GraphicsProfile = GraphicsProfile.HiDef;
-            //    graphics.ApplyChanges();
-            //}
-
-            
-            //ScreenManager.Instance.Initialize(GraphicsDevice, Content);
-            //ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
+            #if WINDOWS
+            // This method is called twice (here and in the Initialize method later), because of cross-platform magic
+            // On Windows GraphicsDevice should me initialized in constructor, otherwise window size will be default and not corresponding to the backbuffer
+            // But on Android GraphicsDevice is still null after ApplyChanges() if it's called in constructor
+            InitializeGraphicsDevice();
+            #endif
         }
 
         private Puzzle CreateTestPanel()
@@ -126,32 +106,40 @@ namespace TWP_Shared
         /// </summary>
         protected override void Initialize()
         {
-            if (isMobile)
-            {
-                graphics.IsFullScreen = true;
-                graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
-                graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
-                graphics.SupportedOrientations = DisplayOrientation.Portrait;
-                TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
-                //graphics.GraphicsProfile = GraphicsProfile.HiDef;
-                graphics.ApplyChanges();
-                //graphics.CreateDevice();
-                //GraphicsDevice.Viewport = new Viewport(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
-            }
-            else
-            {
-                IsMouseVisible = true;
-                graphics.PreferredBackBufferWidth = 320;
-                graphics.PreferredBackBufferHeight = 480;
-                graphics.GraphicsProfile = GraphicsProfile.HiDef;
-                graphics.ApplyChanges();
-            }
-
+            #if ANDROID
+            // This method is called twice (here and in the Constructor earlier), because of cross-platform magic
+            // On Windows GraphicsDevice should me initialized in constructor, otherwise window size will be default and not corresponding to the backbuffer
+            // But on Android GraphicsDevice is still null after ApplyChanges() if it's called in constructor
+            InitializeGraphicsDevice();
+            #endif
 
             ScreenManager.Instance.Initialize(GraphicsDevice, Content);
             ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
 
             base.Initialize();
+        }
+
+        private void InitializeGraphicsDevice()
+        {
+            #if ANDROID
+
+            graphics.IsFullScreen = true;
+            graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
+            graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
+            graphics.SupportedOrientations = DisplayOrientation.Portrait;
+            TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            graphics.ApplyChanges();
+
+            #else
+
+            IsMouseVisible = true;
+            graphics.PreferredBackBufferWidth = 430;
+            graphics.PreferredBackBufferHeight = 720;
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            graphics.ApplyChanges();
+
+            #endif
         }
 
         /// <summary>
@@ -170,7 +158,6 @@ namespace TWP_Shared
 
         protected virtual void InitializeAfterContentIsLoaded()
         {
-
             ScreenManager.Instance.AddScreen<SplashGameScreen>();
         }
 
