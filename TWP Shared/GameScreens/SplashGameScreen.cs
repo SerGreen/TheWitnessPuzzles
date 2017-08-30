@@ -52,11 +52,26 @@ namespace TWP_Shared
             fadeOut.FadeComplete += fadeOutCallback;
             fadeOut.Restart();
             
-            backgroundTexture = new RenderTarget2D(GraphicsDevice, ScreenSize.X, screenSize.Y);
-            RenderBackgroundToTexture();
-
             texPixel = TextureProvider["img/twp_pixel"];
             fadeIn = new FadeInAnimation(60);
+
+            InitializeScreenSizeDependent();
+        }
+
+        private void InitializeScreenSizeDependent()
+        {
+            backgroundTexture = new RenderTarget2D(GraphicsDevice, ScreenSize.X, ScreenSize.Y);
+            RenderBackgroundToTexture();
+        }
+
+        public override void SetScreenSize(Point screenSize)
+        {
+            base.SetScreenSize(screenSize);
+            InitializeScreenSizeDependent();
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                buttons[i].SetSizeAndPosition(menuBounds.Location + new Point(0, i * menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight));
+            }
         }
 
         private void SpawnButtons()
@@ -106,8 +121,7 @@ namespace TWP_Shared
             {
                 // Set the render target
                 GraphicsDevice.SetRenderTarget(backgroundTexture);
-
-                // Draw the lines
+                
                 GraphicsDevice.Clear(Color.Black);
                 spriteBatch.Begin();
 
@@ -137,8 +151,7 @@ namespace TWP_Shared
                 menuBounds = new Rectangle((int) (ScreenSize.X - menuWidth) / 2, (int) menuHeight, (int) menuWidth, (int) (ScreenSize.Y - menuHeight));
 
                 spriteBatch.End();
-                // Drop the render target
-                GraphicsDevice.SetRenderTarget(null);
+                GraphicsDevice.SetRenderTarget(null);   // Drop the render target
             }
         }
     }

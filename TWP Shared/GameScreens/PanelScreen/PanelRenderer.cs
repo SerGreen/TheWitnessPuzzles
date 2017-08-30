@@ -83,10 +83,6 @@ namespace TWP_Shared
         {
             if(panel == null || !panel.Equals(newPanel))
             {
-                Walls.Clear();
-                StartPoints.Clear();
-                EndPoints.Clear();
-                renderedTetrisTextures.Clear();
                 panel = newPanel;
                 InitializePanel();
                 return true;
@@ -98,6 +94,11 @@ namespace TWP_Shared
         {
             if (panel != null)
             {
+                Walls.Clear();
+                StartPoints.Clear();
+                EndPoints.Clear();
+                renderedTetrisTextures.Clear();
+
                 PuzzleDimensions = new Point(panel.Width, panel.Height);
 
                 // Calculation of puzzle sizes for current screen size

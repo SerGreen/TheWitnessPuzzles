@@ -84,6 +84,8 @@ namespace TWP_Shared
             {
                 screenStack.Pop();
                 CurrentScreen = screenStack.Peek();
+                if (CurrentScreen.ScreenSize != ScreenSize)
+                    CurrentScreen.SetScreenSize(ScreenSize);
             }
         }
 
@@ -125,6 +127,13 @@ namespace TWP_Shared
 
             if (transitionAnimation.IsActive)
                 spriteBatch.Draw(texPixel, new Rectangle(Point.Zero, ScreenSize), Color.Black * transitionAnimation.Opacity);
+        }
+
+        public void UpdateScreenSize(Point screenSize)
+        {
+            ScreenSize = screenSize;
+            if (CurrentScreen.ScreenSize != screenSize)
+                CurrentScreen.SetScreenSize(screenSize);
         }
     }
 }

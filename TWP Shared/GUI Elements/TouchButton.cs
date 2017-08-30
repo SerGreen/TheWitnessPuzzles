@@ -25,6 +25,8 @@ namespace TWP_Shared
             isPressedDown = false;
         }
 
+        public virtual void SetSizeAndPosition(Point pos, Point size) => hitbox = new Rectangle(pos, size);
+
         public void Update(Point? touchPoint = null)
         {
             if (touchPoint != null && hitbox.Contains(touchPoint.Value))

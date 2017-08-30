@@ -27,12 +27,19 @@ namespace TWP_Shared
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
 
-            #if WINDOWS
+#if WINDOWS
             // This method is called twice (here and in the Initialize method later), because of cross-platform magic
             // On Windows GraphicsDevice should me initialized in constructor, otherwise window size will be default and not corresponding to the backbuffer
             // But on Android GraphicsDevice is still null after ApplyChanges() if it's called in constructor
             InitializeGraphicsDevice();
-            #endif
+#endif
+
+            Window.ClientSizeChanged += ResizeScreen;
+        }
+
+        private void ResizeScreen(object sender, EventArgs e)
+        {
+            ScreenManager.Instance.UpdateScreenSize(GraphicsDevice.Viewport.Bounds.Size);
         }
 
         private Puzzle CreateTestPanel()
@@ -134,6 +141,7 @@ namespace TWP_Shared
             #else
 
             IsMouseVisible = true;
+            Window.AllowUserResizing = true;
             graphics.PreferredBackBufferWidth = 430;
             graphics.PreferredBackBufferHeight = 720;
             graphics.GraphicsProfile = GraphicsProfile.HiDef;

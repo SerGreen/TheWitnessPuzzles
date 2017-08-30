@@ -9,7 +9,7 @@ namespace TWP_Shared
 {
     public abstract class GameScreen
     {
-        protected Point ScreenSize;
+        public Point ScreenSize { get; protected set; }
         protected GraphicsDevice GraphicsDevice;
         protected Dictionary<string, Texture2D> TextureProvider;
         protected Dictionary<string, SpriteFont> FontProvider;
@@ -24,5 +24,10 @@ namespace TWP_Shared
         
         public virtual void Update(GameTime gameTime) { }
         public virtual void Draw(SpriteBatch spriteBatch) { }
+        public virtual void SetScreenSize(Point screenSize)
+        {
+            if (screenSize.X > 0 && screenSize.Y > 0)
+                ScreenSize = screenSize;
+        }
     }
 }

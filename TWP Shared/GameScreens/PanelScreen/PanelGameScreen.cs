@@ -88,6 +88,36 @@ namespace TWP_Shared
                 walls = renderer.Walls;
             }
         }
+        
+        public override void SetScreenSize(Point screenSize)
+        {
+            base.SetScreenSize(screenSize);
+            
+            renderer.SetScreenSize(screenSize);
+            startPoints = renderer.StartPoints;
+            endPoints = renderer.EndPoints;
+            walls = renderer.Walls;
+
+            backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            tempLineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24, 1, RenderTargetUsage.PreserveContents);
+            lineFadeTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+
+            bloomFilter.UpdateResolution(screenSize.X, screenSize.Y);
+            renderer.RenderPanelToTexture(backgroundTexture);
+
+            // It's nearly impossible to update line hitboxes to the new screen resolution, because they are created real-time and are pixel perfect
+            // So simply abort tracing if lines are active in the moment of screen resize
+            if (line != null)
+            {
+                SoundManager.StopLoop(SoundLoop.Tracing);
+                SoundManager.StopLoop(SoundLoop.PathComplete);
+                SoundManager.PlayOnce(Sound.AbortTracing);
+                line = lineMirror = null;
+            }
+        }
 
         public override void Update(GameTime gameTime)
         {
@@ -470,6 +500,7 @@ namespace TWP_Shared
                 }
             }
         }
+
         #endregion
     }
 }

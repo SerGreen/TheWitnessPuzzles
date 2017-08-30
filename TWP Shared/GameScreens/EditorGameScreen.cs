@@ -222,5 +222,10 @@ namespace TWP_Shared
                     break;
             }
         }
+
+        public override void SetScreenSize(Point screenSize)
+        {
+            throw new NotImplementedException();
+        }
     }
 }

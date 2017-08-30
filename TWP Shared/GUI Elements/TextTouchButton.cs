@@ -25,13 +25,24 @@ namespace TWP_Shared
             this.textColor = textColor ?? Color.White;
             this.textColorPressed = textColorPressed ?? Color.DarkGray;
 
+            CalculateRenderDetails();
+        }
+
+        private void CalculateRenderDetails()
+        {
             Vector2 renderSize = font.MeasureString(text);
-            float xScale = bounds.Width / renderSize.X;
-            float yScale = bounds.Height / renderSize.Y;
+            float xScale = hitbox.Width / renderSize.X;
+            float yScale = hitbox.Height / renderSize.Y;
             scale = Math.Min(xScale, yScale);
             renderSize.X *= scale;
             renderSize.Y *= scale;
-            position = new Vector2(bounds.X + (bounds.Width - renderSize.X) / 2, bounds.Y + (bounds.Height - renderSize.Y) / 2);
+            position = new Vector2(hitbox.X + (hitbox.Width - renderSize.X) / 2, hitbox.Y + (hitbox.Height - renderSize.Y) / 2);
+        }
+
+        public override void SetSizeAndPosition(Point pos, Point size)
+        {
+            base.SetSizeAndPosition(pos, size);
+            CalculateRenderDetails();
         }
 
         public override void Draw(SpriteBatch sb, float alpha = 1f)
