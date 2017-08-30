@@ -78,7 +78,7 @@ float4 ExtractPS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_TA
 	#if SM4
 		float2 halfPixel = 0;
 	#else
-		float2 halfPixel = InverseResolution / 2;
+		float2 halfPixel = InverseResolution / 1.3f;
 	#endif
 	float4 color = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);
 
@@ -98,7 +98,7 @@ float4 ExtractLuminancePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0
 	#if SM4
 		float2 halfPixel = 0;
 	#else
-		float2 halfPixel = InverseResolution / 2;
+		float2 halfPixel = InverseResolution / 1.3f;
 	#endif
     float4 color = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);
 
@@ -120,7 +120,7 @@ float4 DownsamplePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV
 	#if SM4
 		float2 halfPixel = 0;
 	#else
-		float2 halfPixel = InverseResolution / 2;
+		float2 halfPixel = InverseResolution / 1.3f;
 	#endif
         
     float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-2, -2) * offset + halfPixel);
@@ -152,7 +152,7 @@ float4 UpsamplePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD0) : SV_T
 	#if SM4
 		float2 halfPixel = 0;
 	#else
-		float2 halfPixel = InverseResolution / 2;
+		float2 halfPixel = InverseResolution / 1.3f;
 	#endif
     float4 c0 = ScreenTexture.Sample(LinearSampler, texCoord + float2(-1, -1) * offset + halfPixel);
     float4 c1 = ScreenTexture.Sample(LinearSampler, texCoord + float2(0, -1) * offset + halfPixel);
@@ -175,7 +175,7 @@ float4 UpsampleLuminancePS(float4 pos : SV_POSITION,  float2 texCoord : TEXCOORD
 	#if SM4
 		float2 halfPixel = 0;
 	#else
-		float2 halfPixel = InverseResolution / 2;
+		float2 halfPixel = InverseResolution / 1.3f;
 	#endif
     float4 c4 = ScreenTexture.Sample(LinearSampler, texCoord + halfPixel);  //middle one
  

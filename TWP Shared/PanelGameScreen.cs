@@ -25,14 +25,20 @@ namespace TWP_Shared
         List<EndPoint> endPoints;
         List<Rectangle> walls;
 
+        SpriteBatch internalBatch;
         SpriteFont fntDebug = null;
         Texture2D texPixel, texCircle;
         
         RenderTarget2D backgroundTexture;
         RenderTarget2D lineTexture;
+        RenderTarget2D tempLineTexture;
         RenderTarget2D lineFadeTexture;
         RenderTarget2D errorsBlinkTexture;
         RenderTarget2D eliminatedErrorsTexture;
+
+        // Lines are of a darker tint when they are not finished
+        static readonly Color linesTint = new Color(230, 230, 230);
+        static readonly Color linesFinishTracingTint = new Color(new Vector3(1f) - linesTint.ToVector3());
 
         BloomFilter bloomFilter;
 
@@ -43,6 +49,7 @@ namespace TWP_Shared
                 panel = new Puzzle(2, 2);
 
             this.panel = panel;
+            internalBatch = new SpriteBatch(GraphicsDevice);
             renderer = new PanelRenderer(panel, screenSize, TextureProvider, device);
             startPoints = renderer.StartPoints;
             endPoints = renderer.EndPoints;
@@ -54,6 +61,7 @@ namespace TWP_Shared
 
             // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
+            tempLineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24, 1, RenderTargetUsage.PreserveContents);
             lineFadeTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
@@ -62,9 +70,9 @@ namespace TWP_Shared
             // Load bloom shader
             bloomFilter = new BloomFilter();
             bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
-            bloomFilter.BloomPreset = BloomFilter.BloomPresets.Cheap;
+            bloomFilter.BloomPreset = BloomFilter.BloomPresets.Small;
             bloomFilter.BloomThreshold = 0;
-            bloomFilter.BloomStrengthMultiplier = 0.5f;
+            bloomFilter.BloomStrengthMultiplier = 0.75f;
 
             renderer.RenderPanelToTexture(backgroundTexture);
         }
@@ -91,12 +99,16 @@ namespace TWP_Shared
             {
                 // If line touched end point => Produce sound
                 bool lineAtEndpoint = IsLineAtEndPoint();
-                if (lineAtEndpoint && !panelState.State.HasFlag(PanelStates.FinishTracing))
+                if (lineAtEndpoint)
                 {
-                    panelState.SetFinishTracing(true);
                     RenderLinesToTexture(lineFadeTexture, Color.White);
-                    SoundManager.PlayOnce(Sound.FinishTracing);
-                    SoundManager.PlayLoop(SoundLoop.PathComplete);
+
+                    if (!panelState.State.HasFlag(PanelStates.FinishTracing))
+                    {
+                        panelState.SetFinishTracing(true);
+                        SoundManager.PlayOnce(Sound.FinishTracing);
+                        SoundManager.PlayLoop(SoundLoop.PathComplete);
+                    }
                 }
                 // If line left end point => Produce another sound
                 else if (!lineAtEndpoint && panelState.State.HasFlag(PanelStates.FinishTracing))
@@ -109,6 +121,34 @@ namespace TWP_Shared
 
             if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
                 drawDebug = !drawDebug;
+                        
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.S))
+            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.Small;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.C))
+            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.Cheap;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.F))
+            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.Focussed;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.W))
+            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.SuperWide;
+
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D1))
+            //    bloomFilter.BloomStrengthMultiplier = 0.2f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D2))
+            //    bloomFilter.BloomStrengthMultiplier = 0.5f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D3))
+            //    bloomFilter.BloomStrengthMultiplier = 0.7f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D4))
+            //    bloomFilter.BloomStrengthMultiplier = 0.8f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D5))
+            //    bloomFilter.BloomStrengthMultiplier = 0.9f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D6))
+            //    bloomFilter.BloomStrengthMultiplier = 1.0f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D7))
+            //    bloomFilter.BloomStrengthMultiplier = 1.1f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D8))
+            //    bloomFilter.BloomStrengthMultiplier = 1.2f;
+            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D9))
+            //    bloomFilter.BloomStrengthMultiplier = 1.3f;
 
             base.Update(gameTime);
         }
@@ -324,29 +364,56 @@ namespace TWP_Shared
         #region ===== RENDER REGION =====
         public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
-            
+            // Draw lines to texture and apply blink-highlighting effect if line is at end point
             RenderLinesToTexture(lineTexture);
-            AddCompleteTracingBlink();
-            if (!(panelState.State.HasFlag(PanelStates.EliminationStarted) && !panelState.State.HasFlag(PanelStates.EliminationFinished)))
-                AddBloomToTexture(lineTexture);
-            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, panelState.State.HasFlag(PanelStates.Solved) ? Color.White : new Color(230, 230, 230));
+            AddFinishTracingBlink();
+
+            // Draw bloom when elimination is not not started or when panel is solved
+            if (line != null && (!panelState.State.HasFlag(PanelStates.EliminationStarted) || panelState.State.HasFlag(PanelStates.Solved)))
+            {
+                // We are using separate SpriteBatch to draw bloom, so we have to draw background in this batch too, so it will be below bloom texture
+                internalBatch.Begin();
+                internalBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
+
+                // Idk, more weird majiks, but if i call this Draw outside of this batch or inside next (additive) batch, background goes black
+                // So yeah... I guess it stays here now...
+                Texture2D bloom = bloomFilter.Draw(lineTexture, ScreenSize.X, ScreenSize.Y);
+
+                internalBatch.End();
+
+                // Now draw bloom texture in additive blend mode
+                internalBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
+                internalBatch.Draw(bloom, GraphicsDevice.Viewport.Bounds, Color.White * 0.8f);
+                internalBatch.End();
+            }
+            else
+            {
+                // If we don't draw bloom, then we can use the same SpriteBatch to draw background texture
+                spriteBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
+            }
+
+            // Draw line to the backbuffer
+            spriteBatch.Draw(lineTexture, GraphicsDevice.Viewport.Bounds, Color.White);
             
+            // Draw fading line after aborting tracing or submitting wrong solution
             if (panelState.State.HasFlag(PanelStates.LineFade) && lineFadeTexture != null)
                 spriteBatch.Draw(lineFadeTexture, GraphicsDevice.Viewport.Bounds, (panelState.State.HasFlag(PanelStates.ErrorHappened) ? Color.Black : Color.White) * panelState.LineFadeOpacity);
 
+            // Draw red blinking rules after submitting the wrong solution
             if (panelState.State.HasFlag(PanelStates.ErrorBlink) && errorsBlinkTexture != null)
                 spriteBatch.Draw(errorsBlinkTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.ErrorBlinkOpacity);
 
+            // Animate fading into gray of eliminated rules
             if (panelState.State.HasFlag(PanelStates.EliminationFinished) && eliminatedErrorsTexture != null)
                 spriteBatch.Draw(eliminatedErrorsTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.EliminationFadeOpacity);
 
+            // Draw node IDs
             if (drawDebug)
                 DebugDrawNodeIDs(spriteBatch);
             
             base.Draw(spriteBatch);
         }
-        
+
         private void DrawLines(SpriteBatch spriteBatch, Color? fillColor = null)
         {
             if (line != null)
@@ -357,75 +424,37 @@ namespace TWP_Shared
         }
         private void RenderLinesToTexture(RenderTarget2D canvas, Color? fillColor = null)
         {
-            using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
-            {
-                // Set the render target
-                GraphicsDevice.SetRenderTarget(canvas);
+            // First draw the lines to the temp texture
+            GraphicsDevice.SetRenderTarget(tempLineTexture);
+            GraphicsDevice.Clear(Color.Transparent);
 
-                // Draw the lines
-                GraphicsDevice.Clear(Color.Transparent);
-                spriteBatch.Begin(SpriteSortMode.Texture);
-                DrawLines(spriteBatch, fillColor);
-                spriteBatch.End();
-                // Drop the render target
-                GraphicsDevice.SetRenderTarget(null);
-            }
+            internalBatch.Begin(SpriteSortMode.Texture);
+            DrawLines(internalBatch, fillColor);
+            internalBatch.End();
+
+            // Now switch render target to the actual target texture and draw temp one onto it with color tint if necessary
+            GraphicsDevice.SetRenderTarget(canvas);
+            GraphicsDevice.Clear(Color.Transparent);
+
+            internalBatch.Begin();
+            internalBatch.Draw(tempLineTexture, canvas.Bounds, (fillColor == null && !panelState.State.HasFlag(PanelStates.Solved)) ? linesTint : Color.White);
+            internalBatch.End();
+
+            // Drop the render target
+            GraphicsDevice.SetRenderTarget(null);
         }
-        private void AddCompleteTracingBlink()
+        private void AddFinishTracingBlink()
         {
-            if (panelState.State.HasFlag(PanelStates.FinishTracing) && lineFadeTexture != null)
-                using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
-                {
-                    var blendState = new BlendState
-                    {
-                        AlphaBlendFunction = BlendFunction.Add,
-                        AlphaDestinationBlend = Blend.DestinationAlpha,
-                        AlphaSourceBlend = Blend.SourceAlpha,
-                        BlendFactor = Color.White,
-                        ColorBlendFunction = BlendFunction.Add,
-                        ColorDestinationBlend = Blend.One,
-                        ColorSourceBlend = Blend.SourceAlpha,
-                        MultiSampleMask = -1
-                    };
-
-                    GraphicsDevice.SetRenderTarget(lineTexture);
-                    spriteBatch.Begin(SpriteSortMode.Deferred, blendState);
-
-                    spriteBatch.Draw(lineFadeTexture, lineTexture.Bounds, Color.White * panelState.FinishTracingBlinkOpacity);
-
-                    spriteBatch.End();
-                    GraphicsDevice.SetRenderTarget(null);
-                }
-        }
-        private void AddBloomToTexture(RenderTarget2D canvas)
-        {
-            Texture2D bloom = bloomFilter.Draw(canvas, ScreenSize.X, ScreenSize.Y);
-            
-            using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
+            if (panelState.State.HasFlag(PanelStates.FinishTracing))
             {
-                GraphicsDevice.SetRenderTarget(canvas);
+                // When finish tracing is happening, lineFadeTexture has the image of lines in white color
+                // Draw this image on top of the lines with required tint in additive blend mode
+                GraphicsDevice.SetRenderTarget(lineTexture);
+                internalBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
 
-                var blendState = new BlendState
-                {
-                    AlphaBlendFunction = BlendFunction.Min,
-                    AlphaDestinationBlend = Blend.DestinationAlpha,
-                    AlphaSourceBlend = Blend.SourceAlpha,
-                    BlendFactor = Color.White,
-                    ColorBlendFunction = BlendFunction.Add,
-                    ColorDestinationBlend = Blend.One,
-                    ColorSourceBlend = Blend.SourceAlpha,
-                    //ColorWriteChannels = ColorWriteChannels.All,
-                    //ColorWriteChannels1 = ColorWriteChannels.All,
-                    //ColorWriteChannels2 = ColorWriteChannels.All,
-                    //ColorWriteChannels3 = ColorWriteChannels.All,
-                    MultiSampleMask = -1
-                };
+                internalBatch.Draw(lineFadeTexture, lineTexture.Bounds, linesFinishTracingTint * panelState.FinishTracingBlinkOpacity);
 
-                spriteBatch.Begin(SpriteSortMode.Deferred, blendState);
-
-                spriteBatch.Draw(bloom, canvas.Bounds, Color.White);
-
-                spriteBatch.End();
+                internalBatch.End();
                 GraphicsDevice.SetRenderTarget(null);
             }
         }

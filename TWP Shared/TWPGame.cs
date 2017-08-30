@@ -128,7 +128,7 @@ namespace TWP_Shared
             graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
             graphics.SupportedOrientations = DisplayOrientation.Portrait;
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
-            graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            //graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.ApplyChanges();
 
             #else
