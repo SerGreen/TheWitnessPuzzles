@@ -39,9 +39,9 @@ namespace TWP_Shared
             position = new Vector2(hitbox.X + (hitbox.Width - renderSize.X) / 2, hitbox.Y + (hitbox.Height - renderSize.Y) / 2);
         }
 
-        public override void SetSizeAndPosition(Point pos, Point size)
+        public override void SetPositionAndSize(Point pos, Point size)
         {
-            base.SetSizeAndPosition(pos, size);
+            base.SetPositionAndSize(pos, size);
             CalculateRenderDetails();
         }
 

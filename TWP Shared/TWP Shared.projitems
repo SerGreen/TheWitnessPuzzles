@@ -10,6 +10,8 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SettingsGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\ToggleButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\DependencyInjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\EditorGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\EndPoint.cs" />
@@ -28,6 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\ReversePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\ScreenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\SolutionLine.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\SettingsManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\SoundManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SplashGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TextTouchButton.cs" />
@@ -41,8 +44,6 @@
     <Folder Include="$(MSBuildThisFileDirectory)BloomFX\" />
     <Folder Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\" />
     <Folder Include="$(MSBuildThisFileDirectory)Animations\" />
-    <Folder Include="$(MSBuildThisFileDirectory)GUI Elements\" />
-    <Folder Include="$(MSBuildThisFileDirectory)Support Classes\" />
     <Folder Include="$(MSBuildThisFileDirectory)Panel Generators\" />
   </ItemGroup>
 </Project>

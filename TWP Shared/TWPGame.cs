@@ -17,7 +17,8 @@ namespace TWP_Shared
     public class TWPGame : Game
     {
         GraphicsDeviceManager graphics;
-        SpriteBatch spriteBatch; 
+        SpriteBatch spriteBatch;
+        Point defaultScreenSize = new Point(400, 720);
         bool isMobile;
 
         public TWPGame(bool isMobile)
@@ -26,6 +27,7 @@ namespace TWP_Shared
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
+            SettingsManager.LoadSettings();
 
 #if WINDOWS
             // This method is called twice (here and in the Initialize method later), because of cross-platform magic
@@ -42,6 +44,29 @@ namespace TWP_Shared
             ScreenManager.Instance.UpdateScreenSize(GraphicsDevice.Viewport.Bounds.Size);
         }
 
+        public void SetFullscreen(bool isFullscreen)
+        {
+#if ANDROID
+            graphics.IsFullScreen = isFullscreen;
+#else
+            if (isFullscreen)
+            {
+                Window.IsBorderless = true;
+                graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+            }
+            else
+            {
+                Window.IsBorderless = false;
+                graphics.PreferredBackBufferWidth = defaultScreenSize.X;
+                graphics.PreferredBackBufferHeight = defaultScreenSize.Y;
+            }
+#endif
+            graphics.ApplyChanges();
+            ResizeScreen(null, null);
+        }
+
+        // To be removed later
         private Puzzle CreateTestPanel()
         {
             Puzzle panel = new SymmetryPuzzle(5, 5, true, Color.Aqua, Color.Yellow);
@@ -105,6 +130,7 @@ namespace TWP_Shared
             return panel;
         }
 
+
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
         /// This is where it can query for any required services and load any non-graphic
@@ -113,14 +139,14 @@ namespace TWP_Shared
         /// </summary>
         protected override void Initialize()
         {
-            #if ANDROID
+#if ANDROID
             // This method is called twice (here and in the Constructor earlier), because of cross-platform magic
             // On Windows GraphicsDevice should me initialized in constructor, otherwise window size will be default and not corresponding to the backbuffer
             // But on Android GraphicsDevice is still null after ApplyChanges() if it's called in constructor
             InitializeGraphicsDevice();
-            #endif
+#endif
 
-            ScreenManager.Instance.Initialize(GraphicsDevice, Content);
+            ScreenManager.Instance.Initialize(this, GraphicsDevice, Content);
             ScreenManager.Instance.ScreenSize = new Point(graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
 
             base.Initialize();
@@ -128,9 +154,9 @@ namespace TWP_Shared
 
         private void InitializeGraphicsDevice()
         {
-            #if ANDROID
+#if ANDROID
 
-            graphics.IsFullScreen = true;
+            graphics.IsFullScreen = SettingsManager.IsFullscreen;
             graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
             graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
             graphics.SupportedOrientations = DisplayOrientation.Portrait;
@@ -138,16 +164,26 @@ namespace TWP_Shared
             //graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.ApplyChanges();
 
-            #else
+#else
+            
+            if (SettingsManager.IsFullscreen)
+            {
+                Window.IsBorderless = true;
+                graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+                graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+            }
+            else
+            {
+                graphics.PreferredBackBufferWidth = defaultScreenSize.X;
+                graphics.PreferredBackBufferHeight = defaultScreenSize.Y;
+            }
 
-            IsMouseVisible = true;
             Window.AllowUserResizing = true;
-            graphics.PreferredBackBufferWidth = 430;
-            graphics.PreferredBackBufferHeight = 720;
+            IsMouseVisible = true;
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.ApplyChanges();
 
-            #endif
+#endif
         }
 
         /// <summary>

@@ -33,12 +33,12 @@ namespace TWP_Shared
             { SoundLoop.Tracing,            0.04f }
         };
 
-        public static bool Mute = false;
+        public static bool Mute { get; set; } = false;
         private static float _masterVolume = 0.5f;
         public static float MasterVolume
         {
             get => _masterVolume;
-            set => _masterVolume = MathHelper.Clamp(value, 0, 1f);
+            set => _masterVolume = MathHelper.Clamp(value, 0, 1.0f);
         }
 
         public static void LoadContent(ContentManager Content)

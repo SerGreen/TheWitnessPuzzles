@@ -9,7 +9,7 @@ namespace TWP_Shared
     public class TouchButton
     {
         protected Rectangle hitbox;
-        Texture2D textureUp, textureDown;
+        protected Texture2D textureUp, textureDown;
         protected bool isPressedDown;
         protected readonly int timeDownMax = 15;
         protected int timeDown;
@@ -25,7 +25,7 @@ namespace TWP_Shared
             isPressedDown = false;
         }
 
-        public virtual void SetSizeAndPosition(Point pos, Point size) => hitbox = new Rectangle(pos, size);
+        public virtual void SetPositionAndSize(Point pos, Point size) => hitbox = new Rectangle(pos, size);
 
         public void Update(Point? touchPoint = null)
         {

@@ -12,6 +12,7 @@ namespace TWP_Shared
         public static ScreenManager Instance = new ScreenManager();
         private ScreenManager() { }
 
+        TWPGame TheGameWindow;
         GraphicsDevice Device;
         ContentManager Content;
         public Point ScreenSize { get; set; }
@@ -66,11 +67,11 @@ namespace TWP_Shared
         {
             GameScreen screen;
 
-            //if (typeof(TScreen) == typeof(PanelGameScreen))
-            //    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider, Content);
-            //else
-            //    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
-            screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);
+            if (typeof(TScreen) == typeof(PanelGameScreen))
+                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider, Content);
+            else
+                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
+            //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);
 
             if (replaceCurrent)
                 screenStack.Pop();
@@ -89,8 +90,9 @@ namespace TWP_Shared
             }
         }
 
-        public void Initialize(GraphicsDevice device, ContentManager contentManager)
+        public void Initialize(TWPGame game, GraphicsDevice device, ContentManager contentManager)
         {
+            TheGameWindow = game;
             Device = device;
             Content = contentManager;
         }
@@ -132,8 +134,10 @@ namespace TWP_Shared
         public void UpdateScreenSize(Point screenSize)
         {
             ScreenSize = screenSize;
-            if (CurrentScreen.ScreenSize != screenSize)
+            if (CurrentScreen != null && CurrentScreen.ScreenSize != screenSize)
                 CurrentScreen.SetScreenSize(screenSize);
         }
+
+        public void UpdateFullscreen() => TheGameWindow.SetFullscreen(SettingsManager.IsFullscreen);
     }
 }

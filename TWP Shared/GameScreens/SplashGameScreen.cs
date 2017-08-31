@@ -70,7 +70,7 @@ namespace TWP_Shared
             InitializeScreenSizeDependent();
             for (int i = 0; i < buttons.Count; i++)
             {
-                buttons[i].SetSizeAndPosition(menuBounds.Location + new Point(0, i * menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight));
+                buttons[i].SetPositionAndSize(menuBounds.Location + new Point(0, i * menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight));
             }
         }
 
@@ -82,14 +82,14 @@ namespace TWP_Shared
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            TextTouchButton btnEditor = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight)), font, "Editor", texPixel);
-            btnEditor.Click += () => {
-                ScreenManager.Instance.AddScreen<EditorGameScreen>(false, true);
+            TextTouchButton btnSettings = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight)), font, "Settings", texPixel);
+            btnSettings.Click += () => {
+                ScreenManager.Instance.AddScreen<SettingsGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
             buttons.Add(btnStart);
-            buttons.Add(btnEditor);
+            buttons.Add(btnSettings);
         }
 
         public override void Update(GameTime gameTime)
@@ -142,8 +142,11 @@ namespace TWP_Shared
                 spriteBatch.DrawString(font, firstLine, firstLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
                 spriteBatch.DrawString(font, secondLine, secondLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
 
-                symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
-                symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
+                if (currentSymbol != null)
+                {
+                    symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
+                    symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
+                }
                 
                 float menuWidth = ScreenSize.X * 0.8f;
                 float menuHeight = secondLinePosition.Y + secondLineSize.Y * 2;
