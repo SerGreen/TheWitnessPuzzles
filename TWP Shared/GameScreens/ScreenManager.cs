@@ -22,25 +22,29 @@ namespace TWP_Shared
         public Dictionary<string, SpriteFont> FontProvider { get; private set; } = new Dictionary<string, SpriteFont>();
         readonly static string[] texturesToLoad = 
         {
-            "img/twp_pixel",
-            "img/twp_circle",
-            "img/twp_corner",
-            "img/twp_ending_left",
-            "img/twp_ending_top",
-            "img/twp_hexagon",
-            "img/twp_square",
-            "img/twp_sun",
-            "img/twp_elimination",
-            "img/twp_triangle1..3",
-            "img/twp_tetris",
-            "img/twp_tetris_sub",
-            "img/twp_checkbox0..1",
-            "img/twp_sound0..1"
+            "img/pixel",
+            "img/circle",
+            "img/corner",
+            "img/ending_left",
+            "img/ending_top",
+            "img/hexagon",
+            "img/square",
+            "img/sun",
+            "img/elimination",
+            "img/triangle1..3",
+            "img/tetris",
+            "img/tetris_sub",
+            "img/checkbox0..1",
+            "img/sound0..1",
+            "img/next",
+            "img/delete",
+            "img/like",
+            "img/close"
         };
         readonly static string[] fontsToLoad =
         {
-            "font/fnt_constantia12",
-            "font/fnt_constantia36"
+            "font/fnt_constantia_small",
+            "font/fnt_constantia_big"
         };
         System.Text.RegularExpressions.Regex texIsMultiple = new System.Text.RegularExpressions.Regex(@"\d+\.\.\d+");
         System.Text.RegularExpressions.Regex texMultipleGetName = new System.Text.RegularExpressions.Regex(@".+(?=\d+\.\.)");
@@ -114,7 +118,7 @@ namespace TWP_Shared
                         TextureProvider.Add(name + i, Content.Load<Texture2D>(name + i));
                 }
             }
-            texPixel = TextureProvider["img/twp_pixel"];
+            texPixel = TextureProvider["img/pixel"];
 
             // Load all fonts from the list
             foreach (string fontName in fontsToLoad)

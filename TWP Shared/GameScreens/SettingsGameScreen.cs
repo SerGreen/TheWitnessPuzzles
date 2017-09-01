@@ -23,12 +23,12 @@ namespace TWP_Shared
         public SettingsGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
             : base(screenSize, device, textureProvider, fontProvider, Content)
         {
-            font = FontProvider["font/fnt_constantia36"];
-            texPixel = textureProvider["img/twp_pixel"];
-            texCheckbox[0] = textureProvider["img/twp_checkbox0"];
-            texCheckbox[1] = textureProvider["img/twp_checkbox1"];
-            texSound[0] = textureProvider["img/twp_sound0"];
-            texSound[1] = textureProvider["img/twp_sound1"];
+            font = FontProvider["font/fnt_constantia_big"];
+            texPixel = textureProvider["img/pixel"];
+            texCheckbox[0] = textureProvider["img/checkbox0"];
+            texCheckbox[1] = textureProvider["img/checkbox1"];
+            texSound[0] = textureProvider["img/sound0"];
+            texSound[1] = textureProvider["img/sound1"];
 
             InitializeScreenSizeDependent();
             SpawnButtons();

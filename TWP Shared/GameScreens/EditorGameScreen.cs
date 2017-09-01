@@ -49,9 +49,9 @@ namespace TWP_Shared
                 BackgroundColor = Color.White
             };
 
-            font = fontProvider["font/fnt_constantia36"];
-            texPixel = textureProvider["img/twp_pixel"];
-            texSquare = textureProvider["img/twp_square"];
+            font = fontProvider["font/fnt_constantia_big"];
+            texPixel = textureProvider["img/pixel"];
+            texSquare = textureProvider["img/square"];
             panelTexture = new RenderTarget2D(GraphicsDevice, GraphicsDevice.PresentationParameters.BackBufferWidth, GraphicsDevice.PresentationParameters.BackBufferHeight, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
             miniPanelTexture = new RenderTarget2D(GraphicsDevice, (int)(minScreenDim * 0.2f), (int)(minScreenDim * 0.2f), false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24);
 

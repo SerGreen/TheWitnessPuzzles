@@ -55,9 +55,9 @@ namespace TWP_Shared
             endPoints = renderer.EndPoints;
             walls = renderer.Walls;
 
-            texPixel = TextureProvider["img/twp_pixel"];
-            texCircle = TextureProvider["img/twp_circle"];
-            fntDebug = FontProvider["font/fnt_constantia12"];
+            texPixel = TextureProvider["img/pixel"];
+            texCircle = TextureProvider["img/circle"];
+            fntDebug = FontProvider["font/fnt_constantia_small"];
 
             // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);

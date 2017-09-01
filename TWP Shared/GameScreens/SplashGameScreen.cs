@@ -29,15 +29,15 @@ namespace TWP_Shared
         public SplashGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
             : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
-            font = FontProvider["font/fnt_constantia36"];
+            font = FontProvider["font/fnt_constantia_big"];
 
             texSymbols = new List<Texture2D>()
             {
-                TextureProvider["img/twp_hexagon"],
-                TextureProvider["img/twp_square"],
-                //TextureProvider["img/twp_triangle1"],
-                TextureProvider["img/twp_elimination"],
-                TextureProvider["img/twp_sun"]
+                TextureProvider["img/hexagon"],
+                TextureProvider["img/square"],
+                //TextureProvider["img/triangle1"],
+                TextureProvider["img/elimination"],
+                TextureProvider["img/sun"]
             };
             currentSymbol = texSymbols[rnd.Next(texSymbols.Count)];
             //fadeOut = new FadeOutAnimation(60, 150);
@@ -52,7 +52,7 @@ namespace TWP_Shared
             fadeOut.FadeComplete += fadeOutCallback;
             fadeOut.Restart();
             
-            texPixel = TextureProvider["img/twp_pixel"];
+            texPixel = TextureProvider["img/pixel"];
             fadeIn = new FadeInAnimation(60);
 
             InitializeScreenSizeDependent();

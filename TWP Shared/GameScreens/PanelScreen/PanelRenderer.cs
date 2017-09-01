@@ -53,20 +53,20 @@ namespace TWP_Shared
         }
         private void LoadContent(Dictionary<string, Texture2D> TextureProvider)
         {
-            texPixel = TextureProvider["img/twp_pixel"];
-            texCircle = TextureProvider["img/twp_circle"];
-            texCorner = TextureProvider["img/twp_corner"];
-            texEndPoint[0] = TextureProvider["img/twp_ending_left"];
-            texEndPoint[1] = TextureProvider["img/twp_ending_top"];
+            texPixel = TextureProvider["img/pixel"];
+            texCircle = TextureProvider["img/circle"];
+            texCorner = TextureProvider["img/corner"];
+            texEndPoint[0] = TextureProvider["img/ending_left"];
+            texEndPoint[1] = TextureProvider["img/ending_top"];
             // Puzzle rules textures
-            texHexagon = TextureProvider["img/twp_hexagon"];
-            texSquare = TextureProvider["img/twp_square"];
-            texSun = TextureProvider["img/twp_sun"];
-            texElimination = TextureProvider["img/twp_elimination"];
+            texHexagon = TextureProvider["img/hexagon"];
+            texSquare = TextureProvider["img/square"];
+            texSun = TextureProvider["img/sun"];
+            texElimination = TextureProvider["img/elimination"];
             for (int i = 0; i < 3; i++)
-                texTriangle[i] = TextureProvider[$"img/twp_triangle{i + 1}"];
-            texTetris[0] = TextureProvider["img/twp_tetris"];
-            texTetris[1] = TextureProvider["img/twp_tetris_sub"];
+                texTriangle[i] = TextureProvider[$"img/triangle{i + 1}"];
+            texTetris[0] = TextureProvider["img/tetris"];
+            texTetris[1] = TextureProvider["img/tetris_sub"];
         }
 
         public bool SetScreenSize(Point newScreenSize)
