@@ -18,7 +18,7 @@ namespace TWP_Shared
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Point defaultScreenSize = new Point(400, 720);
+        Point defaultScreenSize = new Point(400, 600);
         bool isMobile;
 
         public TWPGame(bool isMobile)

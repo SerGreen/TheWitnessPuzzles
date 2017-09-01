@@ -20,9 +20,9 @@ namespace TWP_Shared
         public override void Draw(SpriteBatch sb, float alpha = 1)
         {
             if (!IsActivated && textureDown != null)
-                sb.Draw(textureDown, hitbox, Color.DarkRed * alpha);
+                sb.Draw(textureDown, hitbox, Color.White * alpha);
             else if(textureUp != null)
-                sb.Draw(textureUp, hitbox, Color.DarkGreen * alpha);
+                sb.Draw(textureUp, hitbox, Color.White * alpha);
         }
     }
 }

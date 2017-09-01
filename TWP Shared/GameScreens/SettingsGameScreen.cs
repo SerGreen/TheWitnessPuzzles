@@ -11,6 +11,8 @@ namespace TWP_Shared
     {
         SpriteFont font = null;
         Texture2D texPixel;
+        Texture2D[] texCheckbox = new Texture2D[2];
+        Texture2D[] texSound = new Texture2D[2];
 
         Rectangle buttonsArea;
         int buttonHeight;
@@ -23,7 +25,11 @@ namespace TWP_Shared
         {
             font = FontProvider["font/fnt_constantia36"];
             texPixel = textureProvider["img/twp_pixel"];
-            
+            texCheckbox[0] = textureProvider["img/twp_checkbox0"];
+            texCheckbox[1] = textureProvider["img/twp_checkbox1"];
+            texSound[0] = textureProvider["img/twp_sound0"];
+            texSound[1] = textureProvider["img/twp_sound1"];
+
             InitializeScreenSizeDependent();
             SpawnButtons();
         }
@@ -36,26 +42,26 @@ namespace TWP_Shared
 
         private void SpawnButtons()
         {
-            ToggleButton btnMute = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight)), texPixel, texPixel, !SettingsManager.IsMute);
+            ToggleButton btnMute = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight)), texSound[1], texSound[0], !SettingsManager.IsMute);
             btnMute.Click += () => {
                 SettingsManager.IsMute = !btnMute.IsActivated;
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, buttonHeight), new Point(buttonHeight, buttonHeight)), texPixel, texPixel, SettingsManager.IsFullscreen);
+            ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 1.2f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], SettingsManager.IsFullscreen);
             btnFullscreen.Click += () => {
                 SettingsManager.IsFullscreen = btnFullscreen.IsActivated;
                 ScreenManager.Instance.UpdateFullscreen();
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            ToggleButton btnVFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, buttonHeight * 2), new Point(buttonHeight, buttonHeight)), texPixel, texPixel, SettingsManager.VFX);
+            ToggleButton btnVFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], SettingsManager.VFX);
             btnVFX.Click += () => {
                 SettingsManager.VFX = btnVFX.IsActivated;
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            TextTouchButton btnBack = new TextTouchButton(new Rectangle(buttonsArea.Location + new Point(0, buttonHeight * 4), new Point(buttonsArea.Width, buttonHeight)), font, "Back", texPixel);
+            TextTouchButton btnBack = new TextTouchButton(new Rectangle(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f))), font, "Back", texPixel);
             btnBack.Click += () => {
                 ScreenManager.Instance.GoBack();
                 SoundManager.PlayOnce(Sound.MenuEscape);
@@ -72,9 +78,9 @@ namespace TWP_Shared
             base.SetScreenSize(screenSize);
             InitializeScreenSizeDependent();
             for (int i = 0; i < buttons.Count - 1; i++)
-                buttons[i].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, buttonHeight * i), new Point(buttonHeight, buttonHeight));
+                buttons[i].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * i * 1.2f)), new Point(buttonHeight, buttonHeight));
 
-            buttons[buttons.Count-1].SetPositionAndSize(buttonsArea.Location + new Point(0, buttonHeight * buttons.Count), new Point(buttonsArea.Width, buttonHeight));
+            buttons[buttons.Count-1].SetPositionAndSize(new Point(buttonsArea.X, screenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight*1.5f)));
         }
 
         public override void Update(GameTime gameTime)
@@ -119,16 +125,16 @@ namespace TWP_Shared
                 spriteBatch.DrawString(font, caption, captionPosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
                 
                 float buttonsAreaWidth = minScreenSize * 0.8f;
-                buttonHeight = (int) (captionSize.Y * 0.6f);
+                buttonHeight = (int) (captionSize.Y * 0.5f);
                 float buttonsAreaTop = captionPosition.Y + captionSize.Y;
-                buttonsAreaTop += (ScreenSize.Y - buttonsAreaTop - buttonHeight * 5) / 2;
+                buttonsAreaTop += (ScreenSize.Y - buttonsAreaTop - buttonHeight * 4 * 1.2f) / 2;
                 buttonsArea = new Rectangle((int) (ScreenSize.X - buttonsAreaWidth) / 2, (int) buttonsAreaTop, (int) buttonsAreaWidth, (int) (ScreenSize.Y - buttonsAreaTop));
 
                 Vector2 textSize = font.MeasureString("V");
                 float scale = buttonHeight / textSize.Y;
-                spriteBatch.DrawString(font, "Volume", new Vector2(buttonsArea.X, buttonsArea.Y), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                spriteBatch.DrawString(font, "Fullscreen", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                spriteBatch.DrawString(font, "Visual FX", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 2), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Sound FX", new Vector2(buttonsArea.X, buttonsArea.Y), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Fullscreen", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 1.2f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Visual FX", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 2.4f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
 
 
                 spriteBatch.End();

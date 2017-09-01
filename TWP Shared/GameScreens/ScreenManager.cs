@@ -33,7 +33,9 @@ namespace TWP_Shared
             "img/twp_elimination",
             "img/twp_triangle1..3",
             "img/twp_tetris",
-            "img/twp_tetris_sub"
+            "img/twp_tetris_sub",
+            "img/twp_checkbox0..1",
+            "img/twp_sound0..1"
         };
         readonly static string[] fontsToLoad =
         {
