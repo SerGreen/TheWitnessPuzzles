@@ -68,28 +68,41 @@ namespace TWP_Shared
         {
             base.SetScreenSize(screenSize);
             InitializeScreenSizeDependent();
+            UpdateButtonsPosition();
+        }
+
+        private void UpdateButtonsPosition()
+        {
             for (int i = 0; i < buttons.Count; i++)
             {
                 buttons[i].SetPositionAndSize(menuBounds.Location + new Point(0, i * menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight));
             }
         }
-
         private void SpawnButtons()
         {
-            TextTouchButton btnStart = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, 0), new Point(menuBounds.Width, menuButtonHeight)), font, "Start", texPixel);
+            TextTouchButton btnStart = new TextTouchButton(new Rectangle(), font, "Start", texPixel);
             btnStart.Click += () => {
                 ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, DI.Get<PanelGenerator>().GeneratePanel());
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            TextTouchButton btnSettings = new TextTouchButton(new Rectangle(menuBounds.Location + new Point(0, menuButtonHeight), new Point(menuBounds.Width, menuButtonHeight)), font, "Settings", texPixel);
+            TextTouchButton btnHistory = new TextTouchButton(new Rectangle(), font, "History", texPixel);
+            btnHistory.Click += () => {
+                // TODO make transition to history screen
+                SoundManager.PlayOnce(Sound.MenuEnter);
+            };
+
+            TextTouchButton btnSettings = new TextTouchButton(new Rectangle(), font, "Settings", texPixel);
             btnSettings.Click += () => {
                 ScreenManager.Instance.AddScreen<SettingsGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
             buttons.Add(btnStart);
+            buttons.Add(btnHistory);
             buttons.Add(btnSettings);
+
+            UpdateButtonsPosition();
         }
 
         public override void Update(GameTime gameTime)
@@ -147,11 +160,14 @@ namespace TWP_Shared
                     symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
                     symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
                 }
-                
-                float menuWidth = ScreenSize.X * 0.8f;
-                float menuHeight = secondLinePosition.Y + secondLineSize.Y * 2;
+
                 menuButtonHeight = (int) (firstLineSize.Y * 0.8f);
-                menuBounds = new Rectangle((int) (ScreenSize.X - menuWidth) / 2, (int) menuHeight, (int) menuWidth, (int) (ScreenSize.Y - menuHeight));
+                float menuWidth = ScreenSize.X * 0.8f;
+                float menuTop = secondLinePosition.Y + secondLineSize.Y;
+                float menuHeight = menuButtonHeight * 3;
+                menuTop += (ScreenSize.Y - menuTop - menuHeight) / 2;
+                
+                menuBounds = new Rectangle((int) (ScreenSize.X - menuWidth) / 2, (int) menuTop, (int) menuWidth, (int) menuHeight);
 
                 spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);   // Drop the render target
