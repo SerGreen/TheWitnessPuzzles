@@ -38,7 +38,7 @@ namespace TWP_Shared
             "img/sound0..1",
             "img/next",
             "img/delete",
-            "img/like",
+            "img/like0..1",
             "img/close"
         };
         readonly static string[] fontsToLoad =
@@ -68,7 +68,6 @@ namespace TWP_Shared
             else
                 _addScreen<TScreen>(replaceCurrent, data);
         }
-
         private void _addScreen<TScreen>(bool replaceCurrent, object data) where TScreen : GameScreen
         {
             GameScreen screen;
@@ -85,15 +84,31 @@ namespace TWP_Shared
             CurrentScreen = screen;
         }
 
-        public void GoBack()
+        public void GoBack(bool doFadeAnimation = true)
         {
-            if(screenStack.Count > 1)
+            if (screenStack.Count > 1)
             {
-                screenStack.Pop();
-                CurrentScreen = screenStack.Peek();
-                if (CurrentScreen.ScreenSize != ScreenSize)
-                    CurrentScreen.SetScreenSize(ScreenSize);
+                if (doFadeAnimation)
+                {
+                    Action callback = null;
+                    callback = () =>
+                    {
+                        _goBack();
+                        transitionAnimation.FadeOutComplete -= callback;
+                    };
+                    transitionAnimation.FadeOutComplete += callback;
+                    transitionAnimation.Restart();
+                }
+                else
+                    _goBack();
             }
+        }
+        private void _goBack()
+        {
+            screenStack.Pop();
+            CurrentScreen = screenStack.Peek();
+            if (CurrentScreen.ScreenSize != ScreenSize)
+                CurrentScreen.SetScreenSize(ScreenSize);
         }
 
         public void Initialize(TWPGame game, GraphicsDevice device, ContentManager contentManager)

@@ -42,20 +42,20 @@ namespace TWP_Shared
 
         private void SpawnButtons()
         {
-            ToggleButton btnMute = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight)), texSound[1], texSound[0], !SettingsManager.IsMute);
+            ToggleButton btnMute = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight)), texSound[1], texSound[0], null, !SettingsManager.IsMute);
             btnMute.Click += () => {
                 SettingsManager.IsMute = !btnMute.IsActivated;
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 1.2f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], SettingsManager.IsFullscreen);
+            ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 1.2f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.IsFullscreen);
             btnFullscreen.Click += () => {
                 SettingsManager.IsFullscreen = btnFullscreen.IsActivated;
                 ScreenManager.Instance.UpdateFullscreen();
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            ToggleButton btnVFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], SettingsManager.VFX);
+            ToggleButton btnVFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.VFX);
             btnVFX.Click += () => {
                 SettingsManager.VFX = btnVFX.IsActivated;
                 SoundManager.PlayOnce(Sound.MenuEnter);

@@ -27,7 +27,8 @@ namespace TWP_Shared
 
         SpriteBatch internalBatch;
         SpriteFont fntDebug = null;
-        Texture2D texPixel, texCircle;
+        Texture2D texPixel, texCircle, texClose, texDelete, texNext;
+        Texture2D[] texLike = new Texture2D[2];
         
         RenderTarget2D backgroundTexture;
         RenderTarget2D lineTexture;
@@ -35,6 +36,9 @@ namespace TWP_Shared
         RenderTarget2D lineFadeTexture;
         RenderTarget2D errorsBlinkTexture;
         RenderTarget2D eliminatedErrorsTexture;
+
+        List<TouchButton> buttons = new List<TouchButton>();
+        FadeTransition fade = new FadeTransition(15, 15, 10);
 
         // Lines are of a darker tint when they are not finished
         static readonly Color linesTint = new Color(230, 230, 230);
@@ -57,6 +61,11 @@ namespace TWP_Shared
 
             texPixel = TextureProvider["img/pixel"];
             texCircle = TextureProvider["img/circle"];
+            texClose = TextureProvider["img/close"];
+            texLike[0] = TextureProvider["img/like0"];
+            texLike[1] = TextureProvider["img/like1"];
+            texNext = TextureProvider["img/next"];
+            texDelete = TextureProvider["img/delete"];
             fntDebug = FontProvider["font/fnt_constantia_small"];
 
             // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
@@ -75,7 +84,85 @@ namespace TWP_Shared
             bloomFilter.BloomStrengthMultiplier = 0.75f;
 
             renderer.RenderPanelToTexture(backgroundTexture);
+
+            SpawnButtons();
         }
+        private void SpawnButtons()
+        {
+            Color buttonsTint = Color.Teal;
+
+            TouchButton btnClose = new TouchButton(new Rectangle(), texClose, null, buttonsTint);
+            btnClose.Click += () => {
+                AbortTracing();
+                SoundManager.PlayOnce(Sound.MenuEnter);
+                ScreenManager.Instance.GoBack();
+            };
+            buttons.Add(btnClose);
+
+            ToggleButton btnLike = new ToggleButton(new Rectangle(), texLike[1], texLike[0], buttonsTint, false);
+            btnLike.Click += () =>
+            {
+                // TODO add panel to the list of saved panels
+            };
+            buttons.Add(btnLike);
+
+            TwoStateButton btnNext = new TwoStateButton(new Rectangle(), texDelete, texNext, null, null, buttonsTint, false);
+            btnNext.Click += () =>
+            {
+                Action callback = null;
+                callback = () =>
+                {
+                    // TODO save current panel to the list of last solved or last discarded
+
+                    AbortTracing();
+                    Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel();
+                    LoadNewPanel(nextPanel);
+                    btnNext.StateActive = false;
+                    btnLike.Reset();
+                    fade.FadeOutComplete -= callback;
+                };
+                fade.FadeOutComplete += callback;
+                fade.Restart();
+            };
+            buttons.Add(btnNext);
+
+            UpdateButtonsPosition();
+        }
+        private void UpdateButtonsPosition()
+        {
+            int screenMin = Math.Min(ScreenSize.X, ScreenSize.Y);
+            bool screenHorizontal = ScreenSize.X > ScreenSize.Y;
+
+            // Close
+            buttons[0].SetPositionAndSize(new Point(Math.Min((int) (screenMin * 0.05f), 50)), new Point((int) (screenMin * 0.1f)));
+
+            int buttonSize = (int) (screenMin * 0.16f);
+            if (screenHorizontal)
+            {
+                int marginX = renderer.PuzzleConfig.X + renderer.PuzzleConfig.Width;
+                int freeSpaceX = ScreenSize.X - marginX;
+                marginX += freeSpaceX / 2 - buttonSize / 2;
+                int marginY = ScreenSize.Y / 4 * 3 - buttonSize / 2;
+
+                // Like
+                buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                // Next
+                buttons[2].SetPositionAndSize(new Point(marginX, ScreenSize.Y - marginY - buttonSize), new Point(buttonSize));
+            }
+            else
+            {
+                int marginY = renderer.PuzzleConfig.Y + renderer.PuzzleConfig.Height;
+                int freeSpaceY = ScreenSize.Y - marginY;
+                marginY += freeSpaceY / 2 - buttonSize / 2;
+                int marginX = ScreenSize.X / 4 - buttonSize / 2;
+
+                // Like
+                buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                // Next
+                buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
+            }
+        }
+
         public void LoadNewPanel(Puzzle panel)
         {
             if (renderer.SetPanel(panel))
@@ -86,7 +173,18 @@ namespace TWP_Shared
                 startPoints = renderer.StartPoints;
                 endPoints = renderer.EndPoints;
                 walls = renderer.Walls;
+                renderer.RenderPanelToTexture(backgroundTexture);
             }
+        }
+
+        private void AbortTracing()
+        {
+            if (SoundManager.IsPlaying(SoundLoop.Tracing))
+                SoundManager.PlayOnce(Sound.AbortTracing);
+            SoundManager.StopLoop(SoundLoop.Tracing);
+            SoundManager.StopLoop(SoundLoop.PathComplete);
+            panelState.ResetToNeutral();
+            line = lineMirror = null;
         }
         
         public override void SetScreenSize(Point screenSize)
@@ -108,15 +206,11 @@ namespace TWP_Shared
             bloomFilter.UpdateResolution(screenSize.X, screenSize.Y);
             renderer.RenderPanelToTexture(backgroundTexture);
 
+            UpdateButtonsPosition();
+
             // It's nearly impossible to update line hitboxes to the new screen resolution, because they are created real-time and are pixel perfect
             // So simply abort tracing if lines are active in the moment of screen resize
-            if (line != null)
-            {
-                SoundManager.StopLoop(SoundLoop.Tracing);
-                SoundManager.StopLoop(SoundLoop.PathComplete);
-                SoundManager.PlayOnce(Sound.AbortTracing);
-                line = lineMirror = null;
-            }
+            AbortTracing();
         }
 
         public override void Update(GameTime gameTime)
@@ -149,36 +243,13 @@ namespace TWP_Shared
                 }
             }
 
+            foreach (var button in buttons)
+                button.Update(InputManager.GetTapPosition());
+
+            fade.Update();
+
             if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
                 drawDebug = !drawDebug;
-                        
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.S))
-            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.Small;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.C))
-            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.Cheap;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.F))
-            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.Focussed;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.W))
-            //    bloomFilter.BloomPreset = BloomFilter.BloomPresets.SuperWide;
-
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D1))
-            //    bloomFilter.BloomStrengthMultiplier = 0.2f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D2))
-            //    bloomFilter.BloomStrengthMultiplier = 0.5f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D3))
-            //    bloomFilter.BloomStrengthMultiplier = 0.7f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D4))
-            //    bloomFilter.BloomStrengthMultiplier = 0.8f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D5))
-            //    bloomFilter.BloomStrengthMultiplier = 0.9f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D6))
-            //    bloomFilter.BloomStrengthMultiplier = 1.0f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D7))
-            //    bloomFilter.BloomStrengthMultiplier = 1.1f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D8))
-            //    bloomFilter.BloomStrengthMultiplier = 1.2f;
-            //if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.D9))
-            //    bloomFilter.BloomStrengthMultiplier = 1.3f;
 
             base.Update(gameTime);
         }
@@ -188,9 +259,6 @@ namespace TWP_Shared
             Point? tap = GetTapPosition();
             if (tap.HasValue)
             {
-                //if (btnRandom.Contains(tap.Value))
-                //    LoadNewPanel(PanelGenerator.GeneratePanel());
-
                 if (!(panelState.State.HasFlag(PanelStates.EliminationStarted) && !panelState.State.HasFlag(PanelStates.EliminationFinished)))
                 {
                     if (line == null || panelState.State.HasFlag(PanelStates.Solved))
@@ -264,18 +332,17 @@ namespace TWP_Shared
                                     renderer.RenderErrorsToTexture(errorsBlinkTexture, trueErrors, false);
                                         renderer.RenderErrorsToTexture(eliminatedErrorsTexture, eliminatedErrors, true);
 
-                                    // If there are no true errors, then panel is solved
-                                    if (trueErrors.Count() == 0)
+                                        // If there are no true errors, then panel is solved
+                                        if (trueErrors.Count() == 0)
                                         {
-                                        // Setting success will stop lines fading process, but retain eliminated errors intact
-                                        panelState.SetSuccess();
-                                            SoundManager.PlayOnce(Sound.Success);
+                                            // Setting success will stop lines fading process, but retain eliminated errors intact
+                                            SetPanelSuccess();
                                         }
                                         else
                                         {
-                                        // If there are true errors => delete the lines
-                                        // They will continue to fade out and errors will continue to blink
-                                        line = lineMirror = null;
+                                            // If there are true errors => delete the lines
+                                            // They will continue to fade out and errors will continue to blink
+                                            line = lineMirror = null;
                                             SoundManager.PlayOnce(Sound.Failure);
                                         }
 
@@ -290,8 +357,7 @@ namespace TWP_Shared
                                     // If there are no true errors, then panel is solved
                                     if (trueErrors.Count() == 0)
                                     {
-                                        panelState.SetSuccess();
-                                        SoundManager.PlayOnce(Sound.Success);
+                                        SetPanelSuccess();
                                     }
                                     else
                                     {
@@ -316,6 +382,12 @@ namespace TWP_Shared
                     } 
                 }
             }
+        }
+        private void SetPanelSuccess()
+        {
+            panelState.SetSuccess();
+            SoundManager.PlayOnce(Sound.Success);
+            (buttons[2] as TwoStateButton).StateActive = true;
         }
         private void MoveLine(Vector2 moveVector)   
         {
@@ -437,9 +509,16 @@ namespace TWP_Shared
             if (panelState.State.HasFlag(PanelStates.EliminationFinished) && eliminatedErrorsTexture != null)
                 spriteBatch.Draw(eliminatedErrorsTexture, GraphicsDevice.Viewport.Bounds, Color.White * panelState.EliminationFadeOpacity);
 
+            // Draw buttons
+            foreach (var button in buttons)
+                button.Draw(spriteBatch);
+
             // Draw node IDs
             if (drawDebug)
                 DebugDrawNodeIDs(spriteBatch);
+
+            if (fade.IsActive)
+                spriteBatch.Draw(texPixel, new Rectangle(Point.Zero, ScreenSize), Color.Black * fade.Opacity);
             
             base.Draw(spriteBatch);
         }

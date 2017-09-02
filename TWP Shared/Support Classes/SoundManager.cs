@@ -120,6 +120,23 @@ namespace TWP_Shared
             }
         }
 
+        public static bool IsPlaying(SoundLoop sound)
+        {
+            switch (sound)
+            {
+                case SoundLoop.Tracing:
+                    return sfxTracingInst.State == SoundState.Playing;
+                case SoundLoop.PathComplete:
+                    return sfxPathCompleteInst.State == SoundState.Playing;
+                case SoundLoop.ScintStartPoint:
+                    return sfxScintStartInst.State == SoundState.Playing;
+                case SoundLoop.ScintEndPoint:
+                    return sfxScintEndInst.State == SoundState.Playing;
+                default:
+                    return false;
+            }
+        }
+
         public static void StopLoop(SoundLoop sound)
         {
             switch (sound)

@@ -9,20 +9,23 @@ namespace TWP_Shared
     public class ToggleButton : TouchButton
     {
         public bool IsActivated { get; private set; }
+        private bool isActivatedDefault;
 
-        public ToggleButton(Rectangle bounds, Texture2D textureOn, Texture2D textureOff = null, bool isActivated = true) 
-            : base(bounds, textureOn, textureOff)
+        public ToggleButton(Rectangle bounds, Texture2D textureOn, Texture2D textureOff = null, Color? tint = null, bool isActivated = true) 
+            : base(bounds, textureOn, textureOff, tint)
         {
-            IsActivated = isActivated;
+            IsActivated = isActivatedDefault = isActivated;
             Click += () => IsActivated = !IsActivated;
         }
+
+        public void Reset() => IsActivated = isActivatedDefault;
 
         public override void Draw(SpriteBatch sb, float alpha = 1)
         {
             if (!IsActivated && textureDown != null)
-                sb.Draw(textureDown, hitbox, Color.White * alpha);
+                sb.Draw(textureDown, hitbox, tintUp * alpha);
             else if(textureUp != null)
-                sb.Draw(textureUp, hitbox, Color.White * alpha);
+                sb.Draw(textureUp, hitbox, tintUp * alpha);
         }
     }
 }
