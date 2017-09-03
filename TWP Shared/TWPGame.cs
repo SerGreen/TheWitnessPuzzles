@@ -129,6 +129,31 @@ namespace TWP_Shared
 
             return panel;
         }
+        private Puzzle CreateTestPanel3()
+        {
+            Puzzle panel = new Puzzle(5, 4);
+            panel.Nodes[25].SetState(NodeState.Start);
+            panel.Nodes[24].SetState(NodeState.Exit);
+            panel.Nodes[3].SetState(NodeState.Exit);
+            panel.Nodes[27].SetState(NodeState.Exit);
+            panel.Edges.Find(x => x.Id == 01)?.SetState(EdgeState.Marked);
+            panel.Edges.Find(x => x.Id == 410)?.SetState(EdgeState.Marked);
+            panel.Edges.Find(x => x.Id == 208)?.SetState(EdgeState.Broken);
+            panel.Edges.Find(x => x.Id == 511)?.SetState(EdgeState.Broken);
+            panel.Edges.Find(x => x.Id == 2127)?.SetState(EdgeState.Broken);
+            panel.Grid[0, 0].Rule = new TriangleRule(3);
+            panel.Grid[3, 0].Rule = new TriangleRule(2);
+            panel.Grid[4, 0].Rule = new TriangleRule(1);
+            panel.Grid[0, 1].Rule = new TetrisRule(new bool[,] { { true } });
+            panel.Grid[4, 1].Rule = new TriangleRule(1);
+            panel.Grid[0, 2].Rule = new TetrisRule(new bool[,] { { true } });
+            panel.Grid[1, 2].Rule = new TetrisRule(new bool[,] { { true } });
+            panel.Grid[2, 2].Rule = new TetrisRule(new bool[,] { { true } });
+            panel.Grid[4, 2].Rule = new EliminationRule();
+            panel.Grid[3, 3].Rule = new TriangleRule(1);
+            
+            return panel;
+        }
 
 
         /// <summary>

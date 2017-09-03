@@ -90,6 +90,13 @@ namespace TWP_Shared
             return false;
         }
 
+        public void SetColorScheme(Color backgroundColor, Color wallsColor)
+        {
+            BackgroundColor = backgroundColor;
+            WallColor = wallsColor;
+            BorderColor = Color.Lerp(wallsColor, Color.Gray, 0.3f);
+        }
+
         private bool InitializePanel()
         {
             if (panel != null)

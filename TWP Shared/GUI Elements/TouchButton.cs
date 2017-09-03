@@ -25,7 +25,12 @@ namespace TWP_Shared
             timeDown = 0;
             isPressedDown = false;
 
-            tintUp = tint ?? Color.White;
+            ChangeTint(tint ?? Color.White);
+        }
+
+        public void ChangeTint(Color newTint)
+        {
+            tintUp = newTint;
             tintDown = Color.Lerp(tintUp, Color.Gray, 0.5f);
         }
 

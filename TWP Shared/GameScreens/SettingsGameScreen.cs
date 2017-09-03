@@ -63,6 +63,7 @@ namespace TWP_Shared
 
             TextTouchButton btnBack = new TextTouchButton(new Rectangle(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f))), font, "Back", texPixel);
             btnBack.Click += () => {
+                SettingsManager.SaveSettings();
                 ScreenManager.Instance.GoBack();
                 SoundManager.PlayOnce(Sound.MenuEscape);
             };

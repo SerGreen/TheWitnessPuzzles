@@ -19,6 +19,9 @@ namespace TheWitnessPuzzles
         public int Height { get; }
 
         public virtual Color MainColor { get; }
+        public Color BackgroundColor { get; }
+        public Color WallsColor { get; }
+        public Color ButtonsColor { get; }
 
         /// <summary>
         /// Panel blocks in two-dimensional array
@@ -81,11 +84,15 @@ namespace TheWitnessPuzzles
             return true;
         }
 
-        public Puzzle(int width, int height, Color? lineColor = null)
+
+        public Puzzle(int width, int height, Color? lineColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null)
         {
             Width = width;
             Height = height;
             MainColor = lineColor ?? Color.White;
+            BackgroundColor = backgroundColor ?? Color.DimGray;
+            WallsColor = wallsColor ?? Color.Black;
+            ButtonsColor = buttonsColor ?? Color.DimGray;
 
             Nodes = new Node[(width + 1) * (height + 1)];
             Grid = new Block[width, height];
@@ -118,6 +125,7 @@ namespace TheWitnessPuzzles
                     edgesAlignment[i, j] = Nodes[a].LinkToNode(Nodes[b]);
                 }
         }
+
 
         /// <summary>
         /// Invokes sector splitting and evaluets errors in the puzzle with current solution

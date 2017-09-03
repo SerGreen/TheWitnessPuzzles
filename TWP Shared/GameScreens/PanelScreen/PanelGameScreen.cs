@@ -55,6 +55,7 @@ namespace TWP_Shared
             this.panel = panel;
             internalBatch = new SpriteBatch(GraphicsDevice);
             renderer = new PanelRenderer(panel, screenSize, TextureProvider, device);
+            renderer.SetColorScheme(panel.BackgroundColor, panel.WallsColor);
             startPoints = renderer.StartPoints;
             endPoints = renderer.EndPoints;
             walls = renderer.Walls;
@@ -86,12 +87,11 @@ namespace TWP_Shared
             renderer.RenderPanelToTexture(backgroundTexture);
 
             SpawnButtons();
+            UpdateButtonsColor();
         }
         private void SpawnButtons()
         {
-            Color buttonsTint = Color.Teal;
-
-            TouchButton btnClose = new TouchButton(new Rectangle(), texClose, null, buttonsTint);
+            TouchButton btnClose = new TouchButton(new Rectangle(), texClose, null);
             btnClose.Click += () => {
                 AbortTracing();
                 SoundManager.PlayOnce(Sound.MenuEnter);
@@ -99,14 +99,14 @@ namespace TWP_Shared
             };
             buttons.Add(btnClose);
 
-            ToggleButton btnLike = new ToggleButton(new Rectangle(), texLike[1], texLike[0], buttonsTint, false);
+            ToggleButton btnLike = new ToggleButton(new Rectangle(), texLike[1], texLike[0], null, false);
             btnLike.Click += () =>
             {
                 // TODO add panel to the list of saved panels
             };
             buttons.Add(btnLike);
 
-            TwoStateButton btnNext = new TwoStateButton(new Rectangle(), texDelete, texNext, null, null, buttonsTint, false);
+            TwoStateButton btnNext = new TwoStateButton(new Rectangle(), texDelete, texNext, null, null, null, false);
             btnNext.Click += () =>
             {
                 Action callback = null;
@@ -162,6 +162,11 @@ namespace TWP_Shared
                 buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
             }
         }
+        private void UpdateButtonsColor()
+        {
+            foreach (var button in buttons)
+                button.ChangeTint(panel.ButtonsColor);
+        }
 
         public void LoadNewPanel(Puzzle panel)
         {
@@ -173,7 +178,9 @@ namespace TWP_Shared
                 startPoints = renderer.StartPoints;
                 endPoints = renderer.EndPoints;
                 walls = renderer.Walls;
+                renderer.SetColorScheme(panel.BackgroundColor, panel.WallsColor);
                 renderer.RenderPanelToTexture(backgroundTexture);
+                UpdateButtonsColor();
             }
         }
 
@@ -250,7 +257,7 @@ namespace TWP_Shared
 
             if (InputManager.IsKeyPressed(Microsoft.Xna.Framework.Input.Keys.N))
                 drawDebug = !drawDebug;
-
+            
             base.Update(gameTime);
         }
 

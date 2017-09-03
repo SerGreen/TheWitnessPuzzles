@@ -598,7 +598,7 @@ namespace TWP_Shared
                 {
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
                     int index = rnd.Next(secBlocks.Count);
-                    int ruleType = rnd.Next(3);
+                    int ruleType = rnd.Next(4);
                     
                     Color? squareCol = sec.Blocks.Select(x => x.Rule).OfType<ColoredSquareRule>().FirstOrDefault()?.Color;
                     Color? sunCol = sec.Blocks.Select(x => x.Rule).OfType<SunPairRule>().FirstOrDefault()?.Color;
@@ -623,7 +623,43 @@ namespace TWP_Shared
                     }
                     // Create triangle
                     else if (ruleType == 2)
-                        secBlocks[index].Rule = new TriangleRule(rnd.Next(1, 4));
+                    {
+                        int trianglePower = rnd.Next(1, 4);
+                        // Make sure that we are not creating triangle that actually fit to solution line
+                        if (secBlocks[index].Edges.Intersect(allSolutionEdges).Count() == trianglePower)
+                            trianglePower = (trianglePower % 3) + 1;
+                        secBlocks[index].Rule = new TriangleRule(trianglePower);
+                    }
+                    // Create tetris
+                    else if (ruleType == 3)
+                    {
+                        int tetrominoSize = rnd.Next(1, Math.Min(4, secBlocks.Count));
+                        // If there are no tetrominos in sector, make sure that we are not creating tetromino that actually fit into sector
+                        if (secBlocks.Where(x => x.Rule is TetrisRule).Count() == 0 && tetrominoSize == secBlocks.Count)
+                            tetrominoSize = tetrominoSize == 1 ? 2 : tetrominoSize - 1;
+                        int w = rnd.Next(1, tetrominoSize + 1);
+                        int h = (int) Math.Ceiling((double) tetrominoSize / w);
+                        bool[,] shape = new bool[w, h];
+                        for (int k = 0; k < tetrominoSize; k++)
+                        {
+                            int x,y;
+                            do
+                            {
+                                x = rnd.Next(0, w);
+                                y = rnd.Next(0, h);
+                            }
+                            while (shape[x, y] == true);
+                            shape[x, y] = true;
+                        }
+
+                        bool rotattable = rnd.NextDouble() > 0.9 && !TetrisRotatableRule.AreShapesIdentical(shape, TetrisRotatableRule.RotateShapeCW(shape));
+                        bool subtractive = rnd.NextDouble() > 0.93;
+
+                        if (rotattable)
+                            secBlocks[index].Rule = new TetrisRotatableRule(shape, subtractive);
+                        else
+                            secBlocks[index].Rule = new TetrisRule(shape, subtractive);
+                    }
                 }
             }
             #endregion 
