@@ -82,7 +82,14 @@ namespace TWP_Shared
         {
             TextTouchButton btnStart = new TextTouchButton(new Rectangle(), font, "Start", texPixel);
             btnStart.Click += () => {
-                ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, DI.Get<PanelGenerator>().GeneratePanel());
+                TheWitnessPuzzles.Puzzle currentPanel = FileStorageManager.LoadCurrentPanel();
+                if (currentPanel == null)
+                {
+                    currentPanel = DI.Get<PanelGenerator>().GeneratePanel();
+                    FileStorageManager.SaveCurrentPanel(currentPanel);
+                }
+
+                ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, currentPanel);
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 

@@ -116,6 +116,7 @@ namespace TWP_Shared
 
                     AbortTracing();
                     Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel();
+                    FileStorageManager.SaveCurrentPanel(nextPanel);
                     LoadNewPanel(nextPanel);
                     btnNext.StateActive = false;
                     btnLike.Reset();
@@ -395,6 +396,11 @@ namespace TWP_Shared
             panelState.SetSuccess();
             SoundManager.PlayOnce(Sound.Success);
             (buttons[2] as TwoStateButton).StateActive = true;
+
+            // TODO add panel to solved list
+
+            // Delete current panel save file so it won't be loaded again next time
+            FileStorageManager.DeleteCurrentPanel();
         }
         private void MoveLine(Vector2 moveVector)   
         {
