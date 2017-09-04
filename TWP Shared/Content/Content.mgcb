@@ -213,18 +213,6 @@
 /processorParam:Quality=Best
 /build:sfx/panel_potential_failure.ogg
 
-#begin sfx/panel_scint_endpoint.ogg
-/importer:OggImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:sfx/panel_scint_endpoint.ogg
-
-#begin sfx/panel_scint_startpoint.ogg
-/importer:OggImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:sfx/panel_scint_startpoint.ogg
-
 #begin sfx/panel_start_tracing.ogg
 /importer:OggImporter
 /processor:SoundEffectProcessor
@@ -393,4 +381,46 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:img/like1.png
+
+#begin sfx/btn_like.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/btn_like.ogg
+
+#begin sfx/btn_next_panel.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/btn_next_panel.ogg
+
+#begin sfx/btn_next_panel_success.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/btn_next_panel_success.ogg
+
+#begin sfx/btn_unlike.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/btn_unlike.ogg
+
+#begin sfx/menu_open.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/menu_open.ogg
+
+#begin sfx/menu_tick.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/menu_tick.ogg
+
+#begin sfx/menu_untick.ogg
+/importer:OggImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:sfx/menu_untick.ogg
 

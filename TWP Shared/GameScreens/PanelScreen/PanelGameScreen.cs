@@ -94,7 +94,7 @@ namespace TWP_Shared
             TouchButton btnClose = new TouchButton(new Rectangle(), texClose, null);
             btnClose.Click += () => {
                 AbortTracing();
-                SoundManager.PlayOnce(Sound.MenuEnter);
+                SoundManager.PlayOnce(Sound.MenuOpen);
                 ScreenManager.Instance.GoBack();
             };
             buttons.Add(btnClose);
@@ -103,6 +103,8 @@ namespace TWP_Shared
             btnLike.Click += () =>
             {
                 // TODO add panel to the list of saved panels
+
+                SoundManager.PlayOnce(btnLike.IsActivated ? Sound.ButtonLike : Sound.ButtonUnlike);
             };
             buttons.Add(btnLike);
 
@@ -122,6 +124,7 @@ namespace TWP_Shared
                     btnLike.Reset();
                     fade.FadeOutComplete -= callback;
                 };
+                SoundManager.PlayOnce(btnNext.StateActive ? Sound.ButtonNextSuccess : Sound.ButtonNext);
                 fade.FadeOutComplete += callback;
                 fade.Restart();
             };

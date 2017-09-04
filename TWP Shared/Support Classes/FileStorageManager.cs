@@ -273,7 +273,10 @@ namespace TWP_Shared
                             // Broken edges
                             int brokenEdgesCount = br.ReadInt32();
                             for (int i = 0; i < brokenEdgesCount; i++)
-                                panel.Edges.Find(x => x.Id == br.ReadInt32()).SetState(EdgeState.Broken);
+                            {
+                                int edgeID = br.ReadInt32();
+                                panel.Edges.Find(x => x.Id == edgeID).SetState(EdgeState.Broken);
+                            }
 
                             // Marked edges
                             int markedEdgesCount = br.ReadInt32();

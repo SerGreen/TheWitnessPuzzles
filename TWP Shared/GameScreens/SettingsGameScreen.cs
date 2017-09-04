@@ -45,20 +45,20 @@ namespace TWP_Shared
             ToggleButton btnMute = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight)), texSound[1], texSound[0], null, !SettingsManager.IsMute);
             btnMute.Click += () => {
                 SettingsManager.IsMute = !btnMute.IsActivated;
-                SoundManager.PlayOnce(Sound.MenuEnter);
+                SoundManager.PlayOnce(SettingsManager.IsMute ? Sound.MenuUntick : Sound.MenuTick);
             };
 
             ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 1.2f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.IsFullscreen);
             btnFullscreen.Click += () => {
                 SettingsManager.IsFullscreen = btnFullscreen.IsActivated;
                 ScreenManager.Instance.UpdateFullscreen();
-                SoundManager.PlayOnce(Sound.MenuEnter);
+                SoundManager.PlayOnce(SettingsManager.IsFullscreen ? Sound.MenuTick : Sound.MenuUntick);
             };
 
             ToggleButton btnVFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.VFX);
             btnVFX.Click += () => {
                 SettingsManager.VFX = btnVFX.IsActivated;
-                SoundManager.PlayOnce(Sound.MenuEnter);
+                SoundManager.PlayOnce(SettingsManager.VFX ? Sound.MenuTick : Sound.MenuUntick);
             };
 
             TextTouchButton btnBack = new TextTouchButton(new Rectangle(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f))), font, "Back", texPixel);
