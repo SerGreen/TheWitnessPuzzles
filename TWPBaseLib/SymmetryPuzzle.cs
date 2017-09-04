@@ -15,9 +15,9 @@ namespace TheWitnessPuzzles
         public Color MirrorColor { get; }
         private readonly int MaxNodeID;
         private readonly int WidthPlus1;
-
-        public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null) 
-            : base(width, height, mainColor, backgroundColor, wallsColor, buttonsColor)
+        
+        public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null, int seed = -1) 
+            : base(width, height, mainColor, backgroundColor, wallsColor, buttonsColor, seed)
         {
             Y_Mirrored = y_mirrored;
             MainColor = mainColor ?? Color.White;

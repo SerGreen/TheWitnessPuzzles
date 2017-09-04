@@ -114,8 +114,6 @@ namespace TWP_Shared
                 Action callback = null;
                 callback = () =>
                 {
-                    // TODO save current panel to the list of last solved or last discarded
-
                     AbortTracing();
                     Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel();
                     FileStorageManager.SaveCurrentPanel(nextPanel);
@@ -124,6 +122,11 @@ namespace TWP_Shared
                     btnLike.Reset();
                     fade.FadeOutComplete -= callback;
                 };
+
+                // Add panel to the list of last 10 discarded panels
+                if (!btnNext.StateActive)
+                    FileStorageManager.AddPanelToDiscardedList(panel);
+
                 SoundManager.PlayOnce(btnNext.StateActive ? Sound.ButtonNextSuccess : Sound.ButtonNext);
                 fade.FadeOutComplete += callback;
                 fade.Restart();
@@ -400,8 +403,8 @@ namespace TWP_Shared
             SoundManager.PlayOnce(Sound.Success);
             (buttons[2] as TwoStateButton).StateActive = true;
 
-            // TODO add panel to solved list
-
+            // Add panel to the list of last 10 solved panels
+            FileStorageManager.AddPanelToSolvedList(panel);
             // Delete current panel save file so it won't be loaded again next time
             FileStorageManager.DeleteCurrentPanel();
         }

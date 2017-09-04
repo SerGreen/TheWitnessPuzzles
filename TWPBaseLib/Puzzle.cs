@@ -10,6 +10,11 @@ namespace TheWitnessPuzzles
     public class Puzzle
     {
         /// <summary>
+        /// Seed of panel generator's RNG, can be used to generate this exact panel (providing that the same version of Generator is used)
+        /// </summary>
+        public int Seed { get; }
+
+        /// <summary>
         /// Panel width in blocks (normally 2 to 7)
         /// </summary>
         public int Width { get; }
@@ -84,9 +89,9 @@ namespace TheWitnessPuzzles
             return true;
         }
 
-
-        public Puzzle(int width, int height, Color? lineColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null)
+        public Puzzle(int width, int height, Color? lineColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null, int seed = -1)
         {
+            Seed = seed;
             Width = width;
             Height = height;
             MainColor = lineColor ?? Color.White;

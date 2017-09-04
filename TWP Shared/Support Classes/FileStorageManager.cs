@@ -13,9 +13,12 @@ namespace TWP_Shared
     {
         private static readonly string SETTINGS_FILE = "settings.cfg";
         private static readonly string CURRENT_PANEL_FILE = "current.panel";
+        private static readonly string SOLVED_DIR = "lastSolved";
+        private static readonly string DISCARDED_DIR = "lastDiscarded";
+        private static readonly string FAVOURITE_DIR = "favourite";
         private static readonly string SOLVED_PANEL_FILE = "solved{0}.panel";
         private static readonly string DISCARDED_PANEL_FILE = "discarded{0}.panel";
-        private static readonly string FAVOURITE_PANEL_FILE = "favourite{0}.panel";
+        private static readonly string FAVOURITE_PANEL_FILE = "fav{0}.panel";
 
         private static IsolatedStorageFile isolatedStorage;
 
@@ -26,8 +29,21 @@ namespace TWP_Shared
 #else
             isolatedStorage = IsolatedStorageFile.GetUserStoreForApplication();
 #endif    
+            SOLVED_PANEL_FILE = Path.Combine(SOLVED_DIR, SOLVED_PANEL_FILE);
+            DISCARDED_PANEL_FILE = Path.Combine(DISCARDED_DIR, DISCARDED_PANEL_FILE);
+            FAVOURITE_PANEL_FILE = Path.Combine(FAVOURITE_DIR, FAVOURITE_PANEL_FILE);
+
+            if (!isolatedStorage.DirectoryExists(SOLVED_DIR))
+                isolatedStorage.CreateDirectory(SOLVED_DIR);
+            if (!isolatedStorage.DirectoryExists(DISCARDED_DIR))
+                isolatedStorage.CreateDirectory(DISCARDED_DIR);
+            if (!isolatedStorage.DirectoryExists(FAVOURITE_DIR))
+                isolatedStorage.CreateDirectory(FAVOURITE_DIR);
         }
 
+        /// <summary>
+        /// Returns game settings as a string, values are separated with ':' character
+        /// </summary>
         public static string LoadSettingsFile()
         {
             // Open isolated storage and read settings file
@@ -47,7 +63,6 @@ namespace TWP_Shared
 
             return null;
         }
-
         public static void SaveSettingsFile(string file)
         {
             // Open isolated storage and write the settings file
@@ -65,10 +80,28 @@ namespace TWP_Shared
 
         public static void SaveCurrentPanel(Puzzle currentPanel) => SavePanelToFile(currentPanel, CURRENT_PANEL_FILE);
         public static Puzzle LoadCurrentPanel() => LoadPanelFromFile(CURRENT_PANEL_FILE);
-        public static void DeleteCurrentPanel()
+        public static void DeleteCurrentPanel() => DeletePanel(CURRENT_PANEL_FILE);
+
+        public static void AddPanelToSolvedList(Puzzle panel) => AddPanelToLast10List(panel, SOLVED_PANEL_FILE);
+        public static void AddPanelToDiscardedList(Puzzle panel) => AddPanelToLast10List(panel, DISCARDED_PANEL_FILE);
+        private static void AddPanelToLast10List(Puzzle panel, string fileNamePattern)
         {
-            if (isolatedStorage.FileExists(CURRENT_PANEL_FILE))
-                isolatedStorage.DeleteFile(CURRENT_PANEL_FILE);
+            // Get how many panels are saved already
+            int listLength = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "?")).Length;
+
+            // If there are all 10 panels, then delete the last one
+            if (listLength == 10)
+            {
+                DeletePanel(string.Format(fileNamePattern, 9));
+                listLength--;
+            }
+
+            // Shift all panels by one place, so the 2nd becomes 3rd and so on
+            for (int i = listLength - 1; i >= 0; i--)
+                isolatedStorage.MoveFile(string.Format(fileNamePattern, i), string.Format(fileNamePattern, i + 1));
+
+            // Now save new panel as 1st
+            SavePanelToFile(panel, string.Format(fileNamePattern, 0));
         }
 
         private static void SavePanelToFile(Puzzle panel, string fileName)
@@ -79,6 +112,9 @@ namespace TWP_Shared
                 {
                     using (BinaryWriter br = new BinaryWriter(fs))
                     {
+                        // Seed of panel
+                        br.Write(panel.Seed);                               // int
+
                         // Panel size
                         br.Write(panel.Width);                              // int
                         br.Write(panel.Height);                             // int
@@ -220,6 +256,9 @@ namespace TWP_Shared
                         {
                             Puzzle panel;
 
+                            // Panel's seed
+                            int seed = br.ReadInt32();
+
                             // Panel size
                             int width = br.ReadInt32();
                             int height = br.ReadInt32();
@@ -245,9 +284,9 @@ namespace TWP_Shared
 
                             // Creating panel
                             if (isSymmetric)
-                                panel = new SymmetryPuzzle(width, height, Y_mirrored, mainColor, mirrorColor, backgroundColor, wallColor, buttonsColor);
+                                panel = new SymmetryPuzzle(width, height, Y_mirrored, mainColor, mirrorColor, backgroundColor, wallColor, buttonsColor, seed);
                             else
-                                panel = new Puzzle(width, height, mainColor, backgroundColor, wallColor, buttonsColor);
+                                panel = new Puzzle(width, height, mainColor, backgroundColor, wallColor, buttonsColor, seed);
                             
                             // Start nodes
                             int startNodesCount = br.ReadInt32();
@@ -367,6 +406,11 @@ namespace TWP_Shared
             }
 
             return null;
+        }
+        private static void DeletePanel(string fileName)
+        {
+            if (isolatedStorage.FileExists(fileName))
+                isolatedStorage.DeleteFile(fileName);
         }
     }
 }

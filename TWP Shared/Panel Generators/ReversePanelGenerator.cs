@@ -21,13 +21,17 @@ namespace TWP_Shared
         public static ReversePanelGenerator Instance = new ReversePanelGenerator();
         private ReversePanelGenerator() { }
 
-        readonly static Random randomNumberGenerator = new Random();
+        readonly static Random seedGenerator = new Random();
         readonly static List<Color> colorPalette = new List<Color>() { Color.Aqua, Color.Magenta, Color.Lime, Color.Blue, Color.OrangeRed, Color.Yellow, Color.White, Color.Black };
 
         // Yeah, i know, it's a method 700+ lines big...
         public override Puzzle GeneratePanel(int? seed = null)
         {
-            Random rnd = seed.HasValue ? new Random(seed.Value) : randomNumberGenerator;
+            // Use provided seed or generate random one -- a number from 0 to 1 billion minus one (9 digits)
+            if (seed == null)
+                seed = seedGenerator.Next(1000000000);
+            Random rnd = new Random(seed.Value);
+
             Puzzle panel = null;
             SymmetryPuzzle symPanel = null;
 
