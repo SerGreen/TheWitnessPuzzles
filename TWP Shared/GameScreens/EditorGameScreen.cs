@@ -22,7 +22,7 @@ namespace TWP_Shared
         Texture2D texPixel, texSquare;
         RenderTarget2D panelTexture, miniPanelTexture;
 
-        TextTouchButton btnBack, btnNext;
+        TextButton btnBack, btnNext;
 
         int dimHitboxSize;
         Vector2 oneDigitSize;
@@ -74,7 +74,7 @@ namespace TWP_Shared
         private void SpawnButtons()
         {
             int btnSize = (int) (Math.Min(ScreenSize.X, ScreenSize.Y) * 0.2f);
-            btnBack = new TextTouchButton(new Rectangle(btnSize / 2, ScreenSize.Y - btnSize, btnSize, btnSize / 2), font, "Back", texPixel);
+            btnBack = new TextButton(new Rectangle(btnSize / 2, ScreenSize.Y - btnSize, btnSize, btnSize / 2), font, "Back", texPixel);
             btnBack.Click += () =>
             {
                 SoundManager.PlayOnce(Sound.MenuEscape);
@@ -98,7 +98,7 @@ namespace TWP_Shared
                 }
             };
 
-            btnNext = new TextTouchButton(new Rectangle(ScreenSize.X -btnSize - btnSize / 2, ScreenSize.Y - btnSize, btnSize, btnSize / 2), font, "Next", texPixel);
+            btnNext = new TextButton(new Rectangle(ScreenSize.X -btnSize - btnSize / 2, ScreenSize.Y - btnSize, btnSize, btnSize / 2), font, "Next", texPixel);
             btnNext.Click += () =>
             {
                 SoundManager.PlayOnce(Sound.MenuEnter);

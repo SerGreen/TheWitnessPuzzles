@@ -22,7 +22,7 @@ namespace TWP_Shared
         FadeInAnimation fadeIn;
         Rectangle menuBounds;
         int menuButtonHeight;
-        List<TextTouchButton> buttons = new List<TextTouchButton>();
+        List<TextButton> buttons = new List<TextButton>();
 
         RenderTarget2D backgroundTexture;
 
@@ -80,7 +80,7 @@ namespace TWP_Shared
         }
         private void SpawnButtons()
         {
-            TextTouchButton btnStart = new TextTouchButton(new Rectangle(), font, "Start", texPixel);
+            TextButton btnStart = new TextButton(new Rectangle(), font, "Start", texPixel);
             btnStart.Click += () => {
                 TheWitnessPuzzles.Puzzle currentPanel = FileStorageManager.LoadCurrentPanel();
                 if (currentPanel == null)
@@ -93,13 +93,13 @@ namespace TWP_Shared
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            TextTouchButton btnHistory = new TextTouchButton(new Rectangle(), font, "History", texPixel);
+            TextButton btnHistory = new TextButton(new Rectangle(), font, "History", texPixel);
             btnHistory.Click += () => {
-                // TODO make transition to history screen
+                ScreenManager.Instance.AddScreen<HistoryGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            TextTouchButton btnSettings = new TextTouchButton(new Rectangle(), font, "Settings", texPixel);
+            TextButton btnSettings = new TextButton(new Rectangle(), font, "Settings", texPixel);
             btnSettings.Click += () => {
                 ScreenManager.Instance.AddScreen<SettingsGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);

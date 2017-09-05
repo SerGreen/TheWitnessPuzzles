@@ -6,7 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace TWP_Shared
 {
-    public class TextTouchButton : TouchButton
+    public class TextButton : TouchButton
     {
         SpriteFont font;
         string text;
@@ -16,7 +16,7 @@ namespace TWP_Shared
         float scale;
         Vector2 position;
 
-        public TextTouchButton(Rectangle bounds, SpriteFont font, string text, Texture2D texPixel, Color? textColor = null, Color? textColorPressed = null) 
+        public TextButton(Rectangle bounds, SpriteFont font, string text, Texture2D texPixel, Color? textColor = null, Color? textColorPressed = null) 
             : base(bounds, null, null)
         {
             this.font = font;

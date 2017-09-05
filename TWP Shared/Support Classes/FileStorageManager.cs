@@ -20,6 +20,8 @@ namespace TWP_Shared
         private static readonly string DISCARDED_PANEL_FILE = "discarded{0}.panel";
         private static readonly string FAVOURITE_PANEL_FILE = "fav{0}.panel";
 
+        private static readonly int MAX_HISTORY_LENGTH = 12;
+
         private static IsolatedStorageFile isolatedStorage;
 
         static FileStorageManager()
@@ -82,17 +84,17 @@ namespace TWP_Shared
         public static Puzzle LoadCurrentPanel() => LoadPanelFromFile(CURRENT_PANEL_FILE);
         public static void DeleteCurrentPanel() => DeletePanel(CURRENT_PANEL_FILE);
 
-        public static void AddPanelToSolvedList(Puzzle panel) => AddPanelToLast10List(panel, SOLVED_PANEL_FILE);
-        public static void AddPanelToDiscardedList(Puzzle panel) => AddPanelToLast10List(panel, DISCARDED_PANEL_FILE);
-        private static void AddPanelToLast10List(Puzzle panel, string fileNamePattern)
+        public static void AddPanelToSolvedList(Puzzle panel) => AddPanelToLastNList(panel, SOLVED_PANEL_FILE);
+        public static void AddPanelToDiscardedList(Puzzle panel) => AddPanelToLastNList(panel, DISCARDED_PANEL_FILE);
+        private static void AddPanelToLastNList(Puzzle panel, string fileNamePattern)
         {
             // Get how many panels are saved already
-            int listLength = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "?")).Length;
+            int listLength = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "*")).Length;
 
-            // If there are all 10 panels, then delete the last one
-            if (listLength == 10)
+            // If there are all N panels, then delete the last one
+            if (listLength >= MAX_HISTORY_LENGTH)
             {
-                DeletePanel(string.Format(fileNamePattern, 9));
+                DeletePanel(string.Format(fileNamePattern, MAX_HISTORY_LENGTH - 1));
                 listLength--;
             }
 

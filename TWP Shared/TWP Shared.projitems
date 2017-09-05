@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\HistoryGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SettingsGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\ToggleButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TwoStateButton.cs" />
@@ -35,7 +36,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\SettingsManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\SoundManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SplashGameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TextTouchButton.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TextButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TouchButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TWPGame.cs" />
   </ItemGroup>

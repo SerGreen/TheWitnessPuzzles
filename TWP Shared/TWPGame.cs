@@ -52,6 +52,7 @@ namespace TWP_Shared
             if (isFullscreen)
             {
                 Window.IsBorderless = true;
+                Window.Position = Point.Zero;
                 graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
                 graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
             }
