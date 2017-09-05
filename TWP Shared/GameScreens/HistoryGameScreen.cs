@@ -259,8 +259,8 @@ namespace TWP_Shared
                     TouchButton btnPanel = new TouchButton(new Rectangle(pos, size), texture);
                     btnPanel.Click += () =>
                     {
-                        SoundManager.PlayOnce(Sound.MenuEnter);
                         ScreenManager.Instance.AddScreen<PanelGameScreen>(false, true, panel, true);
+                        SoundManager.PlayOnce(Sound.MenuEnter);
                     };
                     panels.Add(btnPanel);
                 }

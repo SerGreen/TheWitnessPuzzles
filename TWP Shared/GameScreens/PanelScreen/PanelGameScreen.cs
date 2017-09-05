@@ -51,7 +51,6 @@ namespace TWP_Shared
 
         public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content)
             : this(panel, false, screenSize, device, TextureProvider, FontProvider, Content) { }
-
         public PanelGameScreen(Puzzle panel, bool standalonePanel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
             : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
@@ -106,10 +105,14 @@ namespace TWP_Shared
             };
             buttons.Add(btnClose);
 
-            ToggleButton btnLike = new ToggleButton(new Rectangle(), texLike[1], texLike[0], null, false);
+            ToggleButton btnLike = new ToggleButton(new Rectangle(), texLike[1], texLike[0], null, FileStorageManager.IsPanelInFavourites(panel));
             btnLike.Click += () =>
             {
-                // TODO add panel to the list of saved panels
+                // Add panel the list of favourite panels (or remove from it)
+                if (btnLike.IsActivated)
+                    FileStorageManager.AddPanelToFavourites(panel);
+                else
+                    FileStorageManager.DeletePanelFromFavourites(panel);
 
                 SoundManager.PlayOnce(btnLike.IsActivated ? Sound.ButtonLike : Sound.ButtonUnlike);
             };

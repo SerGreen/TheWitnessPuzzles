@@ -70,25 +70,28 @@ namespace TWP_Shared
         }
         private void _addScreen<TScreen>(bool replaceCurrent, params object[] data) where TScreen : GameScreen
         {
-            GameScreen screen;
+            GameScreen screen = null;
 
             if (typeof(TScreen) == typeof(PanelGameScreen))
             {
-                if(data.Length > 1)
-                    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content);
-                else
+                if (data.Length > 1)
+                    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content); 
+                else if (data.Length > 0)
                     screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], ScreenSize, Device, TextureProvider, FontProvider, Content);
             }
             else
                 screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
             //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);
 
-            CurrentScreen?.Deactivate();
-            if (replaceCurrent)
-                screenStack.Pop();
-            screenStack.Push(screen);
-            CurrentScreen = screen;
-            CurrentScreen.Activate();
+            if (screen != null)
+            {
+                CurrentScreen?.Deactivate();
+                if (replaceCurrent)
+                    screenStack.Pop();
+                screenStack.Push(screen);
+                CurrentScreen = screen;
+                CurrentScreen.Activate();
+            }
         }
 
         public void GoBack(bool doFadeAnimation = true)
