@@ -52,7 +52,7 @@ namespace TWP_Shared
         FadeTransition transitionAnimation = new FadeTransition(15, 20, 10);
         Texture2D texPixel;
 
-        public void AddScreen<TScreen>(bool replaceCurrent = false, bool doFadeAnimation = false, object data = null) where TScreen : GameScreen
+        public void AddScreen<TScreen>(bool replaceCurrent = false, bool doFadeAnimation = false, params object[] data) where TScreen : GameScreen
         {
             if (doFadeAnimation)
             {
@@ -68,12 +68,12 @@ namespace TWP_Shared
             else
                 _addScreen<TScreen>(replaceCurrent, data);
         }
-        private void _addScreen<TScreen>(bool replaceCurrent, object data) where TScreen : GameScreen
+        private void _addScreen<TScreen>(bool replaceCurrent, params object[] data) where TScreen : GameScreen
         {
             GameScreen screen;
 
             if (typeof(TScreen) == typeof(PanelGameScreen))
-                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data, ScreenSize, Device, TextureProvider, FontProvider, Content);
+                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content);
             else
                 screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
             //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);

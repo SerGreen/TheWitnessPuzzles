@@ -13,6 +13,9 @@ namespace TWP_Shared
     public class PanelGameScreen : GameScreen
     {
         bool drawDebug = false;
+        
+        // If this flag is true, then no 'Next Panel' button will be spawned
+        readonly bool IsStandalonePanel = false;
 
         PanelRenderer renderer;
 
@@ -46,13 +49,17 @@ namespace TWP_Shared
 
         BloomFilter bloomFilter;
 
-        public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
+        public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content)
+            : this(panel, false, screenSize, device, TextureProvider, FontProvider, Content) { }
+
+        public PanelGameScreen(Puzzle panel, bool standalonePanel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
             : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
             if (panel == null)
                 panel = new Puzzle(2, 2);
 
             this.panel = panel;
+            IsStandalonePanel = standalonePanel;
             internalBatch = new SpriteBatch(GraphicsDevice);
             renderer = new PanelRenderer(panel, screenSize, TextureProvider, device);
             renderer.SetColorScheme(panel.BackgroundColor, panel.WallsColor);
@@ -108,30 +115,34 @@ namespace TWP_Shared
             };
             buttons.Add(btnLike);
 
-            TwoStateButton btnNext = new TwoStateButton(new Rectangle(), texDelete, texNext, null, null, null, false);
-            btnNext.Click += () =>
+            // When panel is standalone, it cannot have Next button
+            if (!IsStandalonePanel)
             {
-                Action callback = null;
-                callback = () =>
+                TwoStateButton btnNext = new TwoStateButton(new Rectangle(), texDelete, texNext, null, null, null, false);
+                btnNext.Click += () =>
                 {
-                    AbortTracing();
-                    Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel();
-                    FileStorageManager.SaveCurrentPanel(nextPanel);
-                    LoadNewPanel(nextPanel);
-                    btnNext.StateActive = false;
-                    btnLike.Reset();
-                    fade.FadeOutComplete -= callback;
-                };
+                    Action callback = null;
+                    callback = () =>
+                    {
+                        AbortTracing();
+                        Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel();
+                        FileStorageManager.SaveCurrentPanel(nextPanel);
+                        LoadNewPanel(nextPanel);
+                        btnNext.StateActive = false;
+                        btnLike.Reset();
+                        fade.FadeOutComplete -= callback;
+                    };
 
                 // Add panel to the list of last 10 discarded panels
                 if (!btnNext.StateActive)
-                    FileStorageManager.AddPanelToDiscardedList(panel);
+                        FileStorageManager.AddPanelToDiscardedList(panel);
 
-                SoundManager.PlayOnce(btnNext.StateActive ? Sound.ButtonNextSuccess : Sound.ButtonNext);
-                fade.FadeOutComplete += callback;
-                fade.Restart();
-            };
-            buttons.Add(btnNext);
+                    SoundManager.PlayOnce(btnNext.StateActive ? Sound.ButtonNextSuccess : Sound.ButtonNext);
+                    fade.FadeOutComplete += callback;
+                    fade.Restart();
+                };
+                buttons.Add(btnNext);
+            }
 
             UpdateButtonsPosition();
         }
@@ -149,24 +160,42 @@ namespace TWP_Shared
                 int marginX = renderer.PuzzleConfig.X + renderer.PuzzleConfig.Width;
                 int freeSpaceX = ScreenSize.X - marginX;
                 marginX += freeSpaceX / 2 - buttonSize / 2;
-                int marginY = ScreenSize.Y / 4 * 3 - buttonSize / 2;
 
-                // Like
-                buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
-                // Next
-                buttons[2].SetPositionAndSize(new Point(marginX, ScreenSize.Y - marginY - buttonSize), new Point(buttonSize));
+                if (!IsStandalonePanel)
+                {
+                    int marginY = ScreenSize.Y / 4 * 3 - buttonSize / 2;
+                    // Like
+                    buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                    // Next
+                    buttons[2].SetPositionAndSize(new Point(marginX, ScreenSize.Y - marginY - buttonSize), new Point(buttonSize));
+                }
+                else
+                {
+                    int marginY = ScreenSize.Y / 2 - buttonSize / 2;
+                    // Like
+                    buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                }
             }
             else
             {
                 int marginY = renderer.PuzzleConfig.Y + renderer.PuzzleConfig.Height;
                 int freeSpaceY = ScreenSize.Y - marginY;
                 marginY += freeSpaceY / 2 - buttonSize / 2;
-                int marginX = ScreenSize.X / 4 - buttonSize / 2;
 
-                // Like
-                buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
-                // Next
-                buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
+                if (!IsStandalonePanel)
+                {
+                    int marginX = ScreenSize.X / 4 - buttonSize / 2;
+                    // Like
+                    buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                    // Next
+                    buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
+                }
+                else
+                {
+                    int marginX = ScreenSize.X / 2 - buttonSize / 2;
+                    // Like
+                    buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                }
             }
         }
         private void UpdateButtonsColor()

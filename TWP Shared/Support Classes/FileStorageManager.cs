@@ -106,6 +106,10 @@ namespace TWP_Shared
             SavePanelToFile(panel, string.Format(fileNamePattern, 0));
         }
 
+        public static string[] GetSolvedPanelsNames() => isolatedStorage.GetFileNames(string.Format(SOLVED_PANEL_FILE, "*")).Select(x => Path.Combine(SOLVED_DIR, x)).ToArray();
+        public static string[] GetDiscardedPanelsNames() => isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "*")).Select(x => Path.Combine(DISCARDED_DIR, x)).ToArray();
+        public static string[] GetFavouritePanelsNames() => isolatedStorage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)).ToArray();
+
         private static void SavePanelToFile(Puzzle panel, string fileName)
         {
             using (IsolatedStorageFileStream fs = isolatedStorage.OpenFile(fileName, FileMode.Create))
@@ -246,7 +250,7 @@ namespace TWP_Shared
                 }
             }
         }
-        private static Puzzle LoadPanelFromFile(string fileName)
+        public static Puzzle LoadPanelFromFile(string fileName)
         {
             if (isolatedStorage.FileExists(fileName))
             {
