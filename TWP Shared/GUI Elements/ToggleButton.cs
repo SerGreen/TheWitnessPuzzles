@@ -19,6 +19,7 @@ namespace TWP_Shared
         }
 
         public void Reset() => IsActivated = isActivatedDefault;
+        public void Deactivate() => IsActivated = false;
         public void Activate() => IsActivated = true;
 
         public override void Draw(SpriteBatch sb, float alpha = 1)

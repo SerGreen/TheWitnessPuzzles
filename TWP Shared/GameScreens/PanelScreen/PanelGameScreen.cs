@@ -132,7 +132,7 @@ namespace TWP_Shared
                         FileStorageManager.SaveCurrentPanel(nextPanel);
                         LoadNewPanel(nextPanel);
                         btnNext.StateActive = false;
-                        btnLike.Reset();
+                        btnLike.Deactivate();
                         fade.FadeOutComplete -= callback;
                     };
 
