@@ -20,6 +20,7 @@ namespace TWP_Shared
         SpriteBatch spriteBatch;
         Point defaultScreenSize = new Point(400, 600);
         bool isMobile;
+        bool isFocused;
 
         public TWPGame(bool isMobile)
         {
@@ -37,6 +38,8 @@ namespace TWP_Shared
 #endif
 
             Window.ClientSizeChanged += ResizeScreen;
+            this.Activated += (object sender, EventArgs e) => InputManager.IsFocused = true;
+            this.Deactivated += (object sender, EventArgs e) => InputManager.IsFocused = false;
         }
 
         private void ResizeScreen(object sender, EventArgs e)

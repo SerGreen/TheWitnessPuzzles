@@ -19,6 +19,8 @@ namespace TWP_Shared
         private static KeyboardState prevKB;
         private static MouseState prevMouse;
 
+        public static bool IsFocused { get; set; }
+
         public static void Initialize(Game game)
         {
             Game = game;
@@ -33,23 +35,27 @@ namespace TWP_Shared
         }
         private static IEnumerable<GestureSample> GetGestures()
         {
-            while (TouchPanel.IsGestureAvailable)
-                yield return TouchPanel.ReadGesture();
+            if (IsFocused)
+                while (TouchPanel.IsGestureAvailable)
+                    yield return TouchPanel.ReadGesture();
         }
 
         public static Point? GetTapPosition()
         {
-            // Touch screen first
-            foreach (var gesture in gestures)
-                if (gesture.GestureType == GestureType.Tap)
-                    return gesture.Position.ToPoint();
-
-            // Then mouse
-            if (prevMouse.LeftButton == ButtonState.Released && Mouse.GetState().LeftButton == ButtonState.Pressed &&  Game.IsActive)
+            if (IsFocused)
             {
-                Point mousePoint = Mouse.GetState().Position;
-                if (Game.GraphicsDevice.Viewport.Bounds.Contains(mousePoint))
-                    return mousePoint;
+                // Touch screen first
+                foreach (var gesture in gestures)
+                    if (gesture.GestureType == GestureType.Tap)
+                        return gesture.Position.ToPoint();
+
+                // Then mouse
+                if (prevMouse.LeftButton == ButtonState.Released && Mouse.GetState().LeftButton == ButtonState.Pressed && Game.IsActive)
+                {
+                    Point mousePoint = Mouse.GetState().Position;
+                    if (Game.GraphicsDevice.Viewport.Bounds.Contains(mousePoint))
+                        return mousePoint;
+                }
             }
 
             return null;
@@ -59,13 +65,16 @@ namespace TWP_Shared
         {
             Vector2 result = Vector2.Zero;
 
-            foreach (var gesture in gestures.Where(x => x.GestureType == GestureType.FreeDrag))
-                result += gesture.Delta * moveSensitivity;
+            if (IsFocused)
+            {
+                foreach (var gesture in gestures.Where(x => x.GestureType == GestureType.FreeDrag))
+                    result += gesture.Delta * moveSensitivity;
 
-            if (Keyboard.GetState().IsKeyDown(Keys.Right))  result.X += moveStep;
-            if (Keyboard.GetState().IsKeyDown(Keys.Left))   result.X -= moveStep;
-            if (Keyboard.GetState().IsKeyDown(Keys.Down))   result.Y += moveStep;
-            if (Keyboard.GetState().IsKeyDown(Keys.Up))     result.Y -= moveStep;
+                if (Keyboard.GetState().IsKeyDown(Keys.Right)) result.X += moveStep;
+                if (Keyboard.GetState().IsKeyDown(Keys.Left)) result.X -= moveStep;
+                if (Keyboard.GetState().IsKeyDown(Keys.Down)) result.Y += moveStep;
+                if (Keyboard.GetState().IsKeyDown(Keys.Up)) result.Y -= moveStep;
+            }
 
             return result;
         }
@@ -73,6 +82,6 @@ namespace TWP_Shared
         /// <summary>
         /// Returns True if key has just been pressed down. If not pressed or being holded => False
         /// </summary>
-        public static bool IsKeyPressed(Keys key) => prevKB.IsKeyUp(key) && Keyboard.GetState().IsKeyDown(key);
+        public static bool IsKeyPressed(Keys key) => IsFocused ? prevKB.IsKeyUp(key) && Keyboard.GetState().IsKeyDown(key) : false;
     }
 }

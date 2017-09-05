@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using TheWitnessPuzzles;
 using Microsoft.Xna.Framework;
+using System.Text.RegularExpressions;
 
 namespace TWP_Shared
 {
@@ -16,9 +17,12 @@ namespace TWP_Shared
         private static readonly string SOLVED_DIR = "lastSolved";
         private static readonly string DISCARDED_DIR = "lastDiscarded";
         private static readonly string FAVOURITE_DIR = "favourite";
-        private static readonly string SOLVED_PANEL_FILE = "solved{0}.panel";
-        private static readonly string DISCARDED_PANEL_FILE = "discarded{0}.panel";
-        private static readonly string FAVOURITE_PANEL_FILE = "fav{0}.panel";
+        private static readonly string SOLVED_PANEL_FILE = "solved{0}_{1}.panel";
+        private static readonly string DISCARDED_PANEL_FILE = "discarded{0}_{1}.panel";
+        private static readonly string FAVOURITE_PANEL_FILE = "fav{0}_{1}.panel";
+
+        private static readonly Regex ExtractSeedFromName = new Regex(@"(?<=_).+(?=\.panel)");
+        private static readonly Regex ExtractNumberFromName = new Regex(@"\d+(?=_)");
 
         private static readonly int MAX_HISTORY_LENGTH = 12;
 
@@ -84,31 +88,57 @@ namespace TWP_Shared
         public static Puzzle LoadCurrentPanel() => LoadPanelFromFile(CURRENT_PANEL_FILE);
         public static void DeleteCurrentPanel() => DeletePanel(CURRENT_PANEL_FILE);
 
-        public static void AddPanelToSolvedList(Puzzle panel) => AddPanelToLastNList(panel, SOLVED_PANEL_FILE);
+        public static void AddPanelToSolvedList(Puzzle panel)
+        {
+            AddPanelToLastNList(panel, SOLVED_PANEL_FILE);
+            // If solved panel was on discarded list, then remove it from discarded
+            string[] file = isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "???", panel.Seed.ToString("D9")));
+            if (file.Length > 0)
+            {
+                DeletePanel(Path.Combine(DISCARDED_DIR, file[0]));
+                // Shift panels, that were after deleted one
+                string[] fileNames = isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "???", "*"));
+                int number = int.Parse(ExtractNumberFromName.Match(file[0]).Value);
+                for (int i = number; i < fileNames.Length; i++)
+                {
+                    string seed = ExtractSeedFromName.Match(fileNames[i]).Value;
+                    isolatedStorage.MoveFile(string.Format(DISCARDED_PANEL_FILE, (i + 1).ToString("D3"), seed), string.Format(DISCARDED_PANEL_FILE, i.ToString("D3"), seed));
+                }
+            }
+        }
         public static void AddPanelToDiscardedList(Puzzle panel) => AddPanelToLastNList(panel, DISCARDED_PANEL_FILE);
         private static void AddPanelToLastNList(Puzzle panel, string fileNamePattern)
         {
-            // Get how many panels are saved already
-            int listLength = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "*")).Length;
+            // Get list of saved panels
+            string[] fileNames = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "???", "*"));
+            int listLength = fileNames.Length;
 
-            // If there are all N panels, then delete the last one
+            // If given panel is already saved, then abort saving
+            if (fileNames.Any(x => ExtractSeedFromName.Match(x).Value == panel.Seed.ToString("D9")))
+                return;
+
+            // If there are saved all N panels, then delete the last one
             if (listLength >= MAX_HISTORY_LENGTH)
             {
-                DeletePanel(string.Format(fileNamePattern, MAX_HISTORY_LENGTH - 1));
+                string seed = ExtractSeedFromName.Match(fileNames[MAX_HISTORY_LENGTH - 1]).Value;
+                DeletePanel(string.Format(fileNamePattern, (MAX_HISTORY_LENGTH - 1).ToString("D3"), seed));
                 listLength--;
             }
 
             // Shift all panels by one place, so the 2nd becomes 3rd and so on
             for (int i = listLength - 1; i >= 0; i--)
-                isolatedStorage.MoveFile(string.Format(fileNamePattern, i), string.Format(fileNamePattern, i + 1));
+            {
+                string seed = ExtractSeedFromName.Match(fileNames[i]).Value;
+                isolatedStorage.MoveFile(string.Format(fileNamePattern, i.ToString("D3"), seed), string.Format(fileNamePattern, (i + 1).ToString("D3"), seed));
+            }
 
-            // Now save new panel as 1st
-            SavePanelToFile(panel, string.Format(fileNamePattern, 0));
+            // Now save the new panel as the 1st
+            SavePanelToFile(panel, string.Format(fileNamePattern, "000", panel.Seed.ToString("D9")));
         }
 
-        public static string[] GetSolvedPanelsNames() => isolatedStorage.GetFileNames(string.Format(SOLVED_PANEL_FILE, "*")).Select(x => Path.Combine(SOLVED_DIR, x)).ToArray();
-        public static string[] GetDiscardedPanelsNames() => isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "*")).Select(x => Path.Combine(DISCARDED_DIR, x)).ToArray();
-        public static string[] GetFavouritePanelsNames() => isolatedStorage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)).ToArray();
+        public static string[] GetSolvedPanelsNames() => isolatedStorage.GetFileNames(string.Format(SOLVED_PANEL_FILE, "???", "*")).Select(x => Path.Combine(SOLVED_DIR, x)).ToArray();
+        public static string[] GetDiscardedPanelsNames() => isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "???", "*")).Select(x => Path.Combine(DISCARDED_DIR, x)).ToArray();
+        public static string[] GetFavouritePanelsNames() => isolatedStorage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "???", "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)).ToArray();
 
         private static void SavePanelToFile(Puzzle panel, string fileName)
         {

@@ -430,7 +430,8 @@ namespace TWP_Shared
         {
             panelState.SetSuccess();
             SoundManager.PlayOnce(Sound.Success);
-            (buttons[2] as TwoStateButton).StateActive = true;
+            if (!IsStandalonePanel)
+                (buttons[2] as TwoStateButton).StateActive = true;
 
             // Add panel to the list of last 10 solved panels
             FileStorageManager.AddPanelToSolvedList(panel);

@@ -46,7 +46,7 @@ namespace TWP_Shared
             bool ySymmetry = false;
 
             // Panel can be symmetric only if it's big enough
-            #region Symmetry
+            #region Symmetry and panel creation
             if (panelWidth >= 4 && panelHeight >= 4 && rnd.NextDouble() > 0.3)
             {
                 symmetry = true;
@@ -55,8 +55,8 @@ namespace TWP_Shared
             }
 
             panel = symmetry
-                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, Color.Aqua, Color.Yellow)
-                : new Puzzle(panelWidth, panelHeight);
+                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, Color.Aqua, Color.Yellow, null, null, null, seed.Value)
+                : new Puzzle(panelWidth, panelHeight, null, null, null, null, seed.Value);
             if (symmetry)
             {
                 symPanel = panel as SymmetryPuzzle;

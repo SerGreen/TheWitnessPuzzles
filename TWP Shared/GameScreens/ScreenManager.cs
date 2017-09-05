@@ -73,15 +73,22 @@ namespace TWP_Shared
             GameScreen screen;
 
             if (typeof(TScreen) == typeof(PanelGameScreen))
-                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content);
+            {
+                if(data.Length > 1)
+                    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content);
+                else
+                    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], ScreenSize, Device, TextureProvider, FontProvider, Content);
+            }
             else
                 screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
             //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);
 
+            CurrentScreen?.Deactivate();
             if (replaceCurrent)
                 screenStack.Pop();
             screenStack.Push(screen);
             CurrentScreen = screen;
+            CurrentScreen.Activate();
         }
 
         public void GoBack(bool doFadeAnimation = true)
@@ -105,10 +112,12 @@ namespace TWP_Shared
         }
         private void _goBack()
         {
+            CurrentScreen.Deactivate();
             screenStack.Pop();
             CurrentScreen = screenStack.Peek();
             if (CurrentScreen.ScreenSize != ScreenSize)
                 CurrentScreen.SetScreenSize(ScreenSize);
+            CurrentScreen.Activate();
         }
 
         public void Initialize(TWPGame game, GraphicsDevice device, ContentManager contentManager)

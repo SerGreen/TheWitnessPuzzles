@@ -47,8 +47,8 @@ namespace TWP_Shared
             texPixel = textureProvider["img/pixel"];
             renderer = new PanelRenderer(null, screenSize, textureProvider, GraphicsDevice);
 
-            fileNames = FileStorageManager.GetSolvedPanelsNames();
-            UpdatePageSize();
+            //fileNames = FileStorageManager.GetSolvedPanelsNames();
+            //UpdatePageSize();
             InitializeScreenSizeDependent();
             SpawnButtons();
         }
@@ -206,8 +206,7 @@ namespace TWP_Shared
                 }
                 SoundManager.PlayOnce(Sound.ButtonNext);
             };
-
-            SpawnPanelButtons();
+            
             UpdateButtonsPositions();
         }
         private void UpdateButtonsPositions()
@@ -272,9 +271,23 @@ namespace TWP_Shared
             SpawnPanelButtons();
         }
 
+        public override void Activate()
+        {
+            switch (currentTab)
+            {
+                case HistoryTab.Solved:     fileNames = FileStorageManager.GetSolvedPanelsNames();    break;
+                case HistoryTab.Discarded:  fileNames = FileStorageManager.GetDiscardedPanelsNames(); break;
+                case HistoryTab.Favourites: fileNames = FileStorageManager.GetFavouritePanelsNames(); break;
+            }
+
+            UpdatePageSize();
+            RespawnPanelButtons();
+        }
+
         public override void SetScreenSize(Point screenSize)
         {
             base.SetScreenSize(screenSize);
+            UpdatePageSize();
             InitializeScreenSizeDependent();
             UpdateButtonsPositions();
             RespawnPanelButtons();
