@@ -39,7 +39,10 @@ namespace TWP_Shared
             "img/next",
             "img/delete",
             "img/like0..1",
-            "img/close"
+            "img/close",
+            "img/left",
+            "img/right",
+            "img/solved"
         };
         readonly static string[] fontsToLoad =
         {

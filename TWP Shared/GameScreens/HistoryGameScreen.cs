@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using TheWitnessPuzzles;
+using System.Linq;
 
 namespace TWP_Shared
 {
@@ -19,11 +20,11 @@ namespace TWP_Shared
         int pageWidth, pageHeight;
 
         SpriteFont font;
-        Texture2D texPixel;
+        Texture2D texPixel, texLeft, texRight, texSolved, texDiscarded, texFavourite;
 
         PanelRenderer renderer;
 
-        List<TouchButton> tabs = new List<TouchButton>();
+        List<TabButton> tabs = new List<TabButton>();
         List<TouchButton> panels = new List<TouchButton>();
         TouchButton btnBack, btnNextPage, btnPrevPage;
         Point panelsPosition;
@@ -45,10 +46,13 @@ namespace TWP_Shared
         {
             font = fontProvider["font/fnt_constantia_big"];
             texPixel = textureProvider["img/pixel"];
+            texLeft = textureProvider["img/left"];
+            texRight = textureProvider["img/right"];
+            texSolved = textureProvider["img/solved"];
+            texDiscarded = textureProvider["img/delete"];
+            texFavourite = textureProvider["img/like0"];
             renderer = new PanelRenderer(null, screenSize, textureProvider, GraphicsDevice);
-
-            //fileNames = FileStorageManager.GetSolvedPanelsNames();
-            //UpdatePageSize();
+            
             InitializeScreenSizeDependent();
             SpawnButtons();
         }
@@ -148,35 +152,43 @@ namespace TWP_Shared
 
         private void SpawnButtons()
         {
-            TouchButton btnSolved = new TextButton(new Rectangle(), font, "Solved", texPixel);
+            TabButton btnSolved = new TabButton(new Rectangle(), texPixel, texSolved, null, Color.DarkGray, null);
             btnSolved.Click += () =>
             {
                 currentTab = HistoryTab.Solved;
+                currentPage = 0;
                 fileNames = FileStorageManager.GetSolvedPanelsNames();
                 UpdatePageSize();
                 RespawnPanelButtons();
             };
             tabs.Add(btnSolved);
 
-            TouchButton btnDiscarded = new TextButton(new Rectangle(), font, "Discarded", texPixel);
+            TabButton btnDiscarded = new TabButton(new Rectangle(), texPixel, texDiscarded, null, Color.DarkGray, null);
             btnDiscarded.Click += () =>
             {
                 currentTab = HistoryTab.Discarded;
+                currentPage = 0;
                 fileNames = FileStorageManager.GetDiscardedPanelsNames();
                 UpdatePageSize();
                 RespawnPanelButtons();
             };
             tabs.Add(btnDiscarded);
 
-            TouchButton btnFavs = new TextButton(new Rectangle(), font, "Fav", texPixel);
+            TabButton btnFavs = new TabButton(new Rectangle(), texPixel, texFavourite, null, Color.DarkGray, null);
             btnFavs.Click += () =>
             {
                 currentTab = HistoryTab.Favourites;
+                currentPage = 0;
                 fileNames = FileStorageManager.GetFavouritePanelsNames();
                 UpdatePageSize();
                 RespawnPanelButtons();
             };
             tabs.Add(btnFavs);
+
+            foreach (TabButton tab in tabs)
+                foreach (TabButton otherTab in tabs.Where(x => x != tab))
+                    tab.ConnectTab(otherTab);
+            btnSolved.Activate();
 
             btnBack = new TextButton(new Rectangle(), font, "Back", texPixel);
             btnBack.Click += () =>
@@ -185,7 +197,7 @@ namespace TWP_Shared
                 SoundManager.PlayOnce(Sound.MenuEscape);
             };
 
-            btnPrevPage = new TouchButton(new Rectangle(), texPixel, null, Color.Pink);
+            btnPrevPage = new TouchButton(new Rectangle(), texLeft);
             btnPrevPage.Click += () =>
             {
                 if (currentPage > 0)
@@ -196,7 +208,7 @@ namespace TWP_Shared
                 SoundManager.PlayOnce(Sound.ButtonNext);
             };
 
-            btnNextPage= new TouchButton(new Rectangle(), texPixel, null, Color.LimeGreen);
+            btnNextPage= new TouchButton(new Rectangle(), texRight);
             btnNextPage.Click += () =>
             {
                 if (currentPage < maxPage)
@@ -224,7 +236,7 @@ namespace TWP_Shared
                 tabs[2].SetPositionAndSize(new Point(tabSize.X * 2, 0), tabSize);
             }
 
-            btnBack.SetPositionAndSize(new Point(ScreenSize.X / 2 - btnBackSize.X / 2, ScreenSize.Y - btnBackSize.Y), btnBackSize);
+            btnBack.SetPositionAndSize(new Point(ScreenSize.X / 2 - btnBackSize.X / 2, (int) (ScreenSize.Y - btnBackSize.Y * 1.2f)), btnBackSize);
             
             if (ScreenSize.X > ScreenSize.Y)
             {

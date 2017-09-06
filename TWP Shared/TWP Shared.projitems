@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\HistoryGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SettingsGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TabButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\ToggleButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TwoStateButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\DependencyInjector.cs" />
