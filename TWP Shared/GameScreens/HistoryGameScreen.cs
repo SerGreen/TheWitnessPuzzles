@@ -152,7 +152,7 @@ namespace TWP_Shared
 
         private void SpawnButtons()
         {
-            TabButton btnSolved = new TabButton(new Rectangle(), texPixel, texSolved, null, Color.DarkGray, null);
+            TabButton btnSolved = new TabButton(new Rectangle(), texPixel, texSolved, null, Color.DarkGray, new Color(14, 14, 14));
             btnSolved.Click += () =>
             {
                 currentTab = HistoryTab.Solved;
@@ -163,7 +163,7 @@ namespace TWP_Shared
             };
             tabs.Add(btnSolved);
 
-            TabButton btnDiscarded = new TabButton(new Rectangle(), texPixel, texDiscarded, null, Color.DarkGray, null);
+            TabButton btnDiscarded = new TabButton(new Rectangle(), texPixel, texDiscarded, null, Color.DarkGray, new Color(14, 14, 14));
             btnDiscarded.Click += () =>
             {
                 currentTab = HistoryTab.Discarded;
@@ -174,7 +174,7 @@ namespace TWP_Shared
             };
             tabs.Add(btnDiscarded);
 
-            TabButton btnFavs = new TabButton(new Rectangle(), texPixel, texFavourite, null, Color.DarkGray, null);
+            TabButton btnFavs = new TabButton(new Rectangle(), texPixel, texFavourite, null, Color.DarkGray, new Color(14, 14, 14));
             btnFavs.Click += () =>
             {
                 currentTab = HistoryTab.Favourites;

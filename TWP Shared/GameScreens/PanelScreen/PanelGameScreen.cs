@@ -61,7 +61,6 @@ namespace TWP_Shared
             IsStandalonePanel = standalonePanel;
             internalBatch = new SpriteBatch(GraphicsDevice);
             renderer = new PanelRenderer(panel, screenSize, TextureProvider, device);
-            renderer.SetColorScheme(panel.BackgroundColor, panel.WallsColor);
             startPoints = renderer.StartPoints;
             endPoints = renderer.EndPoints;
             walls = renderer.Walls;
@@ -87,7 +86,7 @@ namespace TWP_Shared
             bloomFilter = new BloomFilter();
             bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
             bloomFilter.BloomPreset = BloomFilter.BloomPresets.Small;
-            bloomFilter.BloomThreshold = 0;
+            bloomFilter.BloomThreshold = -1;
             bloomFilter.BloomStrengthMultiplier = 0.75f;
 
             renderer.RenderPanelToTexture(backgroundTexture);
@@ -217,7 +216,6 @@ namespace TWP_Shared
                 startPoints = renderer.StartPoints;
                 endPoints = renderer.EndPoints;
                 walls = renderer.Walls;
-                renderer.SetColorScheme(panel.BackgroundColor, panel.WallsColor);
                 renderer.RenderPanelToTexture(backgroundTexture);
                 UpdateButtonsColor();
             }

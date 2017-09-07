@@ -50,6 +50,8 @@ namespace TWP_Shared
             GraphicsDevice = graphicsDevice;
             LoadContent(TextureProvider);
             InitializePanel();
+            if (panel != null)
+                SetColorScheme(panel.BackgroundColor, panel.WallsColor);
         }
         private void LoadContent(Dictionary<string, Texture2D> TextureProvider)
         {
@@ -85,6 +87,7 @@ namespace TWP_Shared
             {
                 panel = newPanel;
                 InitializePanel();
+                SetColorScheme(panel.BackgroundColor, panel.WallsColor);
                 return true;
             }
             return false;

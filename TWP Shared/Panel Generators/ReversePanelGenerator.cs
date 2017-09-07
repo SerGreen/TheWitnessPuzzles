@@ -35,7 +35,9 @@ namespace TWP_Shared
             Puzzle panel = null;
             SymmetryPuzzle symPanel = null;
 
-            Color mainColor = Color.Black, mirrorColor = Color.Black;
+            //var panelPalette = ColorPalettesLibrary.Palettes[0];
+            var panelPalette = ColorPalettesLibrary.Palettes[rnd.Next(ColorPalettesLibrary.Size)];
+            Color mainColor = panelPalette.MainLineColor, mirrorColor = panelPalette.MirrorLineColor;
 
             // Generate random panel size
             double num = rnd.NextDouble();
@@ -55,14 +57,11 @@ namespace TWP_Shared
             }
 
             panel = symmetry
-                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, Color.Aqua, Color.Yellow, null, null, null, seed.Value)
-                : new Puzzle(panelWidth, panelHeight, null, null, null, null, seed.Value);
+                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, panelPalette.MainLineColor, panelPalette.MirrorLineColor, panelPalette.BackgroundColor, panelPalette.WallsColor, panelPalette.ButtonsColor, seed.Value)
+                : new Puzzle(panelWidth, panelHeight, panelPalette.SingleLineColor, panelPalette.BackgroundColor, panelPalette.WallsColor, panelPalette.ButtonsColor, seed.Value);
+
             if (symmetry)
-            {
                 symPanel = panel as SymmetryPuzzle;
-                mainColor = symPanel.MainColor;
-                mirrorColor = symPanel.MirrorColor;
-            }
             #endregion
 
             // Amount of nodes in one row (1 more than width in blocks)
