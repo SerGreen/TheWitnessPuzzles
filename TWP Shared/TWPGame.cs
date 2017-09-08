@@ -41,10 +41,7 @@ namespace TWP_Shared
             this.Deactivated += (object sender, EventArgs e) => InputManager.IsFocused = false;
         }
 
-        private void ResizeScreen(object sender, EventArgs e)
-        {
-            ScreenManager.Instance.UpdateScreenSize(GraphicsDevice.Viewport.Bounds.Size);
-        }
+        private void ResizeScreen(object sender, EventArgs e) => ScreenManager.Instance.UpdateScreenSize(Window.ClientBounds.Size);
 
         public void SetFullscreen(bool isFullscreen)
         {
@@ -189,7 +186,7 @@ namespace TWP_Shared
             graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
             graphics.SupportedOrientations = DisplayOrientation.Portrait;
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
-            //graphics.GraphicsProfile = GraphicsProfile.HiDef;
+            graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.ApplyChanges();
 
 #else
@@ -246,11 +243,20 @@ namespace TWP_Shared
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Update(GameTime gameTime)
         {
+            // Go to the previous screen when Back button is pressed. If we are at the last screen, then Exit.
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+            {
+                bool? goBackResult = ScreenManager.Instance.GoBack();
+                if (goBackResult != null)
+                {
+                    SoundManager.PlayOnce(Sound.MenuEscape);
+                    if (goBackResult == false)
+                        Exit();
+                }
+            }
 
-            if (InputManager.IsKeyPressed(Keys.Enter))
-                ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, DI.Get<PanelGenerator>().GeneratePanel());
+            //if (InputManager.IsKeyPressed(Keys.Enter))
+            //    ScreenManager.Instance.AddScreen<PanelGameScreen>(true, true, DI.Get<PanelGenerator>().GeneratePanel());
 
             ScreenManager.Instance.Update(gameTime);
             InputManager.Update();

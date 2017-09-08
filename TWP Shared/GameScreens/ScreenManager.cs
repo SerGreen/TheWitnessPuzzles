@@ -84,7 +84,6 @@ namespace TWP_Shared
             }
             else
                 screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
-            //screen = new PanelGameScreen(DI.Get<PanelGenerator>().GeneratePanel(), ScreenSize, Device, TextureProvider, FontProvider, Content);
 
             if (screen != null)
             {
@@ -97,8 +96,11 @@ namespace TWP_Shared
             }
         }
 
-        public void GoBack(bool doFadeAnimation = true)
+        public bool? GoBack(bool doFadeAnimation = true)
         {
+            if (doFadeAnimation && transitionAnimation.IsActive)
+                return null;
+
             if (screenStack.Count > 1)
             {
                 if (doFadeAnimation)
@@ -114,7 +116,11 @@ namespace TWP_Shared
                 }
                 else
                     _goBack();
+
+                return true;
             }
+            else
+                return false;
         }
         private void _goBack()
         {
