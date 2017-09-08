@@ -83,11 +83,14 @@ namespace TWP_Shared
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
 
             // Load bloom shader
-            bloomFilter = new BloomFilter();
-            bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
-            bloomFilter.BloomPreset = BloomFilter.BloomPresets.Small;
-            bloomFilter.BloomThreshold = -1;
-            bloomFilter.BloomStrengthMultiplier = 0.75f;
+            if (SettingsManager.VFX)
+            {
+                bloomFilter = new BloomFilter();
+                bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
+                bloomFilter.BloomPreset = BloomFilter.BloomPresets.Small;
+                bloomFilter.BloomThreshold = -1;
+                bloomFilter.BloomStrengthMultiplier = 0.75f;
+            }
 
             renderer.RenderPanelToTexture(backgroundTexture);
 
@@ -247,7 +250,7 @@ namespace TWP_Shared
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
 
-            bloomFilter.UpdateResolution(screenSize.X, screenSize.Y);
+            bloomFilter?.UpdateResolution(screenSize.X, screenSize.Y);
             renderer.RenderPanelToTexture(backgroundTexture);
 
             UpdateButtonsPosition();
@@ -490,43 +493,39 @@ namespace TWP_Shared
                 void MoveLinePrecise()
                 {
                     // firstMove is the bigger part of vector (X or Y part)
-                    // Try to move full length first
-                    bool firstMoveDone = moveFunc(firstMove, hitboxes);
-                    float firstMoveLength = Math.Max(Math.Abs(firstMove.X), Math.Abs(firstMove.Y));
+                    bool firstMoveDone = false;
                     // If not successful, then try to move gradually by 1 pixel
-                    if (!firstMoveDone)
+                    Vector2 firstMoveStep = firstMove;
+                    firstMoveStep.Normalize();
+                    float firstMoveLength = Math.Max(Math.Abs(firstMove.X), Math.Abs(firstMove.Y));
+                    // Move by 1 pixel until we hit the wall
+                    for (int i = 0; i < firstMoveLength; i++)
                     {
-                        Vector2 firstMoveStep = firstMove;
-                        double length = Math.Ceiling(firstMoveLength) - 1;
-                        firstMoveStep.Normalize();
-                        // Move by 1 pixel until we hit the wall
-                        for (int i = 0; i < length; i++)
-                        {
-                            bool stepSuccessful = moveFunc(firstMoveStep, hitboxes);
+                        bool stepSuccessful = moveFunc(firstMoveStep, hitboxes);
 
-                            if (stepSuccessful)
-                                firstMoveDone = true;
-                            else
-                                break;
-                        }
+                        if (stepSuccessful)
+                            firstMoveDone = true;
+                        else
+                            break;
                     }
 
                     // If we couldn't make the first move in larger axis, then try moving in lesser axis
                     if(!firstMoveDone)
                     {
-                        // If lesser axis is non existent, then check in both directions if there's a corner nearby
+                        // If lesser axis is [almost] non existent, then check in both directions if there's a corner nearby
                         // If there is, then move in that direction half of the main axis distance
-                        if(secondMove == Vector2.Zero)
+                        float secondMoveLength = Math.Max(Math.Abs(secondMove.X), Math.Abs(secondMove.Y));
+                        if (secondMoveLength <= firstMoveLength * 0.1f)
                             secondMove = line.GetMoveVectorNearCorner(moveVector, walls) * (firstMoveLength / 2);
 
                         if(secondMove != Vector2.Zero)
                         {
                             // Try to move by 1 pixel in lesser axis and after each step try to move in bigger axis
                             Vector2 secondMoveStep = secondMove;
-                            double length = Math.Ceiling(Math.Max(Math.Abs(secondMove.X), Math.Abs(secondMove.Y))) - 1;
+                            secondMoveLength = Math.Max(Math.Abs(secondMove.X), Math.Abs(secondMove.Y));
                             secondMoveStep.Normalize();
                             // Move by 1 pixel until we hit the wall
-                            for (int i = 0; i < length; i++)
+                            for (int i = 0; i < secondMoveLength; i++)
                             {
                                 bool stepSuccessful = moveFunc(secondMoveStep, hitboxes);
 
@@ -594,15 +593,18 @@ namespace TWP_Shared
                 internalBatch.Begin();
                 internalBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
 
-                // Idk, more weird majiks, but if i call this Draw outside of this batch or inside next (additive) batch, background goes black
-                // So yeah... I guess it stays here now...
-                Texture2D bloom = bloomFilter.Draw(lineTexture, ScreenSize.X, ScreenSize.Y);
+                if (SettingsManager.VFX)
+                {
+                    // Idk, more weird majiks, but if i call this Draw outside of this batch or inside next (additive) batch, background goes black
+                    // So yeah... I guess it stays here now...
+                    Texture2D bloom = bloomFilter.Draw(lineTexture, ScreenSize.X, ScreenSize.Y);
+                    
+                    internalBatch.End();
 
-                internalBatch.End();
-
-                // Now draw bloom texture in additive blend mode
-                internalBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
-                internalBatch.Draw(bloom, GraphicsDevice.Viewport.Bounds, Color.White * 0.8f);
+                    // Now draw bloom texture in additive blend mode
+                    internalBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
+                    internalBatch.Draw(bloom, GraphicsDevice.Viewport.Bounds, Color.White * 0.8f);
+                }
                 internalBatch.End();
             }
             else
