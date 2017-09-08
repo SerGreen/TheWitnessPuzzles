@@ -137,7 +137,7 @@ namespace TWP_Shared
         /// <summary>
         /// When we tried moving with moveVector and hit a wall, check if there's a corner nearby
         /// </summary>
-        /// <param name="moveVector">XY motion Vector</param>
+        /// <param name="moveVector">2D motion Vector</param>
         /// <param name="collisionHitboxes">Panel hitboxes, except the hitboxes of line itself</param>
         /// <returns>New motion vector that will move head towards corner</returns>
         public Vector2 GetMoveVectorNearCorner(Vector2 moveVector, IEnumerable<Rectangle> collisionHitboxes)

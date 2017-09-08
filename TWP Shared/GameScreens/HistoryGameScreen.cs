@@ -152,6 +152,7 @@ namespace TWP_Shared
 
         private void SpawnButtons()
         {
+            // Tabs
             TabButton btnSolved = new TabButton(new Rectangle(), texPixel, texSolved, null, Color.DarkGray, new Color(14, 14, 14));
             btnSolved.Click += () =>
             {
@@ -160,6 +161,7 @@ namespace TWP_Shared
                 fileNames = FileStorageManager.GetSolvedPanelsNames();
                 UpdatePageSize();
                 RespawnPanelButtons();
+                SoundManager.PlayOnce(Sound.ButtonNext, 0.75f);
             };
             tabs.Add(btnSolved);
 
@@ -171,6 +173,7 @@ namespace TWP_Shared
                 fileNames = FileStorageManager.GetDiscardedPanelsNames();
                 UpdatePageSize();
                 RespawnPanelButtons();
+                SoundManager.PlayOnce(Sound.ButtonNext, 0.75f);
             };
             tabs.Add(btnDiscarded);
 
@@ -182,9 +185,11 @@ namespace TWP_Shared
                 fileNames = FileStorageManager.GetFavouritePanelsNames();
                 UpdatePageSize();
                 RespawnPanelButtons();
+                SoundManager.PlayOnce(Sound.ButtonNext, 0.75f);
             };
             tabs.Add(btnFavs);
 
+            // Other buttons
             foreach (TabButton tab in tabs)
                 foreach (TabButton otherTab in tabs.Where(x => x != tab))
                     tab.ConnectTab(otherTab);
@@ -205,7 +210,7 @@ namespace TWP_Shared
                     currentPage--;
                     RespawnPanelButtons();
                 }
-                SoundManager.PlayOnce(Sound.ButtonNext);
+                SoundManager.PlayOnce(Sound.ButtonNext, 0.75f);
             };
 
             btnNextPage= new TouchButton(new Rectangle(), texRight);
@@ -216,7 +221,7 @@ namespace TWP_Shared
                     currentPage++;
                     RespawnPanelButtons();
                 }
-                SoundManager.PlayOnce(Sound.ButtonNext);
+                SoundManager.PlayOnce(Sound.ButtonNext, 0.75f);
             };
             
             UpdateButtonsPositions();

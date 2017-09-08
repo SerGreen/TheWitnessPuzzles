@@ -20,7 +20,6 @@ namespace TWP_Shared
         SpriteBatch spriteBatch;
         Point defaultScreenSize = new Point(400, 600);
         bool isMobile;
-        bool isFocused;
 
         public TWPGame(bool isMobile)
         {

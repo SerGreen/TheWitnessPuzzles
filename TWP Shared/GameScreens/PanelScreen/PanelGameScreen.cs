@@ -441,34 +441,40 @@ namespace TWP_Shared
         }
         private void MoveLine(Vector2 moveVector)   
         {
-            if (line != null && !panelState.State.HasFlag(PanelStates.EliminationStarted))
+            if (moveVector != Vector2.Zero && line != null && !panelState.State.HasFlag(PanelStates.EliminationStarted))
             {
-                if (moveVector != Vector2.Zero)
+                Vector2 firstMove, secondMove;
+                if (Math.Abs(moveVector.X) > Math.Abs(moveVector.Y))
                 {
-                    Vector2 firstMove, secondMove;
-                    if (Math.Abs(moveVector.X) > Math.Abs(moveVector.Y))
-                    {
-                        firstMove = new Vector2(moveVector.X, 0);
-                        secondMove = new Vector2(0, moveVector.Y);
-                    }
-                    else
-                    {
-                        firstMove = new Vector2(0, moveVector.Y);
-                        secondMove = new Vector2(moveVector.X, 0);
-                    }
+                    firstMove = new Vector2(moveVector.X, 0);
+                    secondMove = new Vector2(0, moveVector.Y);
+                }
+                else
+                {
+                    firstMove = new Vector2(0, moveVector.Y);
+                    secondMove = new Vector2(moveVector.X, 0);
+                }
 
-                    IEnumerable<Rectangle> hitboxes;
-                    if (panel is SymmetryPuzzle)
-                        hitboxes = line.Hitboxes.Concat(lineMirror.Hitboxes).Concat(walls);
-                    else
-                        hitboxes = line.Hitboxes.Concat(walls);
+                IEnumerable<Rectangle> hitboxes;
+                if (panel is SymmetryPuzzle)
+                    hitboxes = line.Hitboxes.Concat(lineMirror.Hitboxes).Concat(walls);
+                else
+                    hitboxes = line.Hitboxes.Concat(walls);
 
-                    Func<Vector2, IEnumerable<Rectangle>, bool> moveFunc;
-                    if (panel is SymmetryPuzzle)
-                        moveFunc = MoveBothLines;
-                    else
-                        moveFunc = MoveOneLine;
+                Func<Vector2, IEnumerable<Rectangle>, bool> moveFunc;
+                if (panel is SymmetryPuzzle)
+                    moveFunc = MoveBothLines;
+                else
+                    moveFunc = MoveOneLine;
 
+                MoveLinePrecise();
+
+                // === Two versions of executing the move (old and new one) ===
+                /// <summary>
+                /// Less CPU consumption, but line is harder to control
+                /// </summary>
+                void MoveLineCheap()
+                {
                     if (!moveFunc(firstMove, hitboxes))
                     {
                         Vector2 cornerMove = line.GetMoveVectorNearCorner(moveVector, walls);
@@ -477,6 +483,66 @@ namespace TWP_Shared
                         else
                             moveFunc(secondMove, hitboxes);
                     }
+                }
+                /// <summary>
+                /// More comfortable line control, but more CPU cost
+                /// </summary>
+                void MoveLinePrecise()
+                {
+                    // firstMove is the bigger part of vector (X or Y part)
+                    // Try to move full length first
+                    bool firstMoveDone = moveFunc(firstMove, hitboxes);
+                    float firstMoveLength = Math.Max(Math.Abs(firstMove.X), Math.Abs(firstMove.Y));
+                    // If not successful, then try to move gradually by 1 pixel
+                    if (!firstMoveDone)
+                    {
+                        Vector2 firstMoveStep = firstMove;
+                        double length = Math.Ceiling(firstMoveLength) - 1;
+                        firstMoveStep.Normalize();
+                        // Move by 1 pixel until we hit the wall
+                        for (int i = 0; i < length; i++)
+                        {
+                            bool stepSuccessful = moveFunc(firstMoveStep, hitboxes);
+
+                            if (stepSuccessful)
+                                firstMoveDone = true;
+                            else
+                                break;
+                        }
+                    }
+
+                    // If we couldn't make the first move in larger axis, then try moving in lesser axis
+                    if(!firstMoveDone)
+                    {
+                        // If lesser axis is non existent, then check in both directions if there's a corner nearby
+                        // If there is, then move in that direction half of the main axis distance
+                        if(secondMove == Vector2.Zero)
+                            secondMove = line.GetMoveVectorNearCorner(moveVector, walls) * (firstMoveLength / 2);
+
+                        if(secondMove != Vector2.Zero)
+                        {
+                            // Try to move by 1 pixel in lesser axis and after each step try to move in bigger axis
+                            Vector2 secondMoveStep = secondMove;
+                            double length = Math.Ceiling(Math.Max(Math.Abs(secondMove.X), Math.Abs(secondMove.Y))) - 1;
+                            secondMoveStep.Normalize();
+                            // Move by 1 pixel until we hit the wall
+                            for (int i = 0; i < length; i++)
+                            {
+                                bool stepSuccessful = moveFunc(secondMoveStep, hitboxes);
+
+                                if (stepSuccessful)
+                                {
+                                    // If we managed to move in first direction after a step in second direction, then stop
+                                    if (moveFunc(firstMove, hitboxes))
+                                        break;
+                                }
+                                // If we hit the wall while stepping in second direction, then stop too
+                                else
+                                    break;
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -504,6 +570,7 @@ namespace TWP_Shared
                 else return false;
             }
         }
+
         private Point RectifyLinePosition(Point pos)
         {
             Point zeroedPos = pos - renderer.PuzzleConfig.Location;
