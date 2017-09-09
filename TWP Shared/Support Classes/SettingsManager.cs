@@ -20,7 +20,26 @@ namespace TWP_Shared
         }
 
         public static bool IsFullscreen { get; set; } = false;
-        public static bool VFX { get; set; } = true;
+        public static bool BloomFX { get; set; } = true;
+        public static float Sensitivity { get; set; } = 1.0f;
+
+#if ANDROID
+        public static DisplayOrientation ScreenOrientation { get; set; } = DisplayOrientation.Default;
+        public static event Action OrientationLockChanged;
+        private static bool _isOrientationLocked = false;
+        public static bool IsOrientationLocked
+        {
+            get => _isOrientationLocked;
+            set
+            {
+                if(value != _isOrientationLocked)
+                {
+                    _isOrientationLocked = value;
+                    OrientationLockChanged?.Invoke();
+                }
+            }
+        }
+#endif
 
         public static void SaveSettings()
         {
@@ -28,7 +47,14 @@ namespace TWP_Shared
             file.Append(IsMute ? 1 : 0).Append(":");
             file.Append(MasterVolume * 10).Append(":");
             file.Append(IsFullscreen ? 1 : 0).Append(":");
-            file.Append(VFX ? 1 : 0);
+            file.Append(BloomFX ? 1 : 0).Append(":");
+            file.Append(Sensitivity * 10);
+
+#if ANDROID
+            file.Append(":");
+            file.Append(IsOrientationLocked ? 1 : 0).Append(":");
+            file.Append((int) ScreenOrientation);
+#endif
 
             FileStorageManager.SaveSettingsFile(file.ToString());
         }
@@ -39,12 +65,20 @@ namespace TWP_Shared
             if(file != null)
             {
                 int[] data = Array.ConvertAll(file.Split(":".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), int.Parse);
-                if (data.Length == 4)
+                if (data.Length >= 5)
                 {
                     IsMute = data[0] == 1;
                     MasterVolume = data[1] / 10f;  // 0..10 interval into float 0.0 .. 1.0
                     IsFullscreen = data[2] == 1;
-                    VFX = data[3] == 1;
+                    BloomFX = data[3] == 1;
+                    Sensitivity = data[4] / 10f;
+#if ANDROID
+                    if(data.Length >= 7)
+                    {
+                        _isOrientationLocked = data[5] == 1;
+                        ScreenOrientation = (DisplayOrientation) data[6];
+                    }
+#endif
                 }
             }
         }

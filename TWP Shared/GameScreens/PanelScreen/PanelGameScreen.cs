@@ -83,7 +83,7 @@ namespace TWP_Shared
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
 
             // Load bloom shader
-            if (SettingsManager.VFX)
+            if (SettingsManager.BloomFX)
             {
                 bloomFilter = new BloomFilter();
                 bloomFilter.Load(GraphicsDevice, Content, screenSize.X, screenSize.Y);
@@ -593,7 +593,7 @@ namespace TWP_Shared
                 internalBatch.Begin();
                 internalBatch.Draw(backgroundTexture, GraphicsDevice.Viewport.Bounds, Color.White);
 
-                if (SettingsManager.VFX)
+                if (SettingsManager.BloomFX)
                 {
                     // Idk, more weird majiks, but if i call this Draw outside of this batch or inside next (additive) batch, background goes black
                     // So yeah... I guess it stays here now...

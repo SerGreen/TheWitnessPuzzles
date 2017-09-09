@@ -13,6 +13,7 @@ namespace TWP_Shared
         Texture2D texPixel;
         Texture2D[] texCheckbox = new Texture2D[2];
         Texture2D[] texSound = new Texture2D[2];
+        Texture2D[] texOrientation = new Texture2D[2];
 
         Rectangle buttonsArea;
         int buttonHeight;
@@ -29,6 +30,8 @@ namespace TWP_Shared
             texCheckbox[1] = textureProvider["img/checkbox1"];
             texSound[0] = textureProvider["img/sound0"];
             texSound[1] = textureProvider["img/sound1"];
+            texOrientation[0] = textureProvider["img/orientation_lock0"];
+            texOrientation[1] = textureProvider["img/orientation_lock1"];
 
             InitializeScreenSizeDependent();
             SpawnButtons();
@@ -47,6 +50,7 @@ namespace TWP_Shared
                 SettingsManager.IsMute = !btnMute.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.IsMute ? Sound.MenuUntick : Sound.MenuTick);
             };
+            buttons.Add(btnMute);
 
             ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 1.2f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.IsFullscreen);
             btnFullscreen.Click += () => {
@@ -54,12 +58,30 @@ namespace TWP_Shared
                 ScreenManager.Instance.UpdateFullscreen();
                 SoundManager.PlayOnce(SettingsManager.IsFullscreen ? Sound.MenuTick : Sound.MenuUntick);
             };
+            buttons.Add(btnFullscreen);
 
-            ToggleButton btnVFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.VFX);
-            btnVFX.Click += () => {
-                SettingsManager.VFX = btnVFX.IsActivated;
-                SoundManager.PlayOnce(SettingsManager.VFX ? Sound.MenuTick : Sound.MenuUntick);
+            //ToggleButton btnSensitivity = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, false);
+            //btnSensitivity.Click += () => {
+                
+            //    SoundManager.PlayOnce(SettingsManager.BloomFX ? Sound.MenuTick : Sound.MenuUntick);
+            //};
+            //buttons.Add(btnSensitivity);
+
+            ToggleButton btnBloomFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 3.6f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.BloomFX);
+            btnBloomFX.Click += () => {
+                SettingsManager.BloomFX = btnBloomFX.IsActivated;
+                SoundManager.PlayOnce(SettingsManager.BloomFX ? Sound.MenuTick : Sound.MenuUntick);
             };
+            buttons.Add(btnBloomFX);
+
+#if ANDROID
+            ToggleButton btnOrientationLock = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 4.8f)), new Point(buttonHeight, buttonHeight)), texOrientation[1], texOrientation[0], null, SettingsManager.IsOrientationLocked);
+            btnOrientationLock.Click += () => {
+                SettingsManager.IsOrientationLocked = btnOrientationLock.IsActivated;
+                SoundManager.PlayOnce(SettingsManager.IsOrientationLocked ? Sound.MenuTick : Sound.MenuUntick);
+            };
+            buttons.Add(btnOrientationLock);
+#endif
 
             TextButton btnBack = new TextButton(new Rectangle(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f))), font, "Back", texPixel);
             btnBack.Click += () => {
@@ -67,10 +89,6 @@ namespace TWP_Shared
                 ScreenManager.Instance.GoBack();
                 SoundManager.PlayOnce(Sound.MenuEscape);
             };
-
-            buttons.Add(btnMute);
-            buttons.Add(btnFullscreen);
-            buttons.Add(btnVFX);
             buttons.Add(btnBack);
         }
 
@@ -121,22 +139,30 @@ namespace TWP_Shared
                 float fontScale = (minScreenSize * 0.6f) / captionSize.X;
                 captionSize = new Vector2(captionSize.X * fontScale, captionSize.Y * fontScale);
 
-                Vector2 captionPosition = new Vector2(ScreenSize.X / 2 - captionSize.X / 2, ScreenSize.Y * 0.1f);
+                Vector2 captionPosition = new Vector2(ScreenSize.X / 2 - captionSize.X / 2, ScreenSize.Y * 0.05f);
 
                 spriteBatch.DrawString(font, caption, captionPosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
-                
+
+                int buttonsCount = 4;
+#if ANDROID
+                // Android has one extra button
+                buttonsCount++;
+#endif
                 float buttonsAreaWidth = minScreenSize * 0.8f;
-                buttonHeight = (int) (captionSize.Y * 0.5f);
-                float buttonsAreaTop = captionPosition.Y + captionSize.Y;
-                buttonsAreaTop += (ScreenSize.Y - buttonsAreaTop - buttonHeight * 4 * 1.2f) / 2;
+                buttonHeight = (int) (captionSize.Y * 0.4f);
+                float buttonsAreaHeight = ScreenSize.Y - (captionPosition.Y + captionSize.Y + buttonHeight * 2);
+                float buttonsAreaTop = captionPosition.Y + captionSize.Y + (buttonsAreaHeight - buttonHeight * buttonsCount * 1.2f) / 2;
                 buttonsArea = new Rectangle((int) (ScreenSize.X - buttonsAreaWidth) / 2, (int) buttonsAreaTop, (int) buttonsAreaWidth, (int) (ScreenSize.Y - buttonsAreaTop));
 
                 Vector2 textSize = font.MeasureString("V");
                 float scale = buttonHeight / textSize.Y;
-                spriteBatch.DrawString(font, "Sound FX", new Vector2(buttonsArea.X, buttonsArea.Y), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Sound", new Vector2(buttonsArea.X, buttonsArea.Y), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
                 spriteBatch.DrawString(font, "Fullscreen", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 1.2f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                spriteBatch.DrawString(font, "Visual FX", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 2.4f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-
+                spriteBatch.DrawString(font, "Sensitivity", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 2.4f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Bloom FX", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 3.6f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+#if ANDROID
+                spriteBatch.DrawString(font, "Lock orientation", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 4.8f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+#endif
 
                 spriteBatch.End();
                 GraphicsDevice.SetRenderTarget(null);   // Drop the render target

@@ -39,9 +39,39 @@ namespace TWP_Shared
             Window.ClientSizeChanged += ResizeScreen;
             this.Activated += (object sender, EventArgs e) => InputManager.IsFocused = true;
             this.Deactivated += (object sender, EventArgs e) => InputManager.IsFocused = false;
+
+#if ANDROID
+            SettingsManager.OrientationLockChanged += () =>
+            {
+                SetScreenOrientation(Window.CurrentOrientation);
+                graphics.ApplyChanges();
+            };
+#endif
         }
 
         private void ResizeScreen(object sender, EventArgs e) => ScreenManager.Instance.UpdateScreenSize(Window.ClientBounds.Size);
+
+        private void SetScreenOrientation(DisplayOrientation orientation)
+        {
+            if (SettingsManager.IsOrientationLocked)
+            {
+                SettingsManager.ScreenOrientation = graphics.SupportedOrientations = orientation;
+                switch (orientation)
+                {
+                    case DisplayOrientation.LandscapeLeft:
+                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Landscape; break;
+                    case DisplayOrientation.LandscapeRight:
+                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.ReverseLandscape; break;
+                    case DisplayOrientation.Portrait:
+                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Portrait; break;
+                }
+            }
+            else
+            {
+                graphics.SupportedOrientations = DisplayOrientation.Portrait | DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+                Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Sensor;
+            }
+        }
 
         public void SetFullscreen(bool isFullscreen)
         {
@@ -184,7 +214,7 @@ namespace TWP_Shared
             graphics.IsFullScreen = SettingsManager.IsFullscreen;
             graphics.PreferredBackBufferWidth = Window.ClientBounds.Width;
             graphics.PreferredBackBufferHeight = Window.ClientBounds.Height;
-            graphics.SupportedOrientations = DisplayOrientation.Portrait;
+            SetScreenOrientation(SettingsManager.ScreenOrientation);
             TouchPanel.EnabledGestures = GestureType.Tap | GestureType.FreeDrag;
             graphics.GraphicsProfile = GraphicsProfile.HiDef;
             graphics.ApplyChanges();

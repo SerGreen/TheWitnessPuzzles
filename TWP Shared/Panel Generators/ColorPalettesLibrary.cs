@@ -50,7 +50,7 @@ namespace TWP_Shared
                              new Color(1, 178, 254), new Color(1, 178, 254), new Color(255, 0, 77)),
             // Swamp green
             new ColorPalette(new Color(140, 204, 99), new Color(52, 82, 35), new Color(112, 199, 55),
-                             new Color(100, 255, 0), new Color(100, 255, 0), new Color(255, 156, 0)),
+                             new Color(240, 255, 0), new Color(240, 255, 0), new Color(255, 60, 0)),
             // Blue
             new ColorPalette(new Color(51, 84, 159), new Color(33, 42, 65), new Color(84, 106, 156),
                              new Color(197, 207, 232), new Color(246, 254, 36), new Color(252, 36, 52))

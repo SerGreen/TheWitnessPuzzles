@@ -42,7 +42,8 @@ namespace TWP_Shared
             "img/close",
             "img/left",
             "img/right",
-            "img/solved"
+            "img/solved",
+            "img/orientation_lock0..1"
         };
         readonly static string[] fontsToLoad =
         {
