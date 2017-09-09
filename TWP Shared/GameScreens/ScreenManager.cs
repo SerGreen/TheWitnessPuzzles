@@ -64,6 +64,7 @@ namespace TWP_Shared
                 callback = () =>
                 {
                     _addScreen<TScreen>(replaceCurrent, data);
+                    SoundManager.StopAllLoops();
                     transitionAnimation.FadeOutComplete -= callback;
                 };
                 transitionAnimation.FadeOutComplete += callback;
@@ -110,6 +111,7 @@ namespace TWP_Shared
                     callback = () =>
                     {
                         _goBack();
+                        SoundManager.StopAllLoops();
                         transitionAnimation.FadeOutComplete -= callback;
                     };
                     transitionAnimation.FadeOutComplete += callback;

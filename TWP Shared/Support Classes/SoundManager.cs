@@ -153,6 +153,14 @@ namespace TWP_Shared
             }
         }
 
+        public static void StopAllLoops()
+        {
+            if (sfxPathCompleteInst.State == SoundState.Playing)
+                sfxPathCompleteInst.Stop();
+            if (sfxTracingInst.State == SoundState.Playing)
+                sfxTracingInst.Stop();
+        }
+
         public static void ChangeLoopVolume(SoundLoop sound, float volume)
         {
             float volumeTweak = defaultVolumes[sound];

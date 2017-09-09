@@ -12,8 +12,7 @@ namespace TWP_Shared
     {
         private static Game Game;
         
-        private static int moveStep = 5;
-        private static float moveSensitivity = 0.5f;
+        private static int moveStep = 5;    // used for keyboard movement
 
         private static List<GestureSample> gestures;
         private static KeyboardState prevKB;
@@ -68,7 +67,7 @@ namespace TWP_Shared
             if (IsFocused)
             {
                 foreach (var gesture in gestures.Where(x => x.GestureType == GestureType.FreeDrag))
-                    result += gesture.Delta * moveSensitivity;
+                    result += gesture.Delta;
 
                 if (Keyboard.GetState().IsKeyDown(Keys.Right)) result.X += moveStep;
                 if (Keyboard.GetState().IsKeyDown(Keys.Left)) result.X -= moveStep;
@@ -76,7 +75,7 @@ namespace TWP_Shared
                 if (Keyboard.GetState().IsKeyDown(Keys.Up)) result.Y -= moveStep;
             }
 
-            return result;
+            return result * SettingsManager.Sensitivity;
         }
 
         /// <summary>

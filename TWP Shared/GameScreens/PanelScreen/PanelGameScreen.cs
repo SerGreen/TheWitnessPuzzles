@@ -221,6 +221,7 @@ namespace TWP_Shared
                 walls = renderer.Walls;
                 renderer.RenderPanelToTexture(backgroundTexture);
                 UpdateButtonsColor();
+                UpdateButtonsPosition();
             }
         }
 

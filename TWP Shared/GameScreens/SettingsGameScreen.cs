@@ -9,15 +9,19 @@ namespace TWP_Shared
 {
     public class SettingsGameScreen : GameScreen
     {
+        const float btnHeightMod = 1.2f;
+
         SpriteFont font = null;
         Texture2D texPixel;
         Texture2D[] texCheckbox = new Texture2D[2];
         Texture2D[] texSound = new Texture2D[2];
         Texture2D[] texOrientation = new Texture2D[2];
+        Texture2D[] texLeftRight = new Texture2D[2];
 
         Rectangle buttonsArea;
         int buttonHeight;
         List<TouchButton> buttons = new List<TouchButton>();
+        SliderUpDown sensitivitySlider, volumeSlider;
 
         RenderTarget2D backgroundTexture;
 
@@ -32,6 +36,8 @@ namespace TWP_Shared
             texSound[1] = textureProvider["img/sound1"];
             texOrientation[0] = textureProvider["img/orientation_lock0"];
             texOrientation[1] = textureProvider["img/orientation_lock1"];
+            texLeftRight[0] = textureProvider["img/left"];
+            texLeftRight[1] = textureProvider["img/right"];
 
             InitializeScreenSizeDependent();
             SpawnButtons();
@@ -45,14 +51,24 @@ namespace TWP_Shared
 
         private void SpawnButtons()
         {
-            ToggleButton btnMute = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight)), texSound[1], texSound[0], null, !SettingsManager.IsMute);
+            ToggleButton btnMute = new ToggleButton(new Rectangle(), texSound[1], texSound[0], null, !SettingsManager.IsMute);
             btnMute.Click += () => {
                 SettingsManager.IsMute = !btnMute.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.IsMute ? Sound.MenuUntick : Sound.MenuTick);
             };
             buttons.Add(btnMute);
 
-            ToggleButton btnFullscreen = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 1.2f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.IsFullscreen);
+            volumeSlider = new SliderUpDown(new Rectangle(), 0f, 1.0f, 0.05f, SettingsManager.MasterVolume, texPixel, texLeftRight[0], texLeftRight[1], new Color(50, 50, 50), Color.White);
+            volumeSlider.ValueChanged += () => {
+                SettingsManager.MasterVolume = volumeSlider.Value;
+            };
+
+            sensitivitySlider = new SliderUpDown(new Rectangle(), 0.1f, 2.0f, 0.1f, SettingsManager.Sensitivity, texPixel, texLeftRight[0], texLeftRight[1], new Color(50, 50, 50), Color.White);
+            sensitivitySlider.ValueChanged += () => {
+                SettingsManager.Sensitivity = sensitivitySlider.Value;
+            };
+
+            ToggleButton btnFullscreen = new ToggleButton(new Rectangle(), texCheckbox[1], texCheckbox[0], null, SettingsManager.IsFullscreen);
             btnFullscreen.Click += () => {
                 SettingsManager.IsFullscreen = btnFullscreen.IsActivated;
                 ScreenManager.Instance.UpdateFullscreen();
@@ -60,14 +76,7 @@ namespace TWP_Shared
             };
             buttons.Add(btnFullscreen);
 
-            //ToggleButton btnSensitivity = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 2.4f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, false);
-            //btnSensitivity.Click += () => {
-                
-            //    SoundManager.PlayOnce(SettingsManager.BloomFX ? Sound.MenuTick : Sound.MenuUntick);
-            //};
-            //buttons.Add(btnSensitivity);
-
-            ToggleButton btnBloomFX = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 3.6f)), new Point(buttonHeight, buttonHeight)), texCheckbox[1], texCheckbox[0], null, SettingsManager.BloomFX);
+            ToggleButton btnBloomFX = new ToggleButton(new Rectangle(), texCheckbox[1], texCheckbox[0], null, SettingsManager.BloomFX);
             btnBloomFX.Click += () => {
                 SettingsManager.BloomFX = btnBloomFX.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.BloomFX ? Sound.MenuTick : Sound.MenuUntick);
@@ -75,7 +84,7 @@ namespace TWP_Shared
             buttons.Add(btnBloomFX);
 
 #if ANDROID
-            ToggleButton btnOrientationLock = new ToggleButton(new Rectangle(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * 4.8f)), new Point(buttonHeight, buttonHeight)), texOrientation[1], texOrientation[0], null, SettingsManager.IsOrientationLocked);
+            ToggleButton btnOrientationLock = new ToggleButton(new Rectangle(), texOrientation[1], texOrientation[0], null, SettingsManager.IsOrientationLocked);
             btnOrientationLock.Click += () => {
                 SettingsManager.IsOrientationLocked = btnOrientationLock.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.IsOrientationLocked ? Sound.MenuTick : Sound.MenuUntick);
@@ -83,29 +92,45 @@ namespace TWP_Shared
             buttons.Add(btnOrientationLock);
 #endif
 
-            TextButton btnBack = new TextButton(new Rectangle(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f))), font, "Back", texPixel);
+            TextButton btnBack = new TextButton(new Rectangle(), font, "Back", texPixel);
             btnBack.Click += () => {
                 SettingsManager.SaveSettings();
                 ScreenManager.Instance.GoBack();
                 SoundManager.PlayOnce(Sound.MenuEscape);
             };
             buttons.Add(btnBack);
+
+            UpdateButtonsSizeAndPosition();
+        }
+
+        private void UpdateButtonsSizeAndPosition()
+        {
+            buttons[0].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight));
+            volumeSlider.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight * 4, (int) (buttonHeight * btnHeightMod)), new Point(buttonHeight * 4, buttonHeight));
+            sensitivitySlider.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight * 4, (int) (buttonHeight * btnHeightMod * 2)), new Point(buttonHeight * 4, buttonHeight));
+            buttons[1].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 3)), new Point(buttonHeight, buttonHeight));
+            buttons[2].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 4)), new Point(buttonHeight, buttonHeight));
+
+            if (buttons.Count > 4)
+                buttons[3].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 5)), new Point(buttonHeight, buttonHeight));
+
+            buttons[buttons.Count - 1].SetPositionAndSize(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f)));
         }
 
         public override void SetScreenSize(Point screenSize)
         {
             base.SetScreenSize(screenSize);
             InitializeScreenSizeDependent();
-            for (int i = 0; i < buttons.Count - 1; i++)
-                buttons[i].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * i * 1.2f)), new Point(buttonHeight, buttonHeight));
-
-            buttons[buttons.Count-1].SetPositionAndSize(new Point(buttonsArea.X, screenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight*1.5f)));
+            UpdateButtonsSizeAndPosition();
         }
 
         public override void Update(GameTime gameTime)
         {
             foreach (var btn in buttons)
                 btn.Update(InputManager.GetTapPosition());
+
+            sensitivitySlider.Update(InputManager.GetTapPosition());
+            volumeSlider.Update(InputManager.GetTapPosition());
 
             base.Update(gameTime);
         }
@@ -117,6 +142,9 @@ namespace TWP_Shared
             
             foreach (var btn in buttons)
                 btn.Draw(spriteBatch);
+
+            sensitivitySlider.Draw(spriteBatch);
+            volumeSlider.Draw(spriteBatch);
 
             base.Draw(spriteBatch);
         }
@@ -143,7 +171,7 @@ namespace TWP_Shared
 
                 spriteBatch.DrawString(font, caption, captionPosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
 
-                int buttonsCount = 4;
+                int buttonsCount = 5;
 #if ANDROID
                 // Android has one extra button
                 buttonsCount++;
@@ -151,17 +179,18 @@ namespace TWP_Shared
                 float buttonsAreaWidth = minScreenSize * 0.8f;
                 buttonHeight = (int) (captionSize.Y * 0.4f);
                 float buttonsAreaHeight = ScreenSize.Y - (captionPosition.Y + captionSize.Y + buttonHeight * 2);
-                float buttonsAreaTop = captionPosition.Y + captionSize.Y + (buttonsAreaHeight - buttonHeight * buttonsCount * 1.2f) / 2;
+                float buttonsAreaTop = captionPosition.Y + captionSize.Y + (buttonsAreaHeight - buttonHeight * buttonsCount * btnHeightMod) / 2;
                 buttonsArea = new Rectangle((int) (ScreenSize.X - buttonsAreaWidth) / 2, (int) buttonsAreaTop, (int) buttonsAreaWidth, (int) (ScreenSize.Y - buttonsAreaTop));
 
                 Vector2 textSize = font.MeasureString("V");
                 float scale = buttonHeight / textSize.Y;
                 spriteBatch.DrawString(font, "Sound", new Vector2(buttonsArea.X, buttonsArea.Y), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                spriteBatch.DrawString(font, "Fullscreen", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 1.2f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                spriteBatch.DrawString(font, "Sensitivity", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 2.4f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
-                spriteBatch.DrawString(font, "Bloom FX", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 3.6f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Volume", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * btnHeightMod), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Sensitivity", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * btnHeightMod * 2), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Fullscreen", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * btnHeightMod * 3), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Bloom FX", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * btnHeightMod * 4), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
 #if ANDROID
-                spriteBatch.DrawString(font, "Lock orientation", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * 4.8f), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+                spriteBatch.DrawString(font, "Lock orientation", new Vector2(buttonsArea.X, buttonsArea.Y + buttonHeight * btnHeightMod * 5), Color.White, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
 #endif
 
                 spriteBatch.End();

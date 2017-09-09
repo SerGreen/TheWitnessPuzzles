@@ -12,6 +12,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\HistoryGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SettingsGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\SliderUpDown.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TabButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\ToggleButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TwoStateButton.cs" />
@@ -29,7 +30,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\BasePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\FirstPanelGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelRenderer.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\PanelRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\QuadRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\ReversePanelGenerator.cs" />

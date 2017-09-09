@@ -51,6 +51,7 @@ namespace TWP_Shared
 
         private void ResizeScreen(object sender, EventArgs e) => ScreenManager.Instance.UpdateScreenSize(Window.ClientBounds.Size);
 
+#if ANDROID
         private void SetScreenOrientation(DisplayOrientation orientation)
         {
             if (SettingsManager.IsOrientationLocked)
@@ -72,6 +73,7 @@ namespace TWP_Shared
                 Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Sensor;
             }
         }
+#endif
 
         public void SetFullscreen(bool isFullscreen)
         {
