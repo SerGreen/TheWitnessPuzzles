@@ -47,7 +47,7 @@ namespace TWP_Shared
         };
         readonly static string[] fontsToLoad =
         {
-            "font/fnt_constantia_small",
+            "font/fnt_small",
             "font/fnt_constantia_big"
         };
         System.Text.RegularExpressions.Regex texIsMultiple = new System.Text.RegularExpressions.Regex(@"\d+\.\.\d+");

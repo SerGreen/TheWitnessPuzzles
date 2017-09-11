@@ -11,15 +11,15 @@ namespace TWP_Android
         , Icon = "@drawable/icon"
         , Theme = "@style/Theme.Splash"
         , AlwaysRetainTaskState = true
-        , LaunchMode = Android.Content.PM.LaunchMode.SingleInstance
-        , ScreenOrientation = ScreenOrientation.Sensor
+        , LaunchMode = LaunchMode.SingleInstance
+        , ScreenOrientation = ScreenOrientation.Locked
         , ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.Keyboard | ConfigChanges.KeyboardHidden | ConfigChanges.ScreenSize)]
     public class ActivityMain : Microsoft.Xna.Framework.AndroidGameActivity
     {
         protected override void OnCreate(Bundle bundle)
         {
             base.OnCreate(bundle);
-            var g = new TWPGame(true);
+            var g = new TWPGame();
             SetContentView((View) g.Services.GetService(typeof(View)));
             g.Run();
         }

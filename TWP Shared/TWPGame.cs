@@ -19,11 +19,9 @@ namespace TWP_Shared
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
         Point defaultScreenSize = new Point(400, 600);
-        bool isMobile;
 
-        public TWPGame(bool isMobile)
+        public TWPGame()
         {
-            this.isMobile = isMobile;
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
@@ -259,7 +257,7 @@ namespace TWP_Shared
 
         protected virtual void InitializeAfterContentIsLoaded()
         {
-            ScreenManager.Instance.AddScreen<SplashGameScreen>();
+            ScreenManager.Instance.AddScreen<MenuGameScreen>();
         }
 
         /// <summary>

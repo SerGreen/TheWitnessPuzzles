@@ -72,7 +72,7 @@ namespace TWP_Shared
             texLike[1] = TextureProvider["img/like1"];
             texNext = TextureProvider["img/next"];
             texDelete = TextureProvider["img/delete"];
-            fntDebug = FontProvider["font/fnt_constantia_small"];
+            fntDebug = FontProvider["font/fnt_small"];
 
             // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);

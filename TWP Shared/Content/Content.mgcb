@@ -157,13 +157,6 @@
 /processorParam:TextureFormat=Color
 /build:img/pixel.png
 
-#begin font/fnt_constantia_small.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=False
-/processorParam:TextureFormat=Compressed
-/build:font/fnt_constantia_small.spritefont
-
 #begin font/fnt_constantia_big.spritefont
 /importer:FontDescriptionImporter
 /processor:FontDescriptionProcessor
@@ -483,4 +476,11 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:img/orientation_lock1.png
+
+#begin font/fnt_small.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:font/fnt_small.spritefont
 

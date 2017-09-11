@@ -94,7 +94,6 @@ namespace TWP_Shared
 
             TextButton btnBack = new TextButton(new Rectangle(), font, "Back", texPixel);
             btnBack.Click += () => {
-                SettingsManager.SaveSettings();
                 ScreenManager.Instance.GoBack();
                 SoundManager.PlayOnce(Sound.MenuEscape);
             };
@@ -133,6 +132,12 @@ namespace TWP_Shared
             volumeSlider.Update(InputManager.GetTapPosition());
 
             base.Update(gameTime);
+        }
+
+        public override void Deactivate()
+        {
+            base.Deactivate();
+            SettingsManager.SaveSettings();
         }
 
 

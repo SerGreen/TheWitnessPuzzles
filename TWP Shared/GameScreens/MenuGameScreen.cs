@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Content;
 
 namespace TWP_Shared
 {
-    public class SplashGameScreen : GameScreen
+    public class MenuGameScreen : GameScreen
     {
         SpriteFont font = null;
 
@@ -26,7 +26,7 @@ namespace TWP_Shared
 
         RenderTarget2D backgroundTexture;
 
-        public SplashGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
+        public MenuGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
             : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
             font = FontProvider["font/fnt_constantia_big"];
@@ -93,7 +93,7 @@ namespace TWP_Shared
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
-            TextButton btnHistory = new TextButton(new Rectangle(), font, "History", texPixel);
+            TextButton btnHistory = new TextButton(new Rectangle(), font, "Library", texPixel);
             btnHistory.Click += () => {
                 ScreenManager.Instance.AddScreen<HistoryGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);
@@ -105,9 +105,16 @@ namespace TWP_Shared
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
 
+            TextButton btnAbout = new TextButton(new Rectangle(), font, "About", texPixel);
+            btnAbout.Click += () => {
+                ScreenManager.Instance.AddScreen<AboutGameScreen>(false, true);
+                SoundManager.PlayOnce(Sound.MenuEnter);
+            };
+
             buttons.Add(btnStart);
             buttons.Add(btnHistory);
             buttons.Add(btnSettings);
+            buttons.Add(btnAbout);
 
             UpdateButtonsPosition();
         }
@@ -152,11 +159,11 @@ namespace TWP_Shared
                 Vector2 secondLineSize = font.MeasureString(secondLine);
 
                 int minScreenSize = Math.Min(ScreenSize.X, ScreenSize.Y);
-                float fontScale = (minScreenSize * 0.8f) / firstLineSize.X;
+                float fontScale = (minScreenSize * 0.75f) / firstLineSize.X;
                 firstLineSize = new Vector2(firstLineSize.X * fontScale, firstLineSize.Y * fontScale);
                 secondLineSize = new Vector2(secondLineSize.X * fontScale, secondLineSize.Y * fontScale);
 
-                Vector2 firstLinePosition = new Vector2(ScreenSize.X / 2 - firstLineSize.X / 2, ScreenSize.Y * 0.1f);
+                Vector2 firstLinePosition = new Vector2(ScreenSize.X / 2 - firstLineSize.X / 2, ScreenSize.Y * 0.07f);
                 Vector2 secondLinePosition = new Vector2(ScreenSize.X / 2 - secondLineSize.X / 2, firstLinePosition.Y + firstLineSize.Y * 0.85f);
 
                 spriteBatch.DrawString(font, firstLine, firstLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
@@ -168,10 +175,13 @@ namespace TWP_Shared
                     symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
                 }
 
-                menuButtonHeight = (int) (firstLineSize.Y * 0.8f);
+                if (ScreenSize.X > ScreenSize.Y)
+                    menuButtonHeight = (int) (ScreenSize.Y * 0.1f);
+                else
+                    menuButtonHeight = (int) (firstLineSize.Y * 0.8f);
                 float menuWidth = ScreenSize.X * 0.8f;
                 float menuTop = secondLinePosition.Y + secondLineSize.Y;
-                float menuHeight = menuButtonHeight * 3;
+                float menuHeight = menuButtonHeight * 4;
                 menuTop += (ScreenSize.Y - menuTop - menuHeight) / 2;
                 
                 menuBounds = new Rectangle((int) (ScreenSize.X - menuWidth) / 2, (int) menuTop, (int) menuWidth, (int) menuHeight);
