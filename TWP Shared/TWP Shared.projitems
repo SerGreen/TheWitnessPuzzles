@@ -35,7 +35,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\QuadRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\ReversePanelGenerator.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\ScreenManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\ScreenManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\SolutionLine.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\SettingsManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\SoundManager.cs" />

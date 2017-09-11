@@ -74,7 +74,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Content\" />
-    <Folder Include="GameScreens\PanelScreen\" />
     <Folder Include="Resources\Layout\" />
   </ItemGroup>
   <ItemGroup>

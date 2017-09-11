@@ -43,7 +43,9 @@ namespace TWP_Shared
             "img/left",
             "img/right",
             "img/solved",
-            "img/orientation_lock0..1"
+            "img/orientation_lock0..1",
+            "img/btn_github",
+            "img/btn_thewitness"
         };
         readonly static string[] fontsToLoad =
         {
