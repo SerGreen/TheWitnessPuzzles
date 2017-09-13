@@ -89,6 +89,9 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <AndroidResource Include="Resources\Values\Colors.xml" />
+  </ItemGroup>
+  <ItemGroup>
     <AndroidResource Include="Resources\Drawable\Splash.xml" />
   </ItemGroup>
   <Import Project="..\TWP Shared\TWP Shared.projitems" Label="Shared" />

@@ -10,7 +10,7 @@ namespace TWP_Shared
 {
     public class AboutGameScreen : GameScreen
     {
-        private const string githubUrl = @"https://github.com/SerGreen/BowRunner";
+        private const string githubUrl = @"https://github.com/SerGreen/TheWitnessPuzzles";
         private const string theWitnessUrl = @"https://store.steampowered.com/app/210970";
 
         TouchButton btnBack, btnLinkGithub, btnLinkTheWitness;
@@ -85,14 +85,14 @@ namespace TWP_Shared
             btnLinkGithub = new TouchButton(new Rectangle(), texGithub, null, Color.LightGray);
             btnLinkGithub.Click += () =>
             {
-                System.Threading.Tasks.Task.Run(() => System.Diagnostics.Process.Start(githubUrl));
+                OpenURL(githubUrl);
                 SoundManager.PlayOnce(Sound.ButtonNext);
             };
 
             btnLinkTheWitness = new TouchButton(new Rectangle(), texTheWitness, null, Color.LightGray);
             btnLinkTheWitness.Click += () =>
             {
-                System.Threading.Tasks.Task.Run(() => System.Diagnostics.Process.Start(theWitnessUrl));
+                OpenURL(theWitnessUrl);
                 SoundManager.PlayOnce(Sound.ButtonNext);
             };
 
@@ -104,6 +104,21 @@ namespace TWP_Shared
             };
 
             UpdateButtonsPositionAndSize();
+        }
+
+        private void OpenURL(string url)
+        {
+            // Opening URL takes a bit of time, so we are using beckground thread to not delay the sound of pressed button
+            System.Threading.Tasks.Task.Run(() =>
+            {
+#if WINDOWS
+                System.Diagnostics.Process.Start(url);
+#elif ANDROID
+                var intent = new Android.Content.Intent(Android.Content.Intent.ActionView, Android.Net.Uri.Parse(url));
+                intent.AddFlags(Android.Content.ActivityFlags.NewTask);
+                Android.App.Application.Context.StartActivity(intent);
+#endif
+            });
         }
 
         private void UpdateButtonsPositionAndSize()

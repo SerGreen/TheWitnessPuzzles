@@ -10,14 +10,7 @@ namespace TWP_Shared
     public class MenuGameScreen : GameScreen
     {
         SpriteFont font = null;
-
-        Random rnd = new Random();
-        List<Texture2D> texSymbols;
-        Texture2D currentSymbol;
-        FadeOutAnimation fadeOut;
-        Vector2 symbolPosition;
-        float symbolScale;
-
+        
         Texture2D texPixel;
         FadeInAnimation fadeIn;
         Rectangle menuBounds;
@@ -26,36 +19,17 @@ namespace TWP_Shared
 
         RenderTarget2D backgroundTexture;
 
-        public MenuGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
+        public MenuGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content)
             : base(screenSize, device, TextureProvider, FontProvider, Content)
         {
             font = FontProvider["font/fnt_constantia_big"];
-
-            texSymbols = new List<Texture2D>()
-            {
-                TextureProvider["img/hexagon"],
-                TextureProvider["img/square"],
-                //TextureProvider["img/triangle1"],
-                TextureProvider["img/elimination"],
-                TextureProvider["img/sun"]
-            };
-            currentSymbol = texSymbols[rnd.Next(texSymbols.Count)];
-            //fadeOut = new FadeOutAnimation(60, 150);
-            fadeOut = new FadeOutAnimation(60, 20);
-            Action fadeOutCallback = null;
-            fadeOutCallback = () => {
-                currentSymbol = null;
-                SpawnButtons();
-                fadeIn.Restart();
-                fadeOut.FadeComplete -= fadeOutCallback;
-            };
-            fadeOut.FadeComplete += fadeOutCallback;
-            fadeOut.Restart();
             
             texPixel = TextureProvider["img/pixel"];
-            fadeIn = new FadeInAnimation(60);
-
+            
             InitializeScreenSizeDependent();
+            SpawnButtons();
+            fadeIn = new FadeInAnimation(120);
+            fadeIn.Restart();
         }
 
         private void InitializeScreenSizeDependent()
@@ -121,7 +95,6 @@ namespace TWP_Shared
 
         public override void Update(GameTime gameTime)
         {
-            fadeOut.Update();
             fadeIn.Update();
             foreach (var btn in buttons)
                 btn.Update(InputManager.GetTapPosition());
@@ -132,10 +105,7 @@ namespace TWP_Shared
         public override void Draw(SpriteBatch spriteBatch)
         {
             spriteBatch.Draw(backgroundTexture, Vector2.Zero, Color.White);
-
-            if(currentSymbol != null)
-                spriteBatch.Draw(currentSymbol, symbolPosition, null, Color.White * fadeOut.Opacity, 0, currentSymbol.Bounds.Center.ToVector2(), symbolScale, SpriteEffects.None, 0);
-
+            
             foreach (var btn in buttons)
                 btn.Draw(spriteBatch, fadeIn.Opacity);
 
@@ -168,13 +138,7 @@ namespace TWP_Shared
 
                 spriteBatch.DrawString(font, firstLine, firstLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
                 spriteBatch.DrawString(font, secondLine, secondLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
-
-                if (currentSymbol != null)
-                {
-                    symbolPosition = new Vector2(ScreenSize.X / 2, secondLinePosition.Y + (ScreenSize.Y - secondLinePosition.Y) / 2);
-                    symbolScale = (minScreenSize * 0.25f) / currentSymbol.Width;
-                }
-
+                
                 if (ScreenSize.X > ScreenSize.Y)
                     menuButtonHeight = (int) (ScreenSize.Y * 0.1f);
                 else

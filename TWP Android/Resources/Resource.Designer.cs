@@ -44,8 +44,8 @@ namespace TWP_Android
 		public partial class Color
 		{
 			
-			// aapt resource value: 0x7f040000
-			public const int black = 2130968576;
+			// aapt resource value: 0x7f030000
+			public const int black = 2130903040;
 			
 			static Color()
 			{
@@ -79,11 +79,11 @@ namespace TWP_Android
 		public partial class String
 		{
 			
-			// aapt resource value: 0x7f030001
-			public const int ApplicationName = 2130903041;
+			// aapt resource value: 0x7f040001
+			public const int ApplicationName = 2130968577;
 			
-			// aapt resource value: 0x7f030000
-			public const int Hello = 2130903040;
+			// aapt resource value: 0x7f040000
+			public const int Hello = 2130968576;
 			
 			static String()
 			{
