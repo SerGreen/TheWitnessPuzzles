@@ -77,9 +77,6 @@
     <Folder Include="Resources\Layout\" />
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\Drawable\Splash.png" />
-  </ItemGroup>
-  <ItemGroup>
     <AndroidResource Include="Resources\Values\Styles.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -92,7 +89,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <AndroidResource Include="Resources\Drawable-land\Splash.png" />
+    <AndroidResource Include="Resources\Drawable\Splash.xml" />
   </ItemGroup>
   <Import Project="..\TWP Shared\TWP Shared.projitems" Label="Shared" />
   <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />

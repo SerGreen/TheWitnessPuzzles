@@ -41,6 +41,22 @@ namespace TWP_Android
 			}
 		}
 		
+		public partial class Color
+		{
+			
+			// aapt resource value: 0x7f040000
+			public const int black = 2130968576;
+			
+			static Color()
+			{
+				global::Android.Runtime.ResourceIdManager.UpdateIdValues();
+			}
+			
+			private Color()
+			{
+			}
+		}
+		
 		public partial class Drawable
 		{
 			
@@ -82,8 +98,8 @@ namespace TWP_Android
 		public partial class Style
 		{
 			
-			// aapt resource value: 0x7f040000
-			public const int Theme_Splash = 2130968576;
+			// aapt resource value: 0x7f050000
+			public const int Theme_Splash = 2131034112;
 			
 			static Style()
 			{

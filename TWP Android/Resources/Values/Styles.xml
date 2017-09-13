@@ -1,7 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <color name="black">#000000</color>
+    
   <style name="Theme.Splash" parent="android:Theme">
-    <item name="android:windowBackground">@drawable/splash</item>
+    <item name="android:windowBackground">@drawable/Splash</item>
     <item name="android:windowNoTitle">true</item>
   </style>
 </resources>
