@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("TWP Desktop")]
-[assembly: AssemblyProduct("TWP Desktop")]
+[assembly: AssemblyTitle("The Witness Puzzles")]
+[assembly: AssemblyProduct("The Witness Puzzles")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyDescription("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyDescription("Puzzle game, inspired by Jonathan Blow's game 'The Witness'")]
+[assembly: AssemblyCompany("SerGreen")]
 [assembly: AssemblyCopyright("Copyright ©  2017")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]

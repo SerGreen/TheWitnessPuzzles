@@ -60,6 +60,10 @@ namespace TWP_Shared
 
         public void AddScreen<TScreen>(bool replaceCurrent = false, bool doFadeAnimation = false, params object[] data) where TScreen : GameScreen
         {
+            // Don't queue another screen transition if we are already in transition
+            if (doFadeAnimation && transitionAnimation.IsActive)
+                return;
+
             if (doFadeAnimation)
             {
                 Action callback = null;
@@ -82,8 +86,10 @@ namespace TWP_Shared
             if (typeof(TScreen) == typeof(PanelGameScreen))
             {
                 if (data.Length > 1)
+                    // Creating standalone PanelGameScreen (without Next button), data[1] normally should contain 'true'
                     screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content); 
                 else if (data.Length > 0)
+                    // Creating regular PanelGameScreen
                     screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], ScreenSize, Device, TextureProvider, FontProvider, Content);
             }
             else
@@ -102,6 +108,7 @@ namespace TWP_Shared
 
         public bool? GoBack(bool doFadeAnimation = true)
         {
+            // Don't queue another screen transition if we are already in transition
             if (doFadeAnimation && transitionAnimation.IsActive)
                 return null;
 

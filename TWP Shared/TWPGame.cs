@@ -281,7 +281,15 @@ namespace TWP_Shared
                 {
                     SoundManager.PlayOnce(Sound.MenuEscape);
                     if (goBackResult == false)
+                    {
+#if WINDOWS
                         Exit();
+#else
+                        // If you Exit() app in Android, it wont come back with restart until you manually kill the process
+                        // This is actually a bug of MonoGame 3.6
+                        Activity.MoveTaskToBack(true);
+#endif
+                    }
                 }
             }
 
