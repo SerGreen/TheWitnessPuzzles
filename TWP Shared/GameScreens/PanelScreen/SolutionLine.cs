@@ -31,6 +31,8 @@ namespace TWP_Shared
             LineWidth = lineWidth;
             startCircle = startCircleBounds;
 
+            hitboxes.Add(startCircle);
+
             head = new Rectangle(currentPos.X, currentPos.Y, LineWidth, LineWidth);
         }
 
@@ -93,8 +95,16 @@ namespace TWP_Shared
             bool moveSuccessful = true;
 
             // Remove fickle hitbox between last point and current point
-            if (hitboxes.Count > 0)
+            if (hitboxes.Count > 1)
                 hitboxes.RemoveAt(hitboxes.Count - 1);
+
+            // Remove start circle hitbox if line is just started, so it will not interfere it's own line motion
+            bool startCircleWasRemoved = false;
+            if (hitboxes.Count < 2)
+            {
+                hitboxes.RemoveAt(0);
+                startCircleWasRemoved = true;
+            }
 
             prevPos = currentPos;
 
@@ -130,6 +140,10 @@ namespace TWP_Shared
 
             // Re-create hitbox between last point and current point
             hitboxes.Add(CreateHitbox(points.Last(), currentPos));
+
+            // Re-insert start circle hitbox, so other line will not overlap
+            if (startCircleWasRemoved)
+                hitboxes.Insert(0, startCircle);
 
             return moveSuccessful;
         }
@@ -289,7 +303,8 @@ namespace TWP_Shared
 
         public void Draw(SpriteBatch sb, Texture2D texCircle, Texture2D texPixel, Color? color = null)
         {
-            for (int i = 0; i < hitboxes.Count; i++)
+            // hitboxes[0] is the start circle hitbox
+            for (int i = 1; i < hitboxes.Count; i++)
             {
                 Point location;
                 bool isHorizontal;

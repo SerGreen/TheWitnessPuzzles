@@ -24,9 +24,6 @@ namespace TWP_Android
             SetContentView((View) g.Services.GetService(typeof(View)));
             g.Run();
         }
-
-        // Trying to get rid of floating three-dot button on some devices
-        public override bool OnPrepareOptionsMenu(IMenu menu) => false;
     }
 }
 
