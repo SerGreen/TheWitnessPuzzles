@@ -533,7 +533,18 @@ namespace TWP_Shared
                                 if (stepSuccessful)
                                 {
                                     // If we managed to move in first direction after a step in second direction, then stop
-                                    if (moveFunc(firstMove, hitboxes))
+                                    // We should move by 1 pixel to not clip through walls
+                                    bool firstMoved = false;
+                                    for (int k = 0; k < firstMoveLength; k++)
+                                    {
+                                        bool substepSuccessful = moveFunc(firstMoveStep, hitboxes);
+
+                                        if (!substepSuccessful)
+                                            break;
+
+                                        firstMoved = true;
+                                    }
+                                    if (firstMoved)
                                         break;
                                 }
                                 // If we hit the wall while stepping in second direction, then stop too
