@@ -99,9 +99,6 @@ namespace TWP_Shared
             points = points.Select(x => (x - puzzleZeroPointOld).Divide(nodePaddingOld).Multiply(nodePaddingNew) + puzzleZeroPointNew).ToList();
             // Convert head
             // Get how far head was offset from nearest node
-
-            // TODO find out a fix for mirrored lines, it should be pixel perfect
-
             Vector2 currentPosOffsetOld = (currentPos - ((currentPos - puzzleZeroPointOld).Divide(nodePaddingOld).Multiply(nodePaddingOld) + puzzleZeroPointOld)).ToVector2();
             // Calculate offset for new node padding
             Vector2 currentPosOffsetNew = currentPosOffsetOld / nodePaddingOld * nodePaddingNew;
@@ -145,6 +142,40 @@ namespace TWP_Shared
             this.points = points;
 
             UpdateHitboxes(lineWidth, startCircleBounds, puzzleWidth, puzzleZeroPoint, nodePadding, puzzleZeroPoint, nodePadding);
+        }
+
+        /// <summary>
+        /// Fixes imperfections of symmetric lines positioning after screen resize
+        /// </summary>
+        /// <param name="one">Main line</param>
+        /// <param name="two">Mirror line</param>
+        /// <param name="puzzleZeroPoint">Position of top-left corner of panel on screen, in pixels</param>
+        /// <param name="nodePadding">Distance between two neighbour nodes, in pixels</param>
+        public static void SynchronizeLines(SolutionLine one, SolutionLine two, Point puzzleZeroPoint, int nodePadding)
+        {
+            // Get offset from nearest node for line One
+            Point oneHeadOffset = one.currentPos - ((one.currentPos - puzzleZeroPoint).Divide(nodePadding).Multiply(nodePadding) + puzzleZeroPoint);
+            // Get offset from nearest node for line Two
+            Point twoHeadOffset = two.currentPos - ((two.currentPos - puzzleZeroPoint).Divide(nodePadding).Multiply(nodePadding) + puzzleZeroPoint);
+
+            // If offsets are the same, then no need to sync (happens when lines are only X-symmetric)
+            if (oneHeadOffset == twoHeadOffset)
+                return;
+
+            // Otherwise calculate the right offset for line Two
+            Point trueTwoHeadOffset;
+            if (oneHeadOffset.X == 0)
+                trueTwoHeadOffset = new Point(0, nodePadding - oneHeadOffset.Y);
+            else
+                trueTwoHeadOffset = new Point(nodePadding - oneHeadOffset.X, 0);
+
+            // Remove fickle hitbox from line Two
+            two.hitboxes.RemoveAt(two.hitboxes.Count - 1);
+            // Move head of line Two
+            two.currentPos += (trueTwoHeadOffset - twoHeadOffset);
+            two.head.Offset(trueTwoHeadOffset - twoHeadOffset);
+            // Create fickle hitbox
+            two.hitboxes.Add(two.CreateHitbox(two.points.Last(), two.currentPos));
         }
 
         public bool Move(Vector2 moveVector, IEnumerable<Rectangle> collisionHitboxes)

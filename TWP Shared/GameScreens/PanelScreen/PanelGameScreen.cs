@@ -234,7 +234,7 @@ namespace TWP_Shared
             panelState.ResetToNeutral();
             line = lineMirror = null;
         }
-        
+
         public override void SetScreenSize(Point screenSize)
         {
             base.SetScreenSize(screenSize);
@@ -245,7 +245,7 @@ namespace TWP_Shared
                 mainStartPointIndex = startPoints.FindIndex(x => x == line.StartCircle);
             if (lineMirror != null)
                 mirrorStartPointIndex = startPoints.FindIndex(x => x == lineMirror.StartCircle);
-            
+
             Point oldPanelZeroPoint = renderer.PuzzleConfig.Location;
             int oldNodePadding = renderer.NodePadding;
 
@@ -269,12 +269,15 @@ namespace TWP_Shared
             renderer.RenderPanelToTexture(backgroundTexture);
 
             UpdateButtonsPosition();
-            
+
             // Update lines
             if (line != null)
                 line.UpdateHitboxes(renderer.LineWidth, startPoints[mainStartPointIndex], panel.Width, oldPanelZeroPoint, oldNodePadding, renderer.PuzzleConfig.Location, renderer.NodePadding);
             if (lineMirror != null)
+            {
                 lineMirror.UpdateHitboxes(renderer.LineWidth, startPoints[mirrorStartPointIndex], panel.Width, oldPanelZeroPoint, oldNodePadding, renderer.PuzzleConfig.Location, renderer.NodePadding);
+                SolutionLine.SynchronizeLines(line, lineMirror, renderer.PuzzleConfig.Location, renderer.NodePadding);
+            }
         }
 
         public override void Update(GameTime gameTime)
