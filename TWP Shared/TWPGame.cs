@@ -28,7 +28,7 @@ namespace TWP_Shared
             SettingsManager.LoadSettings();
 
 #if WINDOWS
-            // This method is called twice (here and in the Initialize method later), because of cross-platform magic
+            // This method call is present twice (here and in the Initialize method later), because of cross-platform magic
             // On Windows GraphicsDevice should me initialized in constructor, otherwise window size will be default and not corresponding to the backbuffer
             // But on Android GraphicsDevice is still null after ApplyChanges() if it's called in constructor
             InitializeGraphicsDevice();
@@ -195,7 +195,7 @@ namespace TWP_Shared
         protected override void Initialize()
         {
 #if ANDROID
-            // This method is called twice (here and in the Constructor earlier), because of cross-platform magic
+            // This method call is present twice (here and in the Constructor earlier), because of cross-platform magic
             // On Windows GraphicsDevice should me initialized in constructor, otherwise window size will be default and not corresponding to the backbuffer
             // But on Android GraphicsDevice is still null after ApplyChanges() if it's called in constructor
             InitializeGraphicsDevice();
@@ -285,7 +285,7 @@ namespace TWP_Shared
 #if WINDOWS
                         Exit();
 #else
-                        // If you Exit() app in Android, it wont come back with restart until you manually kill the process
+                        // If you Exit() app in Android, it wont come back after restart until you manually kill the process
                         // This is actually a bug of MonoGame 3.6
                         Activity.MoveTaskToBack(true);
 #endif

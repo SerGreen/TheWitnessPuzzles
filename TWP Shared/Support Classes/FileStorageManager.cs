@@ -160,7 +160,7 @@ namespace TWP_Shared
         public static string[] GetDiscardedPanelsNames() => isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "???", "*")).Select(x => Path.Combine(DISCARDED_DIR, x)).ToArray();
         public static string[] GetFavouritePanelsNames() => isolatedStorage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "???", "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)).ToArray();
 
-        private static void SavePanelToFile(Puzzle panel, string fileName)
+        private static void SavePanelToFile(Puzzle panel, string fileName, bool saveSolution = false)
         {
             using (IsolatedStorageFileStream fs = isolatedStorage.OpenFile(fileName, FileMode.Create))
             {
@@ -180,6 +180,7 @@ namespace TWP_Shared
                         {
                             br.Write(true);                                 // bool
                             br.Write(sym.Y_Mirrored);                       // bool
+                            br.Write(sym.MirrorColorAlpha);                 // float
                             br.Write(sym.MainColor.PackedValue);            // uint
                             br.Write(sym.MirrorColor.PackedValue);          // uint
                         }
@@ -322,10 +323,12 @@ namespace TWP_Shared
                             // Is panel symmetric and panel colors
                             bool isSymmetric = br.ReadBoolean();
                             bool Y_mirrored = false;
+                            float mirrorAlpha = 1f;
                             Color mainColor, mirrorColor = Color.Black, backgroundColor, wallColor, buttonsColor;
                             if(isSymmetric)
                             {
                                 Y_mirrored = br.ReadBoolean();
+                                mirrorAlpha = br.ReadSingle();
                                 mainColor = new Color(br.ReadUInt32());
                                 mirrorColor = new Color(br.ReadUInt32());
                             }
@@ -340,7 +343,7 @@ namespace TWP_Shared
 
                             // Creating panel
                             if (isSymmetric)
-                                panel = new SymmetryPuzzle(width, height, Y_mirrored, mainColor, mirrorColor, backgroundColor, wallColor, buttonsColor, seed);
+                                panel = new SymmetryPuzzle(width, height, Y_mirrored, mirrorAlpha, mainColor, mirrorColor, backgroundColor, wallColor, buttonsColor, seed);
                             else
                                 panel = new Puzzle(width, height, mainColor, backgroundColor, wallColor, buttonsColor, seed);
                             

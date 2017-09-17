@@ -30,7 +30,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\InputManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\BasePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelGameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\FirstPanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\PanelRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\QuadRenderer.cs" />

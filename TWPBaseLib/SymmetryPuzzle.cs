@@ -10,16 +10,26 @@ namespace TheWitnessPuzzles
 {
     public class SymmetryPuzzle : Puzzle
     {
+        // True = lines are XY mirrored (up=down, left=right), False = lines are X mirrored (up=up, left=right)
         public bool Y_Mirrored { get; }
         public override Color MainColor { get; }
         public Color MirrorColor { get; }
+        // Transparency of mirror line when it's drawn, [0..1]
+        public float MirrorColorAlpha { get; }
+        // ID of right-bottom most node
         private readonly int MaxNodeID;
+        // Amount of nodes in one row
         private readonly int WidthPlus1;
-        
-        public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null, int seed = -1) 
+
+        public SymmetryPuzzle(int width, int height, bool y_mirrored, Color? mainColor = null, Color? mirrorColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null, int seed = -1)
+            : this(width, height, y_mirrored, 1f, mainColor, mirrorColor, backgroundColor, wallsColor, buttonsColor, seed) { }
+        public SymmetryPuzzle(int width, int height, bool y_mirrored, bool mirrorTransparent, Color? mainColor = null, Color? mirrorColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null, int seed = -1)
+            : this(width, height, y_mirrored, mirrorTransparent ? 0f : 1f, mainColor, mirrorColor, backgroundColor, wallsColor, buttonsColor, seed) { }
+        public SymmetryPuzzle(int width, int height, bool y_mirrored, float mirrorLineAlpha, Color? mainColor = null, Color? mirrorColor = null, Color? backgroundColor = null, Color? wallsColor = null, Color? buttonsColor = null, int seed = -1) 
             : base(width, height, mainColor, backgroundColor, wallsColor, buttonsColor, seed)
         {
             Y_Mirrored = y_mirrored;
+            MirrorColorAlpha = MathHelper.Clamp(mirrorLineAlpha, 0f, 1f);
             MainColor = mainColor ?? Color.White;
             MirrorColor = mirrorColor ?? Color.White;
             MaxNodeID = Nodes.Max(x => x.Id);

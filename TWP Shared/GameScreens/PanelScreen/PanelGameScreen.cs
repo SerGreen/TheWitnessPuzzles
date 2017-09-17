@@ -473,21 +473,7 @@ namespace TWP_Shared
 
                 MoveLinePrecise();
 
-                // === Two versions of executing the move (old and new one) ===
-                /// <summary>
-                /// Less CPU consumption, but line is harder to control
-                /// </summary>
-                void MoveLineCheap()
-                {
-                    if (!moveFunc(firstMove, hitboxes))
-                    {
-                        Vector2 cornerMove = line.GetMoveVectorNearCorner(moveVector, walls);
-                        if (cornerMove != Vector2.Zero)
-                            moveFunc(cornerMove, hitboxes);
-                        else
-                            moveFunc(secondMove, hitboxes);
-                    }
-                }
+                // MoveLineCheap() is removed, because it can't be really used, for it is not wall-clipping safe
                 /// <summary>
                 /// More comfortable line control, but more CPU cost
                 /// </summary>
@@ -660,7 +646,11 @@ namespace TWP_Shared
                 line.Draw(spriteBatch, texCircle, texPixel, fillColor ?? panel.MainColor);
 
             if (lineMirror != null)
-                lineMirror.Draw(spriteBatch, texCircle, texPixel, fillColor ?? (panel as SymmetryPuzzle).MirrorColor);
+            {
+                var symPanel = panel as SymmetryPuzzle;
+                if (symPanel.MirrorColorAlpha > 0)
+                    lineMirror.Draw(spriteBatch, texCircle, texPixel, (fillColor ?? symPanel.MirrorColor) * symPanel.MirrorColorAlpha);
+            }
         }
         private void RenderLinesToTexture(RenderTarget2D canvas, Color? fillColor = null)
         {

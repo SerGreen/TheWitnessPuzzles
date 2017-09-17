@@ -46,6 +46,7 @@ namespace TWP_Shared
             int panelWidth = num > 0.05 ? (num > 0.3 ? (num > 0.75 ? (num > 0.9 ? (num > 0.95 ? 7 : 6) : 5) : 4) : 3) : 2;
             bool symmetry = false;
             bool ySymmetry = false;
+            bool mirrorTransparent = false;
 
             // Panel can be symmetric only if it's big enough
             #region Symmetry and panel creation
@@ -54,10 +55,13 @@ namespace TWP_Shared
                 symmetry = true;
                 if (rnd.NextDouble() > 0.5)
                     ySymmetry = true;
+
+                if (rnd.NextDouble() > 0.84)
+                    mirrorTransparent = true;
             }
 
             panel = symmetry
-                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, panelPalette.MainLineColor, panelPalette.MirrorLineColor, panelPalette.BackgroundColor, panelPalette.WallsColor, panelPalette.ButtonsColor, seed.Value)
+                ? new SymmetryPuzzle(panelWidth, panelHeight, ySymmetry, mirrorTransparent, panelPalette.MainLineColor, panelPalette.MirrorLineColor, panelPalette.BackgroundColor, panelPalette.WallsColor, panelPalette.ButtonsColor, seed.Value)
                 : new Puzzle(panelWidth, panelHeight, panelPalette.SingleLineColor, panelPalette.BackgroundColor, panelPalette.WallsColor, panelPalette.ButtonsColor, seed.Value);
 
             if (symmetry)
