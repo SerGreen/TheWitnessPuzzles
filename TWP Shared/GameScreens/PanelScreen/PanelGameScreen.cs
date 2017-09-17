@@ -238,12 +238,24 @@ namespace TWP_Shared
         public override void SetScreenSize(Point screenSize)
         {
             base.SetScreenSize(screenSize);
+
+            // Save some info needed to rebuild lines
+            int mainStartPointIndex = -1, mirrorStartPointIndex = -1;
+            if (line != null)
+                mainStartPointIndex = startPoints.FindIndex(x => x == line.StartCircle);
+            if (lineMirror != null)
+                mirrorStartPointIndex = startPoints.FindIndex(x => x == lineMirror.StartCircle);
             
+            Point oldPanelZeroPoint = renderer.PuzzleConfig.Location;
+            int oldNodePadding = renderer.NodePadding;
+
+            // Update renderer
             renderer.SetScreenSize(screenSize);
             startPoints = renderer.StartPoints;
             endPoints = renderer.EndPoints;
             walls = renderer.Walls;
 
+            // Update textures size
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             tempLineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24, 1, RenderTargetUsage.PreserveContents);
@@ -251,14 +263,18 @@ namespace TWP_Shared
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
 
+            // Update bloom fx
             bloomFilter?.UpdateResolution(screenSize.X, screenSize.Y);
+            // Redraw background
             renderer.RenderPanelToTexture(backgroundTexture);
 
             UpdateButtonsPosition();
-
-            // It's nearly impossible to update line hitboxes to the new screen resolution, because they are created real-time and are pixel perfect
-            // So simply abort tracing if lines are active in the moment of screen resize
-            AbortTracing();
+            
+            // Update lines
+            if (line != null)
+                line.UpdateHitboxes(renderer.LineWidth, startPoints[mainStartPointIndex], panel.Width, oldPanelZeroPoint, oldNodePadding, renderer.PuzzleConfig.Location, renderer.NodePadding);
+            if (lineMirror != null)
+                lineMirror.UpdateHitboxes(renderer.LineWidth, startPoints[mirrorStartPointIndex], panel.Width, oldPanelZeroPoint, oldNodePadding, renderer.PuzzleConfig.Location, renderer.NodePadding);
         }
 
         public override void Update(GameTime gameTime)

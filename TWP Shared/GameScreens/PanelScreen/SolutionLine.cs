@@ -18,8 +18,8 @@ namespace TWP_Shared
         private Rectangle head;
         public Rectangle Head { get => head; }
 
-        public int LineWidth { get; }
-        private Rectangle startCircle;
+        public int LineWidth { get; private set; }
+        public Rectangle StartCircle { get; private set; }
         private float startCircleScaleAnimation = 0.1f;
 
         public SolutionLine(Point start, int lineWidth, Rectangle startCircleBounds)
@@ -29,9 +29,9 @@ namespace TWP_Shared
             Hitboxes = hitboxes.AsReadOnly();
 
             LineWidth = lineWidth;
-            startCircle = startCircleBounds;
+            StartCircle = startCircleBounds;
 
-            hitboxes.Add(startCircle);
+            hitboxes.Add(StartCircle);
 
             head = new Rectangle(currentPos.X, currentPos.Y, LineWidth, LineWidth);
         }
@@ -89,6 +89,63 @@ namespace TWP_Shared
 
             return solution;
         }
+        
+        public void UpdateHitboxes(int lineWidth, Rectangle startCircleBoundsNew, int puzzleWidth, Point puzzleZeroPointOld, int nodePaddingOld, Point puzzleZeroPointNew, int nodePaddingNew)
+        {
+            LineWidth = lineWidth;
+            StartCircle = startCircleBoundsNew;
+
+            // Convert old points to new positions
+            points = points.Select(x => (x - puzzleZeroPointOld).Divide(nodePaddingOld).Multiply(nodePaddingNew) + puzzleZeroPointNew).ToList();
+            // Convert head
+            // Get how far head was offset from nearest node
+
+            // TODO find out a fix for mirrored lines, it should be pixel perfect
+
+            Vector2 currentPosOffsetOld = (currentPos - ((currentPos - puzzleZeroPointOld).Divide(nodePaddingOld).Multiply(nodePaddingOld) + puzzleZeroPointOld)).ToVector2();
+            // Calculate offset for new node padding
+            Vector2 currentPosOffsetNew = currentPosOffsetOld / nodePaddingOld * nodePaddingNew;
+            // Calculate new head current position
+            currentPos = (currentPos - puzzleZeroPointOld).Divide(nodePaddingOld).Multiply(nodePaddingNew) + puzzleZeroPointNew + currentPosOffsetNew.ToPoint();
+            head = new Rectangle(currentPos, new Point(LineWidth));
+
+            // Create hitboxes from each pair of points
+            hitboxes.Clear();
+            hitboxes.Add(StartCircle);
+            for (int i = 0; i < points.Count - 1; i++)
+                hitboxes.Add(CreateHitbox(points[i], points[i + 1]));
+
+            // Create fickle hitbox between last point and head
+            hitboxes.Add(CreateHitbox(points.Last(), currentPos));
+        }
+        /// <summary>
+        /// Rebuilds solution line from sequence of node IDs
+        /// </summary>
+        /// <param name="solution">Sequence of node IDs</param>
+        /// <param name="puzzleWidth">Puzzle width in blocks</param>
+        /// <param name="puzzleZeroPoint">Top left corner of puzzle in pixels</param>
+        /// <param name="nodePadding">Distance between two adjacent nodes in pixels</param>
+        public void RestoreFromSolution(List<int> solution, int lineWidth, Rectangle startCircleBounds, int puzzleWidth, Point puzzleZeroPoint, int nodePadding)
+        {
+            int width = puzzleWidth + 1;
+            Point NodeIdToPoint(int id) => new Point(id % width, id / width);
+
+            List<Point> points = solution.Select(x => NodeIdToPoint(x).Multiply(nodePadding) + puzzleZeroPoint).ToList();
+            for (int i = points.Count - 3; i >= 0; i--)
+            {
+                // Check all points by three. If three adjacent points are on the same line, then remove middle point. We need only corner points.
+                if (ThreePointsOnSameLine(points[i], points[i + 1], points[i + 2]))
+                    points.RemoveAt(i + 1);
+            }
+            // Create head from last point
+            currentPos = points[points.Count - 1];
+            // Remove last point
+            points.RemoveAt(points.Count - 1);
+            // Set new points
+            this.points = points;
+
+            UpdateHitboxes(lineWidth, startCircleBounds, puzzleWidth, puzzleZeroPoint, nodePadding, puzzleZeroPoint, nodePadding);
+        }
 
         public bool Move(Vector2 moveVector, IEnumerable<Rectangle> collisionHitboxes)
         {
@@ -143,7 +200,7 @@ namespace TWP_Shared
 
             // Re-insert start circle hitbox, so other line will not overlap
             if (startCircleWasRemoved)
-                hitboxes.Insert(0, startCircle);
+                hitboxes.Insert(0, StartCircle);
 
             return moveSuccessful;
         }
@@ -342,8 +399,8 @@ namespace TWP_Shared
             sb.Draw(texCircle, head, color ?? Color.White);
 
             //sb.Draw(texCircle, startCircle, color ?? Color.White);
-            float scale = (float) startCircle.Width / texCircle.Width;
-            sb.Draw(texCircle, startCircle.Center.ToVector2(), null, color ?? Color.White, 0, texCircle.Bounds.Center.ToVector2(), scale * startCircleScaleAnimation, SpriteEffects.None, 0);
+            float scale = (float) StartCircle.Width / texCircle.Width;
+            sb.Draw(texCircle, StartCircle.Center.ToVector2(), null, color ?? Color.White, 0, texCircle.Bounds.Center.ToVector2(), scale * startCircleScaleAnimation, SpriteEffects.None, 0);
             if (startCircleScaleAnimation < 1.0f)
                 startCircleScaleAnimation += 0.15f;
         }
