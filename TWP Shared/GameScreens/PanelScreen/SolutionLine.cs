@@ -413,8 +413,9 @@ namespace TWP_Shared
                     else
                         location = new Point(hitboxes[i].Location.X - LineWidth / 2, hitboxes[i].Location.Y);
 
-                    sb.Draw(texCircle, new Rectangle(new Point(location.X - LineWidth / 2, location.Y), new Point(LineWidth)), color ?? Color.White);
-                    sb.Draw(texCircle, new Rectangle(new Point(location.X + hitboxes[i].Width - LineWidth / 2, location.Y), new Point(LineWidth)), color ?? Color.White);
+                    // Size of the circle is 1 pixel smaller than LineWidth for whatever pixel-perfect-magic reason
+                    sb.Draw(texCircle, new Rectangle(new Point(location.X - LineWidth / 2, location.Y), new Point(LineWidth - 1)), color ?? Color.White);
+                    sb.Draw(texCircle, new Rectangle(new Point(location.X + hitboxes[i].Width - LineWidth / 2, location.Y), new Point(LineWidth - 1)), color ?? Color.White);
                 }
                 else
                 {
