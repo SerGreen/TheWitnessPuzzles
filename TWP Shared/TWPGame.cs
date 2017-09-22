@@ -18,7 +18,7 @@ namespace TWP_Shared
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
-        Point defaultScreenSize = new Point(400, 600);
+        Point defaultScreenSize = new Point(800, 480);
 
         public TWPGame()
         {
@@ -37,41 +37,25 @@ namespace TWP_Shared
             Window.ClientSizeChanged += ResizeScreen;
             this.Activated += (object sender, EventArgs e) => InputManager.IsFocused = true;
             this.Deactivated += (object sender, EventArgs e) => InputManager.IsFocused = false;
-
-#if ANDROID
-            SettingsManager.OrientationLockChanged += () =>
-            {
-                SetScreenOrientation(Window.CurrentOrientation);
-                graphics.ApplyChanges();
-            };
-#endif
         }
 
-        private void ResizeScreen(object sender, EventArgs e) => ScreenManager.Instance.UpdateScreenSize(Window.ClientBounds.Size);
-
-#if ANDROID
-        private void SetScreenOrientation(DisplayOrientation orientation)
+        private void ResizeScreen(object sender, EventArgs e)
         {
-            if (SettingsManager.IsOrientationLocked)
-            {
-                SettingsManager.ScreenOrientation = graphics.SupportedOrientations = orientation;
-                switch (orientation)
-                {
-                    case DisplayOrientation.LandscapeLeft:
-                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Landscape; break;
-                    case DisplayOrientation.LandscapeRight:
-                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.ReverseLandscape; break;
-                    case DisplayOrientation.Portrait:
-                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Portrait; break;
-                }
-            }
-            else
-            {
-                graphics.SupportedOrientations = DisplayOrientation.Portrait | DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
-                Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Sensor;
-            }
-        }
+#if ANDROID
+            // On my andoird 4.0.3 i have weird behaviour when backbuffer is automatically being resized wrong
+            // So i update it manually, TitleSafeArea has the right size of the free screeen area
+            graphics.PreferredBackBufferWidth = GraphicsDevice.DisplayMode.TitleSafeArea.Width;
+            graphics.PreferredBackBufferHeight = GraphicsDevice.DisplayMode.TitleSafeArea.Height;
+            graphics.ApplyChanges();
+
+            // Apply screen resize to active GameScreen
+            ScreenManager.Instance.UpdateScreenSize(GraphicsDevice.DisplayMode.TitleSafeArea.Size);
+#else
+            // But on PC it actually should be Window size, not the TitleSafeArea
+            ScreenManager.Instance.UpdateScreenSize(Window.ClientBounds.Size);
 #endif
+
+        }
 
         public void SetFullscreen(bool isFullscreen)
         {
@@ -95,97 +79,7 @@ namespace TWP_Shared
             graphics.ApplyChanges();
             ResizeScreen(null, null);
         }
-
-        // To be removed later
-        private Puzzle CreateTestPanel()
-        {
-            Puzzle panel = new SymmetryPuzzle(5, 5, true, Color.Aqua, Color.Yellow);
-            panel.Nodes[25].SetState(NodeState.Start);
-            panel.Nodes[28].SetState(NodeState.Start);
-            panel.Nodes[7].SetState(NodeState.Start);
-            panel.Nodes[10].SetState(NodeState.Start);
-            panel.Nodes[1].SetState(NodeState.Exit);
-            panel.Nodes[3].SetState(NodeState.Exit);
-            panel.Nodes[23].SetState(NodeState.Exit);
-            panel.Nodes[22].SetState(NodeState.Exit);
-            panel.Nodes[12].SetState(NodeState.Exit);
-            panel.Nodes[0].SetState(NodeState.Exit);
-            panel.Nodes[20].SetState(NodeState.Exit);
-            panel.Nodes[9].SetState(NodeState.Exit);
-            panel.Nodes[24].SetState(NodeState.Exit);
-            panel.Nodes[32].SetState(NodeState.Exit);
-            panel.Edges.Find(x => x.Id == 814)?.SetState(EdgeState.Broken);
-            panel.Edges.Find(x => x.Id == 1617)?.SetState(EdgeState.Broken);
-
-            panel.Nodes[14].SetStateAndColor(NodeState.Marked, Color.Yellow);
-            panel.Nodes[18].SetState(NodeState.Marked);
-            panel.Edges.Find(x => x.Id == 2021)?.SetStateAndColor(EdgeState.Marked, Color.Aqua);
-
-            panel.Grid[2, 0].Rule = new ColoredSquareRule(Color.Magenta);
-            panel.Grid[1, 1].Rule = new SunPairRule(Color.Magenta);
-            panel.Grid[4, 4].Rule = new ColoredSquareRule(Color.Lime);
-            panel.Grid[1, 4].Rule = new SunPairRule(Color.Lime);
-            panel.Grid[2, 1].Rule = new TriangleRule(1);
-            panel.Grid[3, 2].Rule = new TriangleRule(2);
-            panel.Grid[3, 1].Rule = new TriangleRule(3);
-            panel.Grid[4, 2].Rule = new EliminationRule();
-            panel.Grid[2, 3].Rule = new EliminationRule(Color.Magenta);
-
-            return panel;
-        }
-        private Puzzle CreateTestPanel2()
-        {
-            Puzzle panel = new SymmetryPuzzle(7, 4, true, Color.Aqua, Color.Yellow);
-            panel.Nodes[16].SetState(NodeState.Start);
-            panel.Nodes[23].SetState(NodeState.Start);
-            panel.Nodes[3].SetState(NodeState.Exit);
-            panel.Nodes[36].SetState(NodeState.Exit);
-            panel.Nodes[34].SetState(NodeState.Marked);
-            panel.Edges.Find(x => x.Id == 1819)?.SetState(EdgeState.Marked);
-            panel.Edges.Find(x => x.Id == 1920)?.SetState(EdgeState.Marked);
-            panel.Grid[0, 2].Rule = new ColoredSquareRule(Color.Yellow);
-            panel.Grid[2, 0].Rule = new ColoredSquareRule(Color.Aqua);
-            panel.Grid[4, 0].Rule = new ColoredSquareRule(Color.Yellow);
-            panel.Grid[6, 1].Rule = new ColoredSquareRule(Color.Yellow);
-            panel.Grid[3, 3].Rule = new SunPairRule(Color.Yellow);
-            panel.Grid[2, 2].Rule = new EliminationRule();
-            panel.Grid[3, 2].Rule = new EliminationRule();
-            panel.Grid[6, 0].Rule = new TriangleRule(1);
-            panel.Grid[5, 1].Rule = new TriangleRule(2);
-
-            panel.Grid[5, 2].Rule = new TetrisRotatableRule(new bool[,] { { false, true }, {false, true }, { true, true } });
-            panel.Grid[4, 3].Rule = new TetrisRule(new bool[,] { { false, true }, { true, true }, { false, true } });
-            panel.Grid[5, 0].Rule = new TetrisRule(new bool[,] { { true } }, true);
-
-            return panel;
-        }
-        private Puzzle CreateTestPanel3()
-        {
-            Puzzle panel = new Puzzle(5, 4);
-            panel.Nodes[25].SetState(NodeState.Start);
-            panel.Nodes[24].SetState(NodeState.Exit);
-            panel.Nodes[3].SetState(NodeState.Exit);
-            panel.Nodes[27].SetState(NodeState.Exit);
-            panel.Edges.Find(x => x.Id == 01)?.SetState(EdgeState.Marked);
-            panel.Edges.Find(x => x.Id == 410)?.SetState(EdgeState.Marked);
-            panel.Edges.Find(x => x.Id == 208)?.SetState(EdgeState.Broken);
-            panel.Edges.Find(x => x.Id == 511)?.SetState(EdgeState.Broken);
-            panel.Edges.Find(x => x.Id == 2127)?.SetState(EdgeState.Broken);
-            panel.Grid[0, 0].Rule = new TriangleRule(3);
-            panel.Grid[3, 0].Rule = new TriangleRule(2);
-            panel.Grid[4, 0].Rule = new TriangleRule(1);
-            panel.Grid[0, 1].Rule = new TetrisRule(new bool[,] { { true } });
-            panel.Grid[4, 1].Rule = new TriangleRule(1);
-            panel.Grid[0, 2].Rule = new TetrisRule(new bool[,] { { true } });
-            panel.Grid[1, 2].Rule = new TetrisRule(new bool[,] { { true } });
-            panel.Grid[2, 2].Rule = new TetrisRule(new bool[,] { { true } });
-            panel.Grid[4, 2].Rule = new EliminationRule();
-            panel.Grid[3, 3].Rule = new TriangleRule(1);
-            
-            return panel;
-        }
-
-
+        
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
         /// This is where it can query for any required services and load any non-graphic
@@ -226,6 +120,7 @@ namespace TWP_Shared
                 Window.IsBorderless = true;
                 graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
                 graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+                Window.Position = Point.Zero;
             }
             else
             {
@@ -240,6 +135,30 @@ namespace TWP_Shared
 
 #endif
         }
+
+#if ANDROID
+        private void SetScreenOrientation(DisplayOrientation orientation)
+        {
+            if (SettingsManager.IsOrientationLocked)
+            {
+                SettingsManager.ScreenOrientation = graphics.SupportedOrientations = orientation;
+                switch (orientation)
+                {
+                    case DisplayOrientation.LandscapeLeft:
+                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Landscape; break;
+                    case DisplayOrientation.LandscapeRight:
+                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.ReverseLandscape; break;
+                    case DisplayOrientation.Portrait:
+                        Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Portrait; break;
+                }
+            }
+            else
+            {
+                graphics.SupportedOrientations = DisplayOrientation.Portrait | DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
+                Activity.RequestedOrientation = Android.Content.PM.ScreenOrientation.Sensor;
+            }
+        }
+#endif
 
         /// <summary>
         /// LoadContent will be called once per game and is the place to load

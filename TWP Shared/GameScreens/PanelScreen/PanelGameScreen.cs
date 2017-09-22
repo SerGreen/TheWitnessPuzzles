@@ -74,10 +74,10 @@ namespace TWP_Shared
             texDelete = TextureProvider["img/delete"];
             fntDebug = FontProvider["font/fnt_small"];
 
-            // Fullscreen textures for 1. background, 2. fading solution lines, 3. red blinking rules for error highlighting and 4. displaying eliminated rules with dim colors
+            // Fullscreen textures
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             tempLineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
-            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24, 1, RenderTargetUsage.PreserveContents);
+            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             lineFadeTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
@@ -258,7 +258,7 @@ namespace TWP_Shared
             // Update textures size
             backgroundTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             tempLineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
-            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y, false, GraphicsDevice.PresentationParameters.BackBufferFormat, DepthFormat.Depth24, 1, RenderTargetUsage.PreserveContents);
+            lineTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             lineFadeTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             errorsBlinkTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
             eliminatedErrorsTexture = new RenderTarget2D(GraphicsDevice, screenSize.X, screenSize.Y);
@@ -601,7 +601,6 @@ namespace TWP_Shared
         {
             // Draw lines to texture and apply blink-highlighting effect if line is at end point
             RenderLinesToTexture(lineTexture);
-            AddFinishTracingBlink();
 
             // Draw bloom when elimination is not not started or when panel is solved
             if (line != null && (!panelState.State.HasFlag(PanelStates.EliminationStarted) || panelState.State.HasFlag(PanelStates.Solved)))
@@ -689,23 +688,18 @@ namespace TWP_Shared
             internalBatch.Draw(tempLineTexture, canvas.Bounds, (fillColor == null && !panelState.State.HasFlag(PanelStates.Solved)) ? linesTint : Color.White);
             internalBatch.End();
 
-            // Drop the render target
-            GraphicsDevice.SetRenderTarget(null);
-        }
-        private void AddFinishTracingBlink()
-        {
+            // Add finish line pulsation when line is at the end point
             if (panelState.State.HasFlag(PanelStates.FinishTracing))
             {
                 // When finish tracing is happening, lineFadeTexture has the image of lines in white color
-                // Draw this image on top of the lines with required tint in additive blend mode
-                GraphicsDevice.SetRenderTarget(lineTexture);
+                // Draw this image with required tint in additive blend mode
                 internalBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive);
-
                 internalBatch.Draw(lineFadeTexture, lineTexture.Bounds, linesFinishTracingTint * panelState.FinishTracingBlinkOpacity);
-
                 internalBatch.End();
-                GraphicsDevice.SetRenderTarget(null);
             }
+
+            // Drop the render target
+            GraphicsDevice.SetRenderTarget(null);
         }
 
         private void DebugDrawNodeIDs(SpriteBatch spriteBatch)

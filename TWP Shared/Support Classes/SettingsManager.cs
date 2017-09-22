@@ -19,8 +19,8 @@ namespace TWP_Shared
             set => SoundManager.Mute = value;
         }
 
-        public static bool IsFullscreen { get; set; } = false;
-        public static bool BloomFX { get; set; } = true;
+        public static bool IsFullscreen { get; set; } = true;
+        public static bool BloomFX { get; set; } = false;
         public static float Sensitivity { get; set; } = 1.0f;
 
 #if ANDROID
@@ -44,16 +44,15 @@ namespace TWP_Shared
         public static void SaveSettings()
         {
             StringBuilder file = new StringBuilder();
-            file.Append(IsMute ? 1 : 0).Append(":");
-            file.Append((int) (MasterVolume * 1000)).Append(":");
-            file.Append(IsFullscreen ? 1 : 0).Append(":");
-            file.Append(BloomFX ? 1 : 0).Append(":");
-            file.Append((int) (Sensitivity * 1000));
+            file.Append("mute = ").Append(IsMute ? 1 : 0).Append("\n");
+            file.Append("volume = ").Append(MasterVolume).Append("\n");
+            file.Append("fullscreen = ").Append(IsFullscreen ? 1 : 0).Append("\n");
+            file.Append("bloom = ").Append(BloomFX ? 1 : 0).Append("\n");
+            file.Append("sensitivity = ").Append(Sensitivity).Append("\n");
 
 #if ANDROID
-            file.Append(":");
-            file.Append(IsOrientationLocked ? 1 : 0).Append(":");
-            file.Append((int) ScreenOrientation);
+            file.Append("orientationLock = ").Append(IsOrientationLocked ? 1 : 0).Append("\n");
+            file.Append("orientation = ").Append((int) ScreenOrientation).Append("\n");
 #endif
 
             FileStorageManager.SaveSettingsFile(file.ToString());
@@ -62,24 +61,35 @@ namespace TWP_Shared
         public static void LoadSettings()
         {
             string file = FileStorageManager.LoadSettingsFile();
-            if(file != null)
+            if (file != null)
             {
-                int[] data = Array.ConvertAll(file.Split(":".ToCharArray(), StringSplitOptions.RemoveEmptyEntries), int.Parse);
-                if (data.Length >= 5)
+                string[] lines = file.Split("\n".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                // Split options key/value
+                Dictionary<string, string> options = new Dictionary<string, string>();
+                foreach (string line in lines)
                 {
-                    IsMute = data[0] == 1;
-                    MasterVolume = data[1] / 1000f;  // 0..1000 interval into float 0.0 .. 1.0
-                    IsFullscreen = data[2] == 1;
-                    BloomFX = data[3] == 1;
-                    Sensitivity = data[4] / 1000f;
-#if ANDROID
-                    if(data.Length >= 7)
-                    {
-                        _isOrientationLocked = data[5] == 1;
-                        ScreenOrientation = (DisplayOrientation) data[6];
-                    }
-#endif
+                    string[] keyValue = line.Split("=".ToCharArray(), StringSplitOptions.RemoveEmptyEntries);
+                    if (keyValue.Length == 2)
+                        options.Add(keyValue[0].Trim(), keyValue[1].Trim());
                 }
+
+                // Now we can use options dictionary to update settings
+                if (options.ContainsKey("mute"))
+                    IsMute = options["mute"] == "1";
+                if (options.ContainsKey("volume"))
+                    MasterVolume = float.Parse(options["volume"]);
+                if (options.ContainsKey("fullscreen"))
+                    IsFullscreen = options["fullscreen"] != "0";
+                if (options.ContainsKey("bloom"))
+                    BloomFX = options["bloom"] == "1";
+                if (options.ContainsKey("sensitivity"))
+                    Sensitivity = float.Parse(options["sensitivity"]);
+#if ANDROID
+                if (options.ContainsKey("orientationLock"))
+                    _isOrientationLocked = options["orientationLock"] == "1";
+                if (options.ContainsKey("orientation"))
+                    ScreenOrientation = (DisplayOrientation) int.Parse(options["orientation"]);
+#endif
             }
         }
     }
