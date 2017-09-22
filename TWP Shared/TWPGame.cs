@@ -37,6 +37,15 @@ namespace TWP_Shared
             Window.ClientSizeChanged += ResizeScreen;
             this.Activated += (object sender, EventArgs e) => InputManager.IsFocused = true;
             this.Deactivated += (object sender, EventArgs e) => InputManager.IsFocused = false;
+
+#if ANDROID
+            SettingsManager.OrientationLockChanged += () =>
+            {
+                SetScreenOrientation(Window.CurrentOrientation);
+                graphics.ApplyChanges();
+            };
+
+#endif
         }
 
         private void ResizeScreen(object sender, EventArgs e)
