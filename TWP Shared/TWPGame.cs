@@ -59,6 +59,18 @@ namespace TWP_Shared
 
             // Apply screen resize to active GameScreen
             ScreenManager.Instance.UpdateScreenSize(GraphicsDevice.DisplayMode.TitleSafeArea.Size);
+
+            // Dirteh haxx here!
+            // Touch panel behaves weirdly after screen rotation, like being stretched horizontally, 
+            // so the coordinates of the touch point is not where your finger is, but slightly to the left.
+            // But! If you call ApplyChanges again, then it gets back to normal.
+            // But! You can't call it right away, there should be slight delay for hacky magic to happen.
+            // I know, right?! (.__.)
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                Thread.Sleep(200);
+                graphics.ApplyChanges();
+            });
 #else
             // But on PC it actually should be Window size, not the TitleSafeArea
             ScreenManager.Instance.UpdateScreenSize(Window.ClientBounds.Size);
