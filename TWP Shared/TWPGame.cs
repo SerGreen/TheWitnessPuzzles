@@ -214,7 +214,7 @@ namespace TWP_Shared
         protected override void Update(GameTime gameTime)
         {
             // Go to the previous screen when Back button is pressed. If we are at the last screen, then Exit.
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
+            if (InputManager.IsFocused && (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape)))
             {
                 bool? goBackResult = ScreenManager.Instance.GoBack();
                 if (goBackResult != null)
