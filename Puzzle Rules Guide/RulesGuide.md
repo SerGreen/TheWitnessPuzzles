@@ -39,7 +39,7 @@ One of the symmetric lines may be invisible, but it is still there.
 <img src="./lines_3.png" width="200" />&nbsp;
 <img src="./lines_4.png" width="200" />
 
-Lines can split panel into areas. Each area is isolated from other areas.
+Lines will split panel into areas. Each area is isolated from other areas.
 
 <img src="./lines_5.png" width="600" />  
 
@@ -81,7 +81,7 @@ It may has a color that will interfere with a sun rule.
 <img src="./eraser_2.png" height="250" />
 
 ## Triangles rule / _Doritos rule_
-There may be one, two or three orange triangles in a puzzle block. This rule means that exactly one, two or three edges of this block must be adjacent to solution line.
+There may be one, two or three orange triangles in a puzzle block. This rule means that exactly one, two or three edges of this block must be adjacent to the solution line(s).
 
 <img src="./triangles_1.png" height="250" />&nbsp;
 <img src="./triangles_2.png" height="250" />
