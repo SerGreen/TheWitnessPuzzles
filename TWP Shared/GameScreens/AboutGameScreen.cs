@@ -29,7 +29,7 @@ namespace TWP_Shared
                 "If you have not played his games yet ",
                 "(The Witness and Braid), you should definitely do it.",
                 "",
-                "All rights to The Witness and it's sound assets ",
+                "All rights to The Witness and its sound assets ",
                 "belong to Jonathan Blow and Thekla Inc.",
                 "",
                 "SerGreen — 2017"

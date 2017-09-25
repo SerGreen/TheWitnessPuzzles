@@ -19,7 +19,12 @@ namespace TWP_Shared
             set => SoundManager.Mute = value;
         }
 
-        public static bool IsFullscreen { get; set; } = true;
+        public static bool IsFullscreen { get; set; }
+#if ANDROID
+                                                        = true;     // On Android fullscreen is On by default
+#else
+                                                        = false;    // On Windows fullscreen is Off by default
+#endif
         public static bool BloomFX { get; set; } = false;
         public static float Sensitivity { get; set; } = 1.0f;
 
