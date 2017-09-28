@@ -23,6 +23,7 @@ namespace TWP_Shared
         public static void Initialize(Game game)
         {
             Game = game;
+            IsFocused = game.IsActive;
             Update();
         }
 

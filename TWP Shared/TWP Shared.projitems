@@ -17,7 +17,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TabButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\ToggleButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TwoStateButton.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\ColorPalettesLibrary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\ColorPalettesLibrary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\DependencyInjector.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\EditorGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\EndPoint.cs" />

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.sergreen.thewitnesspuzzles" android:versionName="1.0.2" android:installLocation="preferExternal" android:versionCode="3">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.sergreen.thewitnesspuzzles" android:versionName="1.0.3" android:installLocation="preferExternal" android:versionCode="4">
 	<uses-sdk android:minSdkVersion="8" android:targetSdkVersion="25" />
 	<application android:label="The Witness Puzzles" android:icon="@drawable/Icon"></application>
 </manifest>
