@@ -11,8 +11,9 @@ namespace TWP_Shared
     public static class InputManager
     {
         private static Game Game;
-        
+
         private static int moveStep = 5;    // used for keyboard movement
+        private static bool mouseLocked = false; // if mouse is locked in center of window
 
         private static List<GestureSample> gestures;
         private static KeyboardState prevKB;
@@ -32,6 +33,9 @@ namespace TWP_Shared
             gestures = GetGestures().ToList();
             prevMouse = Mouse.GetState();
             prevKB = Keyboard.GetState();
+
+            if (mouseLocked && IsFocused)
+                ResetMouseToCenter();
         }
         private static IEnumerable<GestureSample> GetGestures()
         {
@@ -74,9 +78,33 @@ namespace TWP_Shared
                 if (Keyboard.GetState().IsKeyDown(Keys.Left)) result.X -= moveStep;
                 if (Keyboard.GetState().IsKeyDown(Keys.Down)) result.Y += moveStep;
                 if (Keyboard.GetState().IsKeyDown(Keys.Up)) result.Y -= moveStep;
+
+                if (mouseLocked)
+                {
+                    Point center = Game.Window.ClientBounds.Center - Game.Window.ClientBounds.Location;
+                    Point mousePos = Mouse.GetState().Position;
+                    result += (mousePos - center).ToVector2();
+                }
             }
 
             return result * SettingsManager.Sensitivity;
+        }
+
+        public static void LockMouse()
+        {
+            mouseLocked = true;
+            Game.IsMouseVisible = false;
+            ResetMouseToCenter();
+        }
+        public static void UnlockMouse()
+        {
+            mouseLocked = false;
+            Game.IsMouseVisible = true;
+        }
+        private static void ResetMouseToCenter()
+        {
+            Point center = Game.Window.ClientBounds.Center - Game.Window.ClientBounds.Location;
+            Mouse.SetPosition(center.X, center.Y);
         }
 
         /// <summary>

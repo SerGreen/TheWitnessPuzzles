@@ -333,6 +333,7 @@ namespace TWP_Shared
                         foreach (Rectangle startPoint in startPoints)
                             if (startPoint.Contains(tap.Value))
                             {
+                                InputManager.LockMouse();
                                 panelState.ResetToNeutral();
                                 SoundManager.PlayOnce(Sound.StartTracing);
                                 SoundManager.PlayLoop(SoundLoop.Tracing);
@@ -356,6 +357,7 @@ namespace TWP_Shared
                     }
                     else
                     {
+                        InputManager.UnlockMouse();
                         SoundManager.StopLoop(SoundLoop.Tracing);
                         SoundManager.StopLoop(SoundLoop.PathComplete);
 
