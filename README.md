@@ -1,4 +1,4 @@
-# The Witness Puzzles
+![TWP_logo](./Screenshots/TWP_Logo.png)
 
 This is a puzzle game for Android (executable for Windows is also available), that i decided to create after completing [Jonathan Blow](https://twitter.com/jonathan_blow)'s game [The Witness](http://store.steampowered.com/app/210970/The_Witness).
 I truly admire this game, and i wanted more of it. So i created The Witness Puzzles.  
