@@ -466,7 +466,7 @@ namespace TWP_Shared
         }
         private void MoveLine(Vector2 moveVector)   
         {
-            if (moveVector != Vector2.Zero && line != null && !panelState.State.HasFlag(PanelStates.EliminationStarted))
+            if (moveVector != Vector2.Zero && line != null && !panelState.State.HasFlag(PanelStates.EliminationStarted) && !panelState.State.HasFlag(PanelStates.Solved))
             {
                 Vector2 firstMove, secondMove;
                 if (Math.Abs(moveVector.X) > Math.Abs(moveVector.Y))
