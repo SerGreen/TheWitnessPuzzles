@@ -51,7 +51,7 @@ namespace TWP_Shared
             texSolved = textureProvider["img/solved"];
             texDiscarded = textureProvider["img/delete"];
             texFavourite = textureProvider["img/like0"];
-            renderer = new PanelRenderer(null, screenSize, textureProvider, GraphicsDevice);
+            renderer = new PanelRenderer(null, screenSize, textureProvider, fontProvider, GraphicsDevice);
             
             InitializeScreenSizeDependent();
             SpawnButtons();

@@ -32,6 +32,7 @@ namespace TWP_Shared
         Texture2D[] texTriangle = new Texture2D[3];
         Texture2D[] texTetris = new Texture2D[2];
         Dictionary<int, RenderTarget2D> renderedTetrisTextures = new Dictionary<int, RenderTarget2D>();
+        SpriteFont font;
         
         public Point PuzzleDimensions { get; private set; }     // Size of the puzzle in blocks
         public Rectangle PuzzleConfig { get; private set; }     // Location on screen and size of the puzzle in pixels
@@ -43,11 +44,12 @@ namespace TWP_Shared
         public int NodePadding { get; private set; }            // Distance between two nodes on screen in pixel, is equal to (lineWidth + blockWidth)
         private Point tetrisTextureSize;
 
-        public PanelRenderer(Puzzle panel, Point screenSize, Dictionary<string, Texture2D> TextureProvider, GraphicsDevice graphicsDevice)
+        public PanelRenderer(Puzzle panel, Point screenSize, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, GraphicsDevice graphicsDevice)
         {
             this.panel = panel;
             this.screenSize = screenSize;
             GraphicsDevice = graphicsDevice;
+            font = FontProvider["font/fnt_small"];
             LoadContent(TextureProvider);
             InitializePanel();
             if (panel != null)
@@ -287,7 +289,7 @@ namespace TWP_Shared
             return new Point(x, y);
         }
 
-        public void RenderPanelToTexture(RenderTarget2D canvas)
+        public void RenderPanelToTexture(RenderTarget2D canvas, bool drawPanelSeed = false)
         {
             using (SpriteBatch spriteBatch = new SpriteBatch(GraphicsDevice))
             {
@@ -313,6 +315,9 @@ namespace TWP_Shared
 
                 DrawAllRules(spriteBatch);
                 DrawBorders(spriteBatch);
+
+                if (drawPanelSeed && panel.Seed >= 0)
+                    DrawSeed(spriteBatch);
 
                 spriteBatch.End();
                 // Drop the render target
@@ -368,6 +373,16 @@ namespace TWP_Shared
             spriteBatch.Draw(texPixel, new Rectangle(0, 0, borderWidth, screenSize.Y), BorderColor);
             spriteBatch.Draw(texPixel, new Rectangle(screenSize.X - borderWidth, 0, borderWidth, screenSize.Y), BorderColor);
             spriteBatch.Draw(texPixel, new Rectangle(0, screenSize.Y - borderWidth, screenSize.X, borderWidth), BorderColor);
+        }
+        private void DrawSeed(SpriteBatch spriteBatch)
+        {
+            float targetWidth = Math.Min(screenSize.X, screenSize.Y) * 0.2f;
+            float targetHeight = (int) (Math.Min(screenSize.X, screenSize.Y) * bordersWidth);
+            Vector2 textSize = font.MeasureString(panel.Seed.ToString("D9"));
+            float scale = targetHeight / textSize.Y;
+            textSize *= scale;
+
+            spriteBatch.DrawString(font, panel.Seed.ToString("D9"), new Vector2(screenSize.X / 2 - textSize.X / 2, 0), panel.ButtonsColor, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
         }
         private void DrawAllRules(SpriteBatch sb)
         {

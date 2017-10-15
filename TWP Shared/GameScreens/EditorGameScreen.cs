@@ -34,7 +34,7 @@ namespace TWP_Shared
         public EditorGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
             : base(screenSize, device, textureProvider, fontProvider, Content)
         {
-            renderer = new PanelRenderer(null, screenSize, textureProvider, GraphicsDevice)
+            renderer = new PanelRenderer(null, screenSize, textureProvider, fontProvider, GraphicsDevice)
             {
                 BackgroundColor = Color.White,
                 BorderColor = new Color(39, 166, 204),
@@ -42,7 +42,7 @@ namespace TWP_Shared
             };
 
             int minScreenDim = Math.Min(screenSize.X, screenSize.Y);
-            miniRenderer = new PanelRenderer(null, new Point((int) (minScreenDim * 0.2f)), textureProvider, GraphicsDevice)
+            miniRenderer = new PanelRenderer(null, new Point((int) (minScreenDim * 0.2f)), textureProvider, fontProvider, GraphicsDevice)
             {
                 WallColor = Color.Black,
                 BorderColor = Color.Black,

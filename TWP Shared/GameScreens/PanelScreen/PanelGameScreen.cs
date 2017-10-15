@@ -60,7 +60,7 @@ namespace TWP_Shared
             this.panel = panel;
             IsStandalonePanel = standalonePanel;
             internalBatch = new SpriteBatch(GraphicsDevice);
-            renderer = new PanelRenderer(panel, screenSize, TextureProvider, device);
+            renderer = new PanelRenderer(panel, screenSize, TextureProvider, FontProvider, device);
             startPoints = renderer.StartPoints;
             endPoints = renderer.EndPoints;
             walls = renderer.Walls;
@@ -92,7 +92,7 @@ namespace TWP_Shared
                 bloomFilter.BloomStrengthMultiplier = 0.75f;
             }
 
-            renderer.RenderPanelToTexture(backgroundTexture);
+            renderer.RenderPanelToTexture(backgroundTexture, true);
 
             SpawnButtons();
             UpdateButtonsColor();
@@ -219,7 +219,7 @@ namespace TWP_Shared
                 startPoints = renderer.StartPoints;
                 endPoints = renderer.EndPoints;
                 walls = renderer.Walls;
-                renderer.RenderPanelToTexture(backgroundTexture);
+                renderer.RenderPanelToTexture(backgroundTexture, true);
                 UpdateButtonsColor();
                 UpdateButtonsPosition();
             }
@@ -266,7 +266,7 @@ namespace TWP_Shared
             // Update bloom fx
             bloomFilter?.UpdateResolution(screenSize.X, screenSize.Y);
             // Redraw background
-            renderer.RenderPanelToTexture(backgroundTexture);
+            renderer.RenderPanelToTexture(backgroundTexture, true);
 
             UpdateButtonsPosition();
 
@@ -521,10 +521,10 @@ namespace TWP_Shared
                     if(!firstMoveDone)
                     {
                         // If lesser axis is [almost] non existent, then check in both directions if there's a corner nearby
-                        // If there is, then move in that direction half of the main axis distance
+                        // If there is, then move in that direction 75% of the main axis distance
                         float secondMoveLength = Math.Max(Math.Abs(secondMove.X), Math.Abs(secondMove.Y));
                         if (secondMoveLength <= firstMoveLength * 0.1f)
-                            secondMove = line.GetMoveVectorNearCorner(moveVector, walls) * (firstMoveLength / 2);
+                            secondMove = line.GetMoveVectorNearCorner(moveVector, walls) * (firstMoveLength * 0.75f);
 
                         if(secondMove != Vector2.Zero)
                         {
