@@ -609,27 +609,37 @@ namespace TWP_Shared
                     
                     Color? squareCol = sec.Blocks.Select(x => x.Rule).OfType<ColoredSquareRule>().FirstOrDefault()?.Color;
                     Color? sunCol = sec.Blocks.Select(x => x.Rule).OfType<SunPairRule>().FirstOrDefault()?.Color;
-
+                    
                     // Create colored square
-                    if (ruleType == 0 && squareCol != null && colors.Count > 1)
+                    if (ruleType == 0)
                     {
-                        Color col;
-                        do
-                            col = colors[rnd.Next(colors.Count)];
-                        while (col == squareCol.Value);
-                        secBlocks[index].Rule = new ColoredSquareRule(col);
+                        if (squareCol != null && colors.Count > 1)
+                        {
+                            Color col;
+                            do
+                                col = colors[rnd.Next(colors.Count)];
+                            while (col == squareCol.Value);
+                            secBlocks[index].Rule = new ColoredSquareRule(col);
+                        }
+                        else
+                            ruleType++;
                     }
                     // Create sun
-                    else if (ruleType == 1 && ((squareCol != null && sunCol != null && colors.Count > 2) || ((squareCol == null || sunCol == null) && colors.Count > 1)))
+                    if (ruleType == 1)
                     {
-                        Color col;
-                        do
-                            col = colors[rnd.Next(colors.Count)];
-                        while ((squareCol != null && col == squareCol) || (sunCol != null && col == sunCol));
-                        secBlocks[index].Rule = new SunPairRule(col);
+                        if ((squareCol != null && sunCol != null && colors.Count > 2) || ((squareCol == null || sunCol == null) && colors.Count > 1))
+                        {
+                            Color col;
+                            do
+                                col = colors[rnd.Next(colors.Count)];
+                            while ((squareCol != null && col == squareCol) || (sunCol != null && col == sunCol));
+                            secBlocks[index].Rule = new SunPairRule(col);
+                        }
+                        else
+                            ruleType++;
                     }
                     // Create triangle
-                    else if (ruleType == 2)
+                    if (ruleType == 2)
                     {
                         int trianglePower = rnd.Next(1, 4);
                         // Make sure that we are not creating triangle that actually fit to solution line
@@ -638,7 +648,7 @@ namespace TWP_Shared
                         secBlocks[index].Rule = new TriangleRule(trianglePower);
                     }
                     // Create tetris
-                    else if (ruleType == 3)
+                    if (ruleType == 3)
                     {
                         int tetrominoSize = rnd.Next(1, Math.Min(4, secBlocks.Count));
                         // If there are no tetrominos in sector, make sure that we are not creating tetromino that actually fit into sector
