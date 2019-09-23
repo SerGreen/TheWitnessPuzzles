@@ -590,6 +590,8 @@ namespace TWP_Shared
                             int index = rnd.Next(secNodes.Count);
                             secNodes[index].SetState(NodeState.Marked);
                         }
+                        else
+                            isHexagon = false;
                     }
                     else
                     {
@@ -599,9 +601,11 @@ namespace TWP_Shared
                             int index = rnd.Next(secEdges.Count);
                             secEdges[index].SetState(EdgeState.Marked);
                         }
+                        else
+                            isHexagon = false;
                     }
                 }
-                else
+                if (!isHexagon)
                 {
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
                     int index = rnd.Next(secBlocks.Count);
