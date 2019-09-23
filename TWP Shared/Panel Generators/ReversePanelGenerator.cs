@@ -591,9 +591,9 @@ namespace TWP_Shared
                             secNodes[index].SetState(NodeState.Marked);
                         }
                         else
-                            isHexagon = false;
+                            isNode = false;
                     }
-                    else
+                    if(!isNode)
                     {
                         var secEdges = sec.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).ToList();
                         if (secEdges.Count > 0)
@@ -601,11 +601,9 @@ namespace TWP_Shared
                             int index = rnd.Next(secEdges.Count);
                             secEdges[index].SetState(EdgeState.Marked);
                         }
-                        else
-                            isHexagon = false;
                     }
                 }
-                if (!isHexagon)
+                else
                 {
                     var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
                     int index = rnd.Next(secBlocks.Count);
