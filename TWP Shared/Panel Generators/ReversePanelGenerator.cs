@@ -590,8 +590,10 @@ namespace TWP_Shared
                             int index = rnd.Next(secNodes.Count);
                             secNodes[index].SetState(NodeState.Marked);
                         }
+                        else
+                            isNode = false;
                     }
-                    else
+                    if(!isNode)
                     {
                         var secEdges = sec.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).ToList();
                         if (secEdges.Count > 0)
