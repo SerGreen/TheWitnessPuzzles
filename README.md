@@ -34,6 +34,8 @@ It has to be noted though that _**figuring out what those rules are in the first
 - [MonoGame Framework 3.6](http://www.monogame.net)
 - Slightly modified [BloomFilter for Monogame and XNA](https://github.com/Kosmonaut3d/BloomFilter-for-Monogame-and-XNA) shader by Kosmonaut3d
 - You'll need `Mobile development with .NET` workload (namely `Xamarin`) as well as `Android NDK (R13B)` component in your Visual Studio in order to compile Android project
+- [Roboto font](https://fonts.google.com/specimen/Roboto) has to be installed in the system in order to compile MonoGame resources
+- Target Android SDK: API level 25
 
 ## Solution structure
 - `TWP Android` – Android build project, contains only main activity and configurations.
@@ -64,7 +66,7 @@ static DI()
 Panel consists from three types of parts: nodes, edges and blocks.
 - Node can be empty node, start point, end point or marked, i.e. has a hexagon rule on it. They have IDs and are numbered from 0 starting from top-left node, line by line.
 - Edge connects two nodes. Edge can be normal, broken or marked, i.e. has a hexagon rule on it. They have IDs, that are determined as `nodeA_ID * 100 + nodeB_ID`, where nodeA is a node with the lowest ID number. For example, the ID of the edge between nodes 1 and 5 is 105 (0105), between 16 and 21 is 1621, between 0 and 6 is just 6 (0006).
-- Blocks are the squares between the edges. Block can has a rule attached to it, such as Triangle, Sun, Tetris, etc.
+- Blocks are the squares between the edges. Block can have a rule attached to it, such as Triangle, Sun, Tetris, etc.
 
 You can create regular panel or symmetric panel like this:
 ```c#
