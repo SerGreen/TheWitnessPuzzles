@@ -22,7 +22,8 @@ namespace TWP_Shared
 
         public TWPGame()
         {
-            graphics = new GraphicsDeviceManager(this);
+            graphics = new GraphicsDeviceManager(this) { SynchronizeWithVerticalRetrace = true };
+            IsFixedTimeStep = false;
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
             SettingsManager.LoadSettings();
