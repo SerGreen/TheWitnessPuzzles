@@ -30,7 +30,7 @@ namespace TWP_Shared
 
         SpriteBatch internalBatch;
         SpriteFont fntDebug = null;
-        Texture2D texPixel, texCircle, texClose, texDelete, texNext;
+        Texture2D texPixel, texCircle, texClose, texDelete, texNext, texSeed;
         Texture2D[] texLike = new Texture2D[2];
         
         RenderTarget2D backgroundTexture;
@@ -72,6 +72,7 @@ namespace TWP_Shared
             texLike[1] = TextureProvider["img/like1"];
             texNext = TextureProvider["img/next"];
             texDelete = TextureProvider["img/delete"];
+            texSeed = TextureProvider["img/seed"];
             fntDebug = FontProvider["font/fnt_small"];
 
             // Fullscreen textures
@@ -121,6 +122,7 @@ namespace TWP_Shared
             buttons.Add(btnLike);
 
             // When panel is standalone, it cannot have Next button
+            // It won't have a seed button either
             if (!IsStandalonePanel)
             {
                 TwoStateButton btnNext = new TwoStateButton(new Rectangle(), texDelete, texNext, null, null, null, false);
@@ -147,19 +149,31 @@ namespace TWP_Shared
                     fade.Restart();
                 };
                 buttons.Add(btnNext);
+
+                TouchButton btnSeed = new TouchButton(new Rectangle(), texSeed, null);
+                btnSeed.Click += () => {
+                    AbortTracing();
+                    SoundManager.PlayOnce(Sound.ButtonNext);
+                    ScreenManager.Instance.AddScreen<GameScreens.EnterSeedGameScreen>(replaceCurrent: false, doFadeAnimation: true);
+                };
+                buttons.Add(btnSeed);
             }
 
             UpdateButtonsPosition();
         }
         private void UpdateButtonsPosition()
         {
+            // upd: Ew, i hardcoded button positions. Just... why, past me?
             int screenMin = Math.Min(ScreenSize.X, ScreenSize.Y);
             bool screenHorizontal = ScreenSize.X > ScreenSize.Y;
 
             // Close
-            buttons[0].SetPositionAndSize(new Point(Math.Min((int) (screenMin * 0.05f), 50)), new Point((int) (screenMin * 0.1f)));
+            int minOffset = Math.Min((int)(screenMin * 0.05f), 50);
+            int smallBtnSize = (int)(screenMin * 0.1f);
+            buttons[0].SetPositionAndSize(new Point(minOffset), new Point(smallBtnSize));
 
             int buttonSize = (int) (screenMin * 0.16f);
+            // Horizontal screen
             if (screenHorizontal)
             {
                 int marginX = renderer.PuzzleConfig.X + renderer.PuzzleConfig.Width;
@@ -173,6 +187,8 @@ namespace TWP_Shared
                     buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
                     // Next
                     buttons[2].SetPositionAndSize(new Point(marginX, ScreenSize.Y - marginY - buttonSize), new Point(buttonSize));
+                    // Seed
+                    buttons[3].SetPositionAndSize(new Point(marginX, ScreenSize.Y / 2 - buttonSize / 2), new Point(buttonSize));
                 }
                 else
                 {
@@ -181,6 +197,7 @@ namespace TWP_Shared
                     buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
                 }
             }
+            // Vertical screen
             else
             {
                 int marginY = renderer.PuzzleConfig.Y + renderer.PuzzleConfig.Height;
@@ -194,6 +211,8 @@ namespace TWP_Shared
                     buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
                     // Next
                     buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
+                    // Seed
+                    buttons[3].SetPositionAndSize(new Point(ScreenSize.X / 2 - buttonSize / 2, marginY), new Point(buttonSize));
                 }
                 else
                 {

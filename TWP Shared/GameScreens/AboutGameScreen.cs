@@ -32,7 +32,8 @@ namespace TWP_Shared
                 "All rights to The Witness and its sound assets ",
                 "belong to Jonathan Blow and Thekla Inc.",
                 "",
-                "SerGreen — 2017"
+                "SerGreen  2017-2020",
+                "v1.0.9"
             };
         Rectangle textArea;
         int lineHeight;

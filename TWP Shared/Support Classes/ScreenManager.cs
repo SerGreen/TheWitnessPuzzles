@@ -43,6 +43,7 @@ namespace TWP_Shared
             "img/left",
             "img/right",
             "img/solved",
+            "img/seed",
             "img/orientation_lock0..1",
             "img/btn_github",
             "img/btn_thewitness"
