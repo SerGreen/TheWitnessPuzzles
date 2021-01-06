@@ -138,9 +138,12 @@ namespace TheWitnessPuzzles
 
             // Retrieve all Tetris rules from sector blocks, excluding eliminated ones
             var tetrisRules = Blocks.Where(x => x.Rule is TetrisRule).Select(x => x.Rule as TetrisRule).Except(eliminatedTetrises);
-            
+
+            if (!tetrisRules.Any())
+                return errorsList;
+            int sum = tetrisRules.Sum(x => x.TotalBlocks);
             // If net sum of all tetris blocks is not equal to total blocks of sector, then it's an error outright
-            if (tetrisRules.Sum(x => x.TotalBlocks) != TotalBlocks)
+            if (sum != TotalBlocks && sum != 0)
             {
                 foreach (var tetromino in tetrisRules)
                     errorsList.Add(new Error(tetromino.OwnerBlock));
@@ -153,7 +156,7 @@ namespace TheWitnessPuzzles
             for (int j = 0; j < Panel.Height; j++)
                 for (int i = 0; i < Panel.Width; i++)
                     if (Blocks.Contains(Panel.Grid[i, j]))
-                        baseBoard[i, j] = 0;
+                        baseBoard[i, j] = (sum == 0) ? 1 : 0;
                     else
                         baseBoard[i, j] = 1;
 
