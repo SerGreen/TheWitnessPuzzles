@@ -6,12 +6,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework.Input;
+using TheWitnessPuzzles;
 
 namespace TWP_Shared.GameScreens
 {
     public class EnterSeedGameScreen : GameScreen
     {
-        SpriteBatch internalBatch;
         SpriteFont fntRobotoMono = null;
 
         Texture2D[] texDigits = new Texture2D[10];
@@ -20,21 +20,25 @@ namespace TWP_Shared.GameScreens
         TouchButton btnClose, btnOk, btnDel;
         TouchButton[] btnDigits;
         List<TouchButton> buttons = new List<TouchButton>();
-        FadeTransition fade = new FadeTransition(15, 15, 10);
 
         private readonly Color DIM_COLOR = Color.Gray;
+
+        // save currently active panel in order to add it to skipped panels upon successfully generating seeded panel
+        Puzzle currentPanel = null;
+
         private const int SEED_LENGTH = 9;
         int[] seed = new int[SEED_LENGTH];
         int cursorPos = 0;
         string seedString = new string('_', SEED_LENGTH);
         Vector2 seedStringSize = Vector2.Zero;
+
         void UpdateSeedString() => seedString = string.Join("", seed.Take(cursorPos)) + new string('_', SEED_LENGTH - cursorPos);
         void UpdateOkButton() => btnOk.ChangeTint(cursorPos == SEED_LENGTH ? Color.White : DIM_COLOR);
 
-        public EnterSeedGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
-            : base(screenSize, device, textureProvider, fontProvider, Content)
+        public EnterSeedGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content, params object[] data) 
+            : base(screenSize, device, textureProvider, fontProvider, Content, data)
         {
-            internalBatch = new SpriteBatch(GraphicsDevice);
+            currentPanel = data?[0] as Puzzle;
             fntRobotoMono = FontProvider["font/fnt_mono_digits"];
 
             texDel = TextureProvider["img/del"];
@@ -83,9 +87,14 @@ namespace TWP_Shared.GameScreens
                 if (cursorPos == SEED_LENGTH)
                 {
                     SoundManager.PlayOnce(Sound.ButtonNextSuccess);
-                    //ScreenManager.Instance.GoBack();
-                    // TODO: create new panel screen
-                    // TODO: add deactivated texture
+                    int iseed = seed.Select((digit, i) => digit * Convert.ToInt32(Math.Pow(10, SEED_LENGTH - i - 1))).Sum();
+                    var panel = DI.Get<PanelGenerator>().GeneratePanel(iseed);
+                    
+                    if (currentPanel != null)
+                        FileStorageManager.AddPanelToDiscardedList(currentPanel);
+                    FileStorageManager.SaveCurrentPanel(panel);
+
+                    ScreenManager.Instance.AddScreen<PanelGameScreen>(popNScreensFromStack: 2, doFadeAnimation: true, panel);
                 }
             };
             buttons.Add(btnOk);
@@ -193,8 +202,6 @@ namespace TWP_Shared.GameScreens
             foreach (var button in buttons)
                 button.Update(InputManager.GetTapPosition());
 
-            fade.Update();
-
             base.Update(gameTime);
         }
 
@@ -218,9 +225,6 @@ namespace TWP_Shared.GameScreens
             // Draw buttons
             foreach (var button in buttons)
                 button.Draw(spriteBatch);
-
-            if (fade.IsActive)
-                spriteBatch.Draw(texPixel, new Rectangle(Point.Zero, ScreenSize), Color.Black * fade.Opacity);
 
             base.Draw(spriteBatch);
         }

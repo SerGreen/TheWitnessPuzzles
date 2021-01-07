@@ -49,6 +49,10 @@ namespace TWP_Shared
 
         BloomFilter bloomFilter;
 
+        public PanelGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content, params object[] data)
+            : this(data?[0] as Puzzle,
+                   (data?.Length > 1 && data[1] is bool) ? Convert.ToBoolean(data[1]) : false,
+                   screenSize, device, TextureProvider, FontProvider, Content) { }
         public PanelGameScreen(Puzzle panel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content)
             : this(panel, false, screenSize, device, TextureProvider, FontProvider, Content) { }
         public PanelGameScreen(Puzzle panel, bool standalonePanel, Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content) 
@@ -152,9 +156,13 @@ namespace TWP_Shared
 
                 TouchButton btnSeed = new TouchButton(new Rectangle(), texSeed, null);
                 btnSeed.Click += () => {
-                    AbortTracing();
+                    //AbortTracing();
                     SoundManager.PlayOnce(Sound.ButtonNext);
-                    ScreenManager.Instance.AddScreen<GameScreens.EnterSeedGameScreen>(replaceCurrent: false, doFadeAnimation: true);
+                    ScreenManager.Instance.AddScreen<GameScreens.EnterSeedGameScreen>(
+                        replaceCurrent: false, 
+                        doFadeAnimation: true, 
+                        data: panelState.State == PanelStates.Solved ? null : panel
+                    );
                 };
                 buttons.Add(btnSeed);
             }

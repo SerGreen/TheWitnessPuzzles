@@ -41,8 +41,8 @@ namespace TWP_Shared
         int currentPage = 0;
         int maxPage;
 
-        public HistoryGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
-            : base(screenSize, device, textureProvider, fontProvider, Content)
+        public HistoryGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content, params object[] data) 
+            : base(screenSize, device, textureProvider, fontProvider, Content, data)
         {
             font = fontProvider["font/fnt_constantia_big"];
             texPixel = textureProvider["img/pixel"];

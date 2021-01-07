@@ -19,8 +19,8 @@ namespace TWP_Shared
 
         RenderTarget2D backgroundTexture;
 
-        public MenuGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content)
-            : base(screenSize, device, TextureProvider, FontProvider, Content)
+        public MenuGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> TextureProvider, Dictionary<string, SpriteFont> FontProvider, ContentManager Content, params object[] data)
+            : base(screenSize, device, TextureProvider, FontProvider, Content, data)
         {
             font = FontProvider["font/fnt_constantia_big"];
             

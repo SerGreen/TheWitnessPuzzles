@@ -31,8 +31,8 @@ namespace TWP_Shared
         Rectangle[] vDimensions = new Rectangle[6];
         Rectangle[,] dimMatrix = new Rectangle[7, 7];
 
-        public EditorGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
-            : base(screenSize, device, textureProvider, fontProvider, Content)
+        public EditorGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content, params object[] data) 
+            : base(screenSize, device, textureProvider, fontProvider, Content, data)
         {
             renderer = new PanelRenderer(null, screenSize, textureProvider, fontProvider, GraphicsDevice)
             {

@@ -62,7 +62,8 @@ namespace TWP_Shared
         FadeTransition transitionAnimation = new FadeTransition(15, 20, 10);
         Texture2D texPixel;
 
-        public void AddScreen<TScreen>(bool replaceCurrent = false, bool doFadeAnimation = false, params object[] data) where TScreen : GameScreen
+        public void AddScreen<TScreen>(bool replaceCurrent = false, bool doFadeAnimation = false, params object[] data) where TScreen : GameScreen => AddScreen<TScreen>(replaceCurrent ? 1 : 0, doFadeAnimation, data);
+        public void AddScreen<TScreen>(int popNScreensFromStack, bool doFadeAnimation = false, params object[] data) where TScreen : GameScreen
         {
             // Don't queue another screen transition if we are already in transition
             if (doFadeAnimation && transitionAnimation.IsActive)
@@ -73,7 +74,7 @@ namespace TWP_Shared
                 Action callback = null;
                 callback = () =>
                 {
-                    _addScreen<TScreen>(replaceCurrent, data);
+                    _addScreen<TScreen>(popNScreensFromStack, data);
                     SoundManager.StopAllLoops();
                     transitionAnimation.FadeOutComplete -= callback;
                 };
@@ -81,29 +82,20 @@ namespace TWP_Shared
                 transitionAnimation.Restart();
             }
             else
-                _addScreen<TScreen>(replaceCurrent, data);
+                _addScreen<TScreen>(popNScreensFromStack, data);
         }
-        private void _addScreen<TScreen>(bool replaceCurrent, params object[] data) where TScreen : GameScreen
+        private void _addScreen<TScreen>(int popNScreensFromStack, params object[] data) where TScreen : GameScreen
         {
-            GameScreen screen = null;
-
-            if (typeof(TScreen) == typeof(PanelGameScreen))
-            {
-                if (data.Length > 1)
-                    // Creating standalone PanelGameScreen (without Next button), data[1] normally should contain 'true'
-                    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], (bool) data[1], ScreenSize, Device, TextureProvider, FontProvider, Content); 
-                else if (data.Length > 0)
-                    // Creating regular PanelGameScreen
-                    screen = (TScreen) Activator.CreateInstance(typeof(TScreen), (TheWitnessPuzzles.Puzzle) data[0], ScreenSize, Device, TextureProvider, FontProvider, Content);
-            }
-            else
-                screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content);
+            GameScreen screen = (TScreen) Activator.CreateInstance(typeof(TScreen), ScreenSize, Device, TextureProvider, FontProvider, Content, data);
 
             if (screen != null)
             {
                 CurrentScreen?.Deactivate();
-                if (replaceCurrent)
+                while (popNScreensFromStack > 0)
+                {
                     screenStack.Pop();
+                    popNScreensFromStack--;
+                }
                 screenStack.Push(screen);
                 CurrentScreen = screen;
                 CurrentScreen.Activate();

@@ -23,7 +23,7 @@ namespace TWP_Shared
             {
                 "DISCLAIMER",
                 "",
-                "This game is inspired by amazing game The Witness, ",
+                "This game is inspired by the amazing game The Witness, ",
                 "which was created by Jonathan Blow.",
                 "",
                 "If you have not played his games yet ",
@@ -41,8 +41,8 @@ namespace TWP_Shared
         Point backButtonSize, linkButtonSize;
         Point backButtonPosition, linkGithubPosition, linkTheWitnessPosition;
 
-        public AboutGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content) 
-            : base(screenSize, device, textureProvider, fontProvider, Content)
+        public AboutGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content, params object[] data) 
+            : base(screenSize, device, textureProvider, fontProvider, Content, data)
         {
             fntBig = FontProvider["font/fnt_constantia_big"];
             fntSmall = FontProvider["font/fnt_small"];

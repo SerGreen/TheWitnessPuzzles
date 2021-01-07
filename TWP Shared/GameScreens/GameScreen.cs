@@ -14,7 +14,7 @@ namespace TWP_Shared
         protected Dictionary<string, Texture2D> TextureProvider;
         protected Dictionary<string, SpriteFont> FontProvider;
 
-        public GameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content)
+        public GameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content, params object[] data)
         {
             GraphicsDevice = device;
             ScreenSize = screenSize;
