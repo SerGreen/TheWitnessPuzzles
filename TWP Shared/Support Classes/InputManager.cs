@@ -108,7 +108,7 @@ namespace TWP_Shared
         }
 
         /// <summary>
-        /// Returns True if key has just been pressed down. If not pressed or being holded => False
+        /// Returns True if key has just been pressed down. If not pressed or being held => False
         /// </summary>
         public static bool IsKeyPressed(Keys key) => IsFocused ? prevKB.IsKeyUp(key) && Keyboard.GetState().IsKeyDown(key) : false;
     }

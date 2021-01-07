@@ -282,7 +282,7 @@ namespace TheWitnessPuzzles
                             continue;
 
                         // Once all shapes are placed, we should check if board is complete (all blocks are 1)
-                        // Let's assume that board is complete
+                        // Let's assume that the board is complete
                         success = true;
                         for (int i = 0; i < boardCopy.GetLength(0); i++)
                         {
@@ -310,7 +310,7 @@ namespace TheWitnessPuzzles
                     break;
             }
 
-            // If after all of this loops we couldn't find a right combination for solution
+            // If after all of these loops we couldn't find the right combination for solution
             // Then create errors for each Tetris rule block and finally return
             if (!success)
                 foreach (var tetrisRule in tetrisRules)
@@ -324,6 +324,7 @@ namespace TheWitnessPuzzles
             {
                 int[,] originalBoard = board.Clone() as int[,];
 
+                // Check if shape fits on the board at all
                 if (point.x + shape.GetLength(0) - 1 >= board.GetLength(0) ||
                    point.y + shape.GetLength(1) - 1 >= board.GetLength(1))
                     return false;
@@ -333,8 +334,8 @@ namespace TheWitnessPuzzles
                         if (shape[i, j])
                             if (board[point.x + i, point.y + j] < 1 || isSubtractive)
                                 board[point.x + i, point.y + j] += isSubtractive ? -1 : 1;
-                            // If shape is not subtractive and it's can't be fit onto board (not all blocks have 0 or less)
-                            // Then restore board to it's original state and return fail
+                            // If shape is not subtractive and it can't be fit onto the board (not all blocks have 0 or less)
+                            // Then restore board to its original state and return fail
                             else
                             {
                                 for (int w = 0; w < board.GetLength(0); w++)
