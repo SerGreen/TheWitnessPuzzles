@@ -10,7 +10,7 @@ namespace TWP_Shared
 {
     public class PanelRenderer
     {
-        static readonly float bordersWidth = 0.03f; // Size of the border frame, % of total screen min(width, height)
+        static readonly float bordersWidth = 0.035f; // Size of the border frame, % of total screen min(width, height)
         static readonly float endPointLegth = 0.3f; // Size of ending appendix at the end point, % of the block width
         static readonly Random rnd = new Random();
 
@@ -49,7 +49,7 @@ namespace TWP_Shared
             this.panel = panel;
             this.screenSize = screenSize;
             GraphicsDevice = graphicsDevice;
-            font = FontProvider["font/fnt_small"];
+            font = FontProvider["font/fnt_mono_digits"];
             LoadContent(TextureProvider);
             InitializePanel();
             if (panel != null)
@@ -99,7 +99,7 @@ namespace TWP_Shared
         {
             BackgroundColor = backgroundColor;
             WallColor = wallsColor;
-            BorderColor = Color.Lerp(wallsColor, Color.Gray, 0.3f);
+            BorderColor = new Color(backgroundColor.R / 4, backgroundColor.G / 4, backgroundColor.B / 4);
         }
 
         private bool InitializePanel()
@@ -376,13 +376,22 @@ namespace TWP_Shared
         }
         private void DrawSeed(SpriteBatch spriteBatch)
         {
-            float targetWidth = Math.Min(screenSize.X, screenSize.Y) * 0.2f;
             float targetHeight = (int) (Math.Min(screenSize.X, screenSize.Y) * bordersWidth);
             Vector2 textSize = font.MeasureString(panel.Seed.ToString("D9"));
             float scale = targetHeight / textSize.Y;
             textSize *= scale;
 
-            spriteBatch.DrawString(font, panel.Seed.ToString("D9"), new Vector2(screenSize.X / 2 - textSize.X / 2, 0), panel.ButtonsColor, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
+            // Pick color that has better contrast
+            int getColorBrightness (Color c) => (299 * c.R + 587 * c.G + 114 * c.B) / 1000;
+
+            int brightnessColBorder  = getColorBrightness(BorderColor);
+            int brightnessColButtons = getColorBrightness(panel.ButtonsColor);
+            int brightnessColWalls   = getColorBrightness(panel.WallsColor);
+            Color seedColor = Math.Abs(brightnessColButtons - brightnessColBorder) > Math.Abs(brightnessColWalls - brightnessColBorder) 
+                ? panel.ButtonsColor 
+                : panel.WallsColor;
+
+            spriteBatch.DrawString(font, panel.Seed.ToString("D9"), new Vector2(screenSize.X / 2 - textSize.X / 2, 0), seedColor, 0, Vector2.Zero, scale, SpriteEffects.None, 0);
         }
         private void DrawAllRules(SpriteBatch sb)
         {

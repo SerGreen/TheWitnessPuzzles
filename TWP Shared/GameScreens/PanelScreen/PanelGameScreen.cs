@@ -156,12 +156,13 @@ namespace TWP_Shared
 
                 TouchButton btnSeed = new TouchButton(new Rectangle(), texSeed, null);
                 btnSeed.Click += () => {
-                    //AbortTracing();
                     SoundManager.PlayOnce(Sound.ButtonNext);
                     ScreenManager.Instance.AddScreen<GameScreens.EnterSeedGameScreen>(
                         replaceCurrent: false, 
                         doFadeAnimation: true, 
-                        data: panelState.State == PanelStates.Solved ? null : panel
+                        panelState.State == PanelStates.Solved ? null : panel,
+                        panel.WallsColor,
+                        panel.ButtonsColor
                     );
                 };
                 buttons.Add(btnSeed);
@@ -171,7 +172,6 @@ namespace TWP_Shared
         }
         private void UpdateButtonsPosition()
         {
-            // upd: Ew, i hardcoded button positions. Just... why, past me?
             int screenMin = Math.Min(ScreenSize.X, ScreenSize.Y);
             bool screenHorizontal = ScreenSize.X > ScreenSize.Y;
 

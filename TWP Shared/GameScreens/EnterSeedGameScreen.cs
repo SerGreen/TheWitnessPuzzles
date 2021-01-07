@@ -21,10 +21,10 @@ namespace TWP_Shared.GameScreens
         TouchButton[] btnDigits;
         List<TouchButton> buttons = new List<TouchButton>();
 
-        private readonly Color DIM_COLOR = Color.Gray;
-
         // save currently active panel in order to add it to skipped panels upon successfully generating seeded panel
         Puzzle currentPanel = null;
+        Color backgroundColor, foregroundColor;
+        private readonly Color DIM_COLOR;
 
         private const int SEED_LENGTH = 9;
         int[] seed = new int[SEED_LENGTH];
@@ -33,12 +33,16 @@ namespace TWP_Shared.GameScreens
         Vector2 seedStringSize = Vector2.Zero;
 
         void UpdateSeedString() => seedString = string.Join("", seed.Take(cursorPos)) + new string('_', SEED_LENGTH - cursorPos);
-        void UpdateOkButton() => btnOk.ChangeTint(cursorPos == SEED_LENGTH ? Color.White : DIM_COLOR);
+        void UpdateOkButton() => btnOk.ChangeTint(cursorPos == SEED_LENGTH ? foregroundColor : DIM_COLOR);
 
         public EnterSeedGameScreen(Point screenSize, GraphicsDevice device, Dictionary<string, Texture2D> textureProvider, Dictionary<string, SpriteFont> fontProvider, ContentManager Content, params object[] data) 
             : base(screenSize, device, textureProvider, fontProvider, Content, data)
         {
             currentPanel = data?[0] as Puzzle;
+            backgroundColor = data?.Length > 1 ? (Color) data[1] : Color.Black;
+            foregroundColor = data?.Length > 2 ? (Color) data[2] : Color.White;
+            DIM_COLOR = foregroundColor * 0.25f;
+            
             fntRobotoMono = FontProvider["font/fnt_mono_digits"];
 
             texDel = TextureProvider["img/del"];
@@ -52,7 +56,6 @@ namespace TWP_Shared.GameScreens
             seedStringSize = fntRobotoMono.MeasureString(seedString);
 
             SpawnButtons();
-            //UpdateButtonsColor();
         }
 
         private void SpawnButtons()
@@ -60,7 +63,7 @@ namespace TWP_Shared.GameScreens
             btnDigits = new TouchButton[10];
             for (int i = 0; i < 10; i++)
             {
-                btnDigits[i] = new TouchButton(new Rectangle(), texDigits[i], null);
+                btnDigits[i] = new TouchButton(new Rectangle(), texDigits[i], null, foregroundColor);
                 int value = i;
                 btnDigits[i].Click += () => {
                     if (cursorPos < SEED_LENGTH)
@@ -75,7 +78,7 @@ namespace TWP_Shared.GameScreens
                 buttons.Add(btnDigits[i]);
             }
 
-            btnClose = new TouchButton(new Rectangle(), texClose, null);
+            btnClose = new TouchButton(new Rectangle(), texClose, null, foregroundColor);
             btnClose.Click += () => {
                 SoundManager.PlayOnce(Sound.MenuOpen);
                 ScreenManager.Instance.GoBack();
@@ -99,7 +102,7 @@ namespace TWP_Shared.GameScreens
             };
             buttons.Add(btnOk);
 
-            btnDel = new TouchButton(new Rectangle(), texDel, null);
+            btnDel = new TouchButton(new Rectangle(), texDel, null, foregroundColor);
             btnDel.Click += () => {
                 SoundManager.PlayOnce(Sound.ButtonNext);
                 if (cursorPos > 0)
@@ -200,13 +203,19 @@ namespace TWP_Shared.GameScreens
                 btnDel.Press();
 
             foreach (var button in buttons)
+            {
+                if (cursorPos < SEED_LENGTH && button == btnOk)
+                    continue; // don't check if it's pressed when seed is not complete
+
                 button.Update(InputManager.GetTapPosition());
+            }
 
             base.Update(gameTime);
         }
 
         public override void Draw(SpriteBatch spriteBatch)
         {
+            // calculate position of seed text
             bool screenHorizontal = ScreenSize.X > ScreenSize.Y;
             int availableWidth = screenHorizontal
                 ? ScreenSize.X / 2
@@ -219,8 +228,9 @@ namespace TWP_Shared.GameScreens
                 ? ScreenSize.Y / 2 - seedStringSize.Y * seedScale / 2
                 : ScreenSize.Y / 4 - seedStringSize.Y * seedScale / 2;
 
-            GraphicsDevice.Clear(Color.Black);
-            spriteBatch.DrawString(fntRobotoMono, seedString, new Vector2(padding, posY), Color.White, 0, Vector2.Zero, seedScale, SpriteEffects.None, 0);
+            // Draw screen
+            GraphicsDevice.Clear(backgroundColor);
+            spriteBatch.DrawString(fntRobotoMono, seedString, new Vector2(padding, posY), foregroundColor, 0, Vector2.Zero, seedScale, SpriteEffects.None, 0);
 
             // Draw buttons
             foreach (var button in buttons)
