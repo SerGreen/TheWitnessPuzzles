@@ -46,12 +46,15 @@ namespace TWP_Shared
             "img/seed",
             "img/orientation_lock0..1",
             "img/btn_github",
-            "img/btn_thewitness"
+            "img/btn_thewitness",
+            "img/digit0..9",
+            "img/del"
         };
         readonly static string[] fontsToLoad =
         {
             "font/fnt_small",
-            "font/fnt_constantia_big"
+            "font/fnt_constantia_big",
+            "font/fnt_mono_digits"
         };
         System.Text.RegularExpressions.Regex texIsMultiple = new System.Text.RegularExpressions.Regex(@"\d+\.\.\d+");
         System.Text.RegularExpressions.Regex texMultipleGetName = new System.Text.RegularExpressions.Regex(@".+(?=\d+\.\.)");
