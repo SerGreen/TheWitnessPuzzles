@@ -53,6 +53,11 @@ namespace TWP_Shared
             }
         }
 
+        /// <summary>
+        /// Invokes Click event
+        /// </summary>
+        public void Press() => Click?.Invoke();
+
         public virtual void Draw(SpriteBatch sb, float alpha = 1f)
         {
             if (textureDown != null)

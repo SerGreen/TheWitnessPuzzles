@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Microsoft.Xna.Framework.Input;
 
 namespace TWP_Shared.GameScreens
 {
@@ -17,6 +18,7 @@ namespace TWP_Shared.GameScreens
         Texture2D texDel, texOk, texClose, texPixel;
 
         TouchButton btnClose, btnOk, btnDel;
+        TouchButton[] btnDigits;
         List<TouchButton> buttons = new List<TouchButton>();
         FadeTransition fade = new FadeTransition(15, 15, 10);
 
@@ -51,11 +53,12 @@ namespace TWP_Shared.GameScreens
 
         private void SpawnButtons()
         {
+            btnDigits = new TouchButton[10];
             for (int i = 0; i < 10; i++)
             {
-                TouchButton btnDigit = new TouchButton(new Rectangle(), texDigits[i], null);
+                btnDigits[i] = new TouchButton(new Rectangle(), texDigits[i], null);
                 int value = i;
-                btnDigit.Click += () => {
+                btnDigits[i].Click += () => {
                     if (cursorPos < SEED_LENGTH)
                     {
                         SoundManager.PlayOnce(Sound.ButtonNext);
@@ -65,7 +68,7 @@ namespace TWP_Shared.GameScreens
                         UpdateOkButton();
                     }
                 };
-                buttons.Add(btnDigit);
+                buttons.Add(btnDigits[i]);
             }
 
             btnClose = new TouchButton(new Rectangle(), texClose, null);
@@ -156,6 +159,37 @@ namespace TWP_Shared.GameScreens
 
         public override void Update(GameTime gameTime)
         {
+            int? digit = null;
+            if (InputManager.IsKeyPressed(Keys.D0) || InputManager.IsKeyPressed(Keys.NumPad0))
+                digit = 0;
+            if (InputManager.IsKeyPressed(Keys.D1) || InputManager.IsKeyPressed(Keys.NumPad1))
+                digit = 1;
+            if (InputManager.IsKeyPressed(Keys.D2) || InputManager.IsKeyPressed(Keys.NumPad2))
+                digit = 2;
+            if (InputManager.IsKeyPressed(Keys.D3) || InputManager.IsKeyPressed(Keys.NumPad3))
+                digit = 3;
+            if (InputManager.IsKeyPressed(Keys.D4) || InputManager.IsKeyPressed(Keys.NumPad4))
+                digit = 4;
+            if (InputManager.IsKeyPressed(Keys.D5) || InputManager.IsKeyPressed(Keys.NumPad5))
+                digit = 5;
+            if (InputManager.IsKeyPressed(Keys.D6) || InputManager.IsKeyPressed(Keys.NumPad6))
+                digit = 6;
+            if (InputManager.IsKeyPressed(Keys.D7) || InputManager.IsKeyPressed(Keys.NumPad7))
+                digit = 7;
+            if (InputManager.IsKeyPressed(Keys.D8) || InputManager.IsKeyPressed(Keys.NumPad8))
+                digit = 8;
+            if (InputManager.IsKeyPressed(Keys.D9) || InputManager.IsKeyPressed(Keys.NumPad9))
+                digit = 9;
+
+            if (digit != null)
+                btnDigits[digit.Value].Press();
+
+            if (cursorPos == SEED_LENGTH && InputManager.IsKeyPressed(Keys.Enter))
+                btnOk.Press();
+
+            if (cursorPos > 0 && (InputManager.IsKeyPressed(Keys.Back) || InputManager.IsKeyPressed(Keys.Delete)))
+                btnDel.Press();
+
             foreach (var button in buttons)
                 button.Update(InputManager.GetTapPosition());
 
