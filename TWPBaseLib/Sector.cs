@@ -155,8 +155,8 @@ namespace TheWitnessPuzzles
             int[,] baseBoard = new int[Panel.Width, Panel.Height];
             for (int j = 0; j < Panel.Height; j++)
                 for (int i = 0; i < Panel.Width; i++)
-                    if (Blocks.Contains(Panel.Grid[i, j]))
-                        baseBoard[i, j] = (sum == 0) ? 1 : 0;
+                    if (Blocks.Contains(Panel.Grid[i, j]) && sum != 0)
+                        baseBoard[i, j] = 0;
                     else
                         baseBoard[i, j] = 1;
 
