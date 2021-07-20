@@ -27,10 +27,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Animations\FadeOutAnimation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Animations\FadeTransition.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\GameScreen.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\FileStorageManager.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\Storage\ExternalStorage.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\Storage\FileStorageManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\InputManager.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Panel Generators\BasePanelGenerator.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\Storage\InternalStorage.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Support Classes\PanelRenderer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\PanelState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\QuadRenderer.cs" />
@@ -42,6 +44,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\MenuGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TextButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\TouchButton.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Support Classes\Storage\IStorageProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TWPGame.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -52,5 +55,6 @@
     <Folder Include="$(MSBuildThisFileDirectory)GameScreens\PanelScreen\" />
     <Folder Include="$(MSBuildThisFileDirectory)Animations\" />
     <Folder Include="$(MSBuildThisFileDirectory)Panel Generators\" />
+    <Folder Include="$(MSBuildThisFileDirectory)Support Classes\Storage\" />
   </ItemGroup>
 </Project>

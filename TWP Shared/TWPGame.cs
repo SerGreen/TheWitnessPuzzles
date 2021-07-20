@@ -27,6 +27,7 @@ namespace TWP_Shared
             Content.RootDirectory = "Content";
             InputManager.Initialize(this);
             SettingsManager.LoadSettings();
+            FileStorageManager.MigrateInternalToExternal();
 
 #if WINDOWS
             // This method call is present twice (here and in the Initialize method later), because of cross-platform magic

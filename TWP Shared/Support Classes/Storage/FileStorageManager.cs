@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.IO.IsolatedStorage;
 using System.Linq;
 using System.Text;
 using TheWitnessPuzzles;
@@ -17,34 +16,29 @@ namespace TWP_Shared
         private static readonly string SOLVED_DIR = "lastSolved";
         private static readonly string DISCARDED_DIR = "lastDiscarded";
         private static readonly string FAVOURITE_DIR = "favourite";
-        private static readonly string SOLVED_PANEL_FILE = "solved{0}_{1}.panel";
-        private static readonly string DISCARDED_PANEL_FILE = "discarded{0}_{1}.panel";
-        private static readonly string FAVOURITE_PANEL_FILE = "fav{0}_{1}.panel";
-
-        private static readonly Regex ExtractSeedFromName = new Regex(@"(?<=_).+(?=\.panel)");
-        private static readonly Regex ExtractNumberFromName = new Regex(@"\d+(?=_)");
+        private static readonly string PANEL_FILE = "{0}.panel";
+        private static readonly string SOLVED_PANEL_FILE;
+        private static readonly string DISCARDED_PANEL_FILE;
+        private static readonly string FAVOURITE_PANEL_FILE;
 
         private static readonly int MAX_HISTORY_LENGTH = 12;
 
-        private static IsolatedStorageFile isolatedStorage;
+        private static readonly IStorageProvider storage;
 
         static FileStorageManager()
         {
-#if WINDOWS
-            isolatedStorage = IsolatedStorageFile.GetUserStoreForDomain();
-#else
-            isolatedStorage = IsolatedStorageFile.GetUserStoreForApplication();
-#endif    
-            SOLVED_PANEL_FILE = Path.Combine(SOLVED_DIR, SOLVED_PANEL_FILE);
-            DISCARDED_PANEL_FILE = Path.Combine(DISCARDED_DIR, DISCARDED_PANEL_FILE);
-            FAVOURITE_PANEL_FILE = Path.Combine(FAVOURITE_DIR, FAVOURITE_PANEL_FILE);
+            storage = new ExternalStorage();
 
-            if (!isolatedStorage.DirectoryExists(SOLVED_DIR))
-                isolatedStorage.CreateDirectory(SOLVED_DIR);
-            if (!isolatedStorage.DirectoryExists(DISCARDED_DIR))
-                isolatedStorage.CreateDirectory(DISCARDED_DIR);
-            if (!isolatedStorage.DirectoryExists(FAVOURITE_DIR))
-                isolatedStorage.CreateDirectory(FAVOURITE_DIR);
+            SOLVED_PANEL_FILE = Path.Combine(SOLVED_DIR, PANEL_FILE);
+            DISCARDED_PANEL_FILE = Path.Combine(DISCARDED_DIR, PANEL_FILE);
+            FAVOURITE_PANEL_FILE = Path.Combine(FAVOURITE_DIR, PANEL_FILE);
+
+            if (!storage.DirectoryExists(SOLVED_DIR))
+                storage.CreateDirectory(SOLVED_DIR);
+            if (!storage.DirectoryExists(DISCARDED_DIR))
+                storage.CreateDirectory(DISCARDED_DIR);
+            if (!storage.DirectoryExists(FAVOURITE_DIR))
+                storage.CreateDirectory(FAVOURITE_DIR);
         }
 
         /// <summary>
@@ -53,9 +47,9 @@ namespace TWP_Shared
         public static string LoadSettingsFile()
         {
             // Open isolated storage and read settings file
-            if (isolatedStorage.FileExists(SETTINGS_FILE))
+            if (storage.FileExists(SETTINGS_FILE))
             {
-                using (IsolatedStorageFileStream fs = isolatedStorage.OpenFile(SETTINGS_FILE, FileMode.Open))
+                using (FileStream fs = storage.OpenFile(SETTINGS_FILE, FileMode.Open))
                 {
                     if (fs != null)
                     {
@@ -72,7 +66,7 @@ namespace TWP_Shared
         public static void SaveSettingsFile(string file)
         {
             // Open isolated storage and write the settings file
-            using (IsolatedStorageFileStream fs = isolatedStorage.OpenFile(SETTINGS_FILE, FileMode.Create))
+            using (FileStream fs = storage.OpenFile(SETTINGS_FILE, FileMode.Create))
             {
                 if (fs != null)
                 {
@@ -97,72 +91,42 @@ namespace TWP_Shared
         public static void AddPanelToDiscardedList(Puzzle panel) => AddPanelToLastNList(panel, DISCARDED_PANEL_FILE);
         private static void AddPanelToLastNList(Puzzle panel, string fileNamePattern)
         {
-            // Get list of saved panels
-            string[] fileNames = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "???", "*"));
-            int listLength = fileNames.Length;
+            // Get list of saved panels (sorted new first)
+            string[] fileNames = storage.GetFileNames(string.Format(fileNamePattern, "*"));
 
             // If given panel is already saved, then abort saving
-            if (fileNames.Any(x => ExtractSeedFromName.Match(x).Value == panel.Seed.ToString("D9")))
+            if (fileNames.Any(x => Path.GetFileNameWithoutExtension(x) == panel.Seed.ToString("D9")))
                 return;
 
-            // If there are saved all N panels, then delete the last one
-            if (listLength >= MAX_HISTORY_LENGTH)
+            // If there are saved more than N panels, then delete the oldest ones
+            List<string> fileNamesList = fileNames.ToList();
+            while (fileNamesList.Count >= MAX_HISTORY_LENGTH)
             {
-                string seed = ExtractSeedFromName.Match(fileNames[MAX_HISTORY_LENGTH - 1]).Value;
-                DeletePanel(string.Format(fileNamePattern, (MAX_HISTORY_LENGTH - 1).ToString("D3"), seed));
-                listLength--;
+                string seed = Path.GetFileNameWithoutExtension(fileNamesList[fileNamesList.Count - 1]);
+                DeletePanel(string.Format(fileNamePattern, seed));
+                fileNamesList.RemoveAt(fileNamesList.Count - 1);
             }
 
-            // Shift all panels by one place, so the 2nd becomes 3rd and so on
-            for (int i = listLength - 1; i >= 0; i--)
-            {
-                string seed = ExtractSeedFromName.Match(fileNames[i]).Value;
-                isolatedStorage.MoveFile(string.Format(fileNamePattern, i.ToString("D3"), seed), string.Format(fileNamePattern, (i + 1).ToString("D3"), seed));
-            }
-
-            // Now save the new panel as the 1st
-            SavePanelToFile(panel, string.Format(fileNamePattern, "000", panel.Seed.ToString("D9")));
+            // Now save the new panel
+            SavePanelToFile(panel, string.Format(fileNamePattern, panel.Seed.ToString("D9")));
         }
 
         /// <summary>
         /// Deletes panels's file and shifts all panels after it backwards
         /// </summary>
-        private static void DeletePanelFromList(Puzzle panel, string fileNamePattern)
-        {
-            // Get this panel's file name
-            string[] file = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "???", panel.Seed.ToString("D9")));
-            if (file.Length > 0)
-            {
-                string dir = Path.GetDirectoryName(fileNamePattern);
-                DeletePanel(Path.Combine(dir, file[0]));
-                // Shift panels, that were after deleted one
-                string[] fileNames = isolatedStorage.GetFileNames(string.Format(fileNamePattern, "???", "*"));
-                // Extract number of deleted panel's file
-                int number = int.Parse(ExtractNumberFromName.Match(file[0]).Value);
-                // Shift panels backwards
-                for (int i = number; i < fileNames.Length; i++)
-                {
-                    string seed = ExtractSeedFromName.Match(fileNames[i]).Value;
-                    isolatedStorage.MoveFile(string.Format(fileNamePattern, (i + 1).ToString("D3"), seed), string.Format(fileNamePattern, i.ToString("D3"), seed));
-                }
-            }
-        }
+        private static void DeletePanelFromList(Puzzle panel, string fileNamePattern) => DeletePanel(string.Format(fileNamePattern, panel.Seed.ToString("D9")));
 
-        public static void AddPanelToFavourites(Puzzle panel)
-        {
-            int favsCount = GetFavouritePanelsNames().Length;
-            SavePanelToFile(panel, string.Format(FAVOURITE_PANEL_FILE, favsCount.ToString("D3"), panel.Seed.ToString("D9")));
-        }
+        public static void AddPanelToFavourites(Puzzle panel) => SavePanelToFile(panel, string.Format(FAVOURITE_PANEL_FILE, panel.Seed.ToString("D9")));
         public static void DeletePanelFromFavourites(Puzzle panel) => DeletePanelFromList(panel, FAVOURITE_PANEL_FILE);
-        public static bool IsPanelInFavourites(Puzzle panel) => isolatedStorage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "???", panel.Seed.ToString("D9"))).Length > 0;
+        public static bool IsPanelInFavourites(Puzzle panel) => storage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, panel.Seed.ToString("D9"))).Length > 0;
 
-        public static string[] GetSolvedPanelsNames() => isolatedStorage.GetFileNames(string.Format(SOLVED_PANEL_FILE, "???", "*")).Select(x => Path.Combine(SOLVED_DIR, x)).ToArray();
-        public static string[] GetDiscardedPanelsNames() => isolatedStorage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "???", "*")).Select(x => Path.Combine(DISCARDED_DIR, x)).ToArray();
-        public static string[] GetFavouritePanelsNames() => isolatedStorage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "???", "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)).ToArray();
+        public static string[] GetSolvedPanelsNames() => storage.GetFileNames(string.Format(SOLVED_PANEL_FILE, "*")).Select(x => Path.Combine(SOLVED_DIR, x)).ToArray();
+        public static string[] GetDiscardedPanelsNames() => storage.GetFileNames(string.Format(DISCARDED_PANEL_FILE, "*")).Select(x => Path.Combine(DISCARDED_DIR, x)).ToArray();
+        public static string[] GetFavouritePanelsNames() => storage.GetFileNames(string.Format(FAVOURITE_PANEL_FILE, "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)).ToArray();
 
         private static void SavePanelToFile(Puzzle panel, string fileName, bool saveSolution = false)
         {
-            using (IsolatedStorageFileStream fs = isolatedStorage.OpenFile(fileName, FileMode.Create))
+            using (FileStream fs = storage.OpenFile(fileName, FileMode.Create))
             {
                 if (fs != null)
                 {
@@ -303,9 +267,9 @@ namespace TWP_Shared
         }
         public static Puzzle LoadPanelFromFile(string fileName)
         {
-            if (isolatedStorage.FileExists(fileName))
+            if (storage.FileExists(fileName))
             {
-                using (IsolatedStorageFileStream fs = isolatedStorage.OpenFile(fileName, FileMode.Open))
+                using (FileStream fs = storage.OpenFile(fileName, FileMode.Open))
                 {
                     if (fs != null)
                     {
@@ -468,8 +432,68 @@ namespace TWP_Shared
         }
         private static void DeletePanel(string fileName)
         {
-            if (isolatedStorage.FileExists(fileName))
-                isolatedStorage.DeleteFile(fileName);
+            if (storage.FileExists(fileName))
+                storage.DeleteFile(fileName);
+        }
+
+        /// <summary>
+        /// Move old saves from internal memory to the new location in "Android/data/" or "Documents/My Games/"
+        /// Works only if the new location doesn't have any files yet (first launch after an update)
+        /// </summary>
+        /// <returns>True if migration was performed, Flase if no files were copied</returns>
+        public static bool MigrateInternalToExternal()
+        {
+            List<string> extFiles = new List<string>();
+            extFiles.AddRange(storage.GetFileNames("*"));
+            extFiles.AddRange(storage.GetFileNames(Path.Combine(FAVOURITE_DIR, "*")));
+            extFiles.AddRange(storage.GetFileNames(Path.Combine(SOLVED_DIR, "*")));
+            extFiles.AddRange(storage.GetFileNames(Path.Combine(DISCARDED_DIR, "*")));
+
+            if (extFiles.Count == 0)
+            {
+                IStorageProvider internStorage = new InternalStorage();
+
+                List<string> oldFiles = new List<string>();
+                oldFiles.AddRange(internStorage.GetFileNames("*"));
+                if (internStorage.DirectoryExists(FAVOURITE_DIR))
+                    oldFiles.AddRange(internStorage.GetFileNames(Path.Combine(FAVOURITE_DIR, "*")).Select(x => Path.Combine(FAVOURITE_DIR, x)));
+                if (internStorage.DirectoryExists(SOLVED_DIR))
+                    oldFiles.AddRange(internStorage.GetFileNames(Path.Combine(SOLVED_DIR, "*")).Select(x => Path.Combine(SOLVED_DIR, x)));
+                if (internStorage.DirectoryExists(DISCARDED_DIR))
+                    oldFiles.AddRange(internStorage.GetFileNames(Path.Combine(DISCARDED_DIR, "*")).Select(x => Path.Combine(DISCARDED_DIR, x)));
+
+                if (oldFiles.Count > 0)
+                {
+                    Regex regexRenamer = new Regex(@"(.*?)(\w+\d{3}_)(\d{9}\.panel)");
+                    List<string> newFiles = new List<string>();
+
+                    // New panels will only have their seed as their name
+                    for (int i = 0; i < oldFiles.Count; i++)
+                    {
+                        var gg = regexRenamer.Match(oldFiles[i]);
+                        newFiles.Add(regexRenamer.Replace(oldFiles[i], "$1$3"));
+                    }
+
+                    // Copy all the files from the old storage to the new one
+                    for (int i = 0; i < oldFiles.Count; i++)
+                    {
+                        using (FileStream internalStream = internStorage.OpenFile(oldFiles[i], FileMode.Open))
+                        {
+                            using (FileStream externalStream = storage.OpenFile(newFiles[i], FileMode.Create))
+                            {
+                                if (internalStream != null && externalStream != null)
+                                {
+                                    internalStream.CopyTo(externalStream);
+                                }
+                            }
+                        }
+                    }
+
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }
