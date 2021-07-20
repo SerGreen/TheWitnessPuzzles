@@ -18,7 +18,7 @@ namespace TWP_Shared
 
         SpriteFont fntBig, fntSmall;
         Texture2D texPixel;
-        
+
         string[] text =
             {
                 "DISCLAIMER",
@@ -32,9 +32,14 @@ namespace TWP_Shared
                 "All rights to The Witness and its sound assets ",
                 "belong to Jonathan Blow and Thekla Inc.",
                 "",
-                "SerGreen  2017-2020",
-                "v1.0.9"
-            };
+                "SerGreen  2017-2021",
+                "v" +
+#if WINDOWS
+                System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3)
+#else
+                Android.App.Application.Context.PackageManager.GetPackageInfo(Android.App.Application.Context.PackageName, 0).VersionName
+#endif
+        };
         Rectangle textArea;
         int lineHeight;
         float textScale;
