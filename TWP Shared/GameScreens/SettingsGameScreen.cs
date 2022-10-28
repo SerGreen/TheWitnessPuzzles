@@ -20,7 +20,7 @@ namespace TWP_Shared
 
         Rectangle buttonsArea;
         int buttonHeight;
-        List<TouchButton> buttons = new List<TouchButton>();
+        List<AbstractButton> buttons = new List<AbstractButton>();
         SliderUpDown sensitivitySlider, volumeSlider;
 
         RenderTarget2D backgroundTexture;
@@ -56,17 +56,28 @@ namespace TWP_Shared
                 SettingsManager.IsMute = !btnMute.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.IsMute ? Sound.MenuUntick : Sound.MenuTick);
             };
+            btnMute.UpdateButton += () => {
+                btnMute.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight));
+            };
             buttons.Add(btnMute);
 
             volumeSlider = new SliderUpDown(new Rectangle(), 0f, 1.0f, 0.05f, SettingsManager.MasterVolume, texPixel, texLeftRight[0], texLeftRight[1], new Color(50, 50, 50), Color.White);
             volumeSlider.ValueChanged += () => {
                 SettingsManager.MasterVolume = volumeSlider.Value;
             };
+            volumeSlider.UpdateButton += () => {
+                volumeSlider.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight * 4, (int)(buttonHeight * btnHeightMod)), new Point(buttonHeight * 4, buttonHeight));
+            };
+            buttons.Add(volumeSlider);
 
             sensitivitySlider = new SliderUpDown(new Rectangle(), 0.1f, 2.0f, 0.1f, SettingsManager.Sensitivity, texPixel, texLeftRight[0], texLeftRight[1], new Color(50, 50, 50), Color.White);
             sensitivitySlider.ValueChanged += () => {
                 SettingsManager.Sensitivity = sensitivitySlider.Value;
             };
+            sensitivitySlider.UpdateButton += () => {
+                sensitivitySlider.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight * 4, (int)(buttonHeight * btnHeightMod * 2)), new Point(buttonHeight * 4, buttonHeight));
+            };
+            buttons.Add(sensitivitySlider);
 
             ToggleButton btnFullscreen = new ToggleButton(new Rectangle(), texCheckbox[1], texCheckbox[0], null, SettingsManager.IsFullscreen);
             btnFullscreen.Click += () => {
@@ -74,12 +85,18 @@ namespace TWP_Shared
                 ScreenManager.Instance.UpdateFullscreen();
                 SoundManager.PlayOnce(SettingsManager.IsFullscreen ? Sound.MenuTick : Sound.MenuUntick);
             };
+            btnFullscreen.UpdateButton += () => {
+                btnFullscreen.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int)(buttonHeight * btnHeightMod * 3)), new Point(buttonHeight, buttonHeight));
+            };
             buttons.Add(btnFullscreen);
 
             ToggleButton btnBloomFX = new ToggleButton(new Rectangle(), texCheckbox[1], texCheckbox[0], null, SettingsManager.BloomFX);
             btnBloomFX.Click += () => {
                 SettingsManager.BloomFX = btnBloomFX.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.BloomFX ? Sound.MenuTick : Sound.MenuUntick);
+            };
+            btnBloomFX.UpdateButton += () => {
+                btnBloomFX.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int)(buttonHeight * btnHeightMod * 4)), new Point(buttonHeight, buttonHeight));
             };
             buttons.Add(btnBloomFX);
 
@@ -89,13 +106,35 @@ namespace TWP_Shared
                 SettingsManager.IsOrientationLocked = btnOrientationLock.IsActivated;
                 SoundManager.PlayOnce(SettingsManager.IsOrientationLocked ? Sound.MenuTick : Sound.MenuUntick);
             };
+            btnOrientationLock.UpdateButton += () => {
+                btnOrientationLock.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 5)), new Point(buttonHeight, buttonHeight));
+            };
             buttons.Add(btnOrientationLock);
 #endif
+
+            TextButton btnGeneratorSettings = new TextButton(new Rectangle(), font, "Generator settings", texPixel, buttonAlignment: TextButton.ButtonAlignment.Left);
+            btnGeneratorSettings.Click += () => {
+                // TODO: Open new screen with generator settings
+                SoundManager.PlayOnce(Sound.MenuEnter);
+            };
+            btnGeneratorSettings.UpdateButton += () => {
+                btnGeneratorSettings.SetPositionAndSize(buttonsArea.Location + new Point(0, (int)(buttonHeight * btnHeightMod * 
+#if ANDROID
+                    6 
+#else 
+                    5 
+#endif
+                    )), new Point(buttonsArea.Width, buttonHeight));
+            };
+            buttons.Add(btnGeneratorSettings);
 
             TextButton btnBack = new TextButton(new Rectangle(), font, "Back", texPixel);
             btnBack.Click += () => {
                 ScreenManager.Instance.GoBack();
                 SoundManager.PlayOnce(Sound.MenuEscape);
+            };
+            btnBack.UpdateButton += () => {
+                btnBack.SetPositionAndSize(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int)(buttonHeight * 1.5f)));
             };
             buttons.Add(btnBack);
 
@@ -104,16 +143,8 @@ namespace TWP_Shared
 
         private void UpdateButtonsSizeAndPosition()
         {
-            buttons[0].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, 0), new Point(buttonHeight, buttonHeight));
-            volumeSlider.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight * 4, (int) (buttonHeight * btnHeightMod)), new Point(buttonHeight * 4, buttonHeight));
-            sensitivitySlider.SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight * 4, (int) (buttonHeight * btnHeightMod * 2)), new Point(buttonHeight * 4, buttonHeight));
-            buttons[1].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 3)), new Point(buttonHeight, buttonHeight));
-            buttons[2].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 4)), new Point(buttonHeight, buttonHeight));
-
-            if (buttons.Count > 4)
-                buttons[3].SetPositionAndSize(buttonsArea.Location + new Point(buttonsArea.Width - buttonHeight, (int) (buttonHeight * btnHeightMod * 5)), new Point(buttonHeight, buttonHeight));
-
-            buttons[buttons.Count - 1].SetPositionAndSize(new Point(buttonsArea.X, ScreenSize.Y - buttonHeight * 2), new Point(buttonsArea.Width, (int) (buttonHeight * 1.5f)));
+            foreach (AbstractButton btn in buttons)
+                btn.FireUpdateButton();       
         }
 
         public override void SetScreenSize(Point screenSize)
@@ -127,9 +158,6 @@ namespace TWP_Shared
         {
             foreach (var btn in buttons)
                 btn.Update(InputManager.GetTapPosition());
-
-            sensitivitySlider.Update(InputManager.GetTapPosition());
-            volumeSlider.Update(InputManager.GetTapPosition());
 
             base.Update(gameTime);
         }
@@ -147,9 +175,6 @@ namespace TWP_Shared
             
             foreach (var btn in buttons)
                 btn.Draw(spriteBatch);
-
-            sensitivitySlider.Draw(spriteBatch);
-            volumeSlider.Draw(spriteBatch);
 
             base.Draw(spriteBatch);
         }
@@ -176,7 +201,7 @@ namespace TWP_Shared
 
                 spriteBatch.DrawString(font, caption, captionPosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
 
-                int buttonsCount = 5;
+                int buttonsCount = 6;
 #if ANDROID
                 // Android has one extra button
                 buttonsCount++;
