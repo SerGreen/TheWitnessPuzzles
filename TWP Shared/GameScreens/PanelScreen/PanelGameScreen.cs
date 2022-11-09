@@ -135,8 +135,15 @@ namespace TWP_Shared
                     Action callback = null;
                     callback = () =>
                     {
+                        int? seed = null;
+                        if (SettingsManager.isSequentialMode)
+                        {
+                            seed = ++SettingsManager.CurrentSequentialSeed;
+                            SettingsManager.SaveSettings();
+                        }
+
                         AbortTracing();
-                        Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel();
+                        Puzzle nextPanel = DI.Get<PanelGenerator>().GeneratePanel(seed);
                         FileStorageManager.SaveCurrentPanel(nextPanel);
                         LoadNewPanel(nextPanel);
                         btnNext.StateActive = false;
@@ -490,6 +497,13 @@ namespace TWP_Shared
             FileStorageManager.AddPanelToSolvedList(panel);
             // Delete current panel save file so it won't be loaded again next time
             FileStorageManager.DeleteCurrentPanel();
+
+            // In sequential mode advance seed by 1
+            if (SettingsManager.isSequentialMode)
+            {
+                SettingsManager.CurrentSequentialSeed++;
+                SettingsManager.SaveSettings();
+            }
         }
         private void MoveLine(Vector2 moveVector)   
         {

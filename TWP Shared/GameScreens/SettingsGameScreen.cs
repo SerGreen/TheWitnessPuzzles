@@ -115,6 +115,7 @@ namespace TWP_Shared
             TextButton btnGeneratorSettings = new TextButton(new Rectangle(), font, "Generator settings", texPixel, buttonAlignment: TextButton.ButtonAlignment.Left);
             btnGeneratorSettings.Click += () => {
                 // TODO: Open new screen with generator settings
+                SettingsManager.isSequentialMode = !SettingsManager.isSequentialMode;
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
             btnGeneratorSettings.UpdateButton += () => {

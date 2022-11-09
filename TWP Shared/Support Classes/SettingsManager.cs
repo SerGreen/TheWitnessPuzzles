@@ -29,7 +29,7 @@ namespace TWP_Shared
         public static float Sensitivity { get; set; } = 1.0f;
 
         // Sequential mode settings
-        public static bool SequentialMode { get; set; } = false;
+        public static bool isSequentialMode { get; set; } = false;
         public static int CurrentSequentialSeed { get; set; } = 0;
 
 #if ANDROID
@@ -64,7 +64,7 @@ namespace TWP_Shared
             file.Append("orientation = ").Append((int) ScreenOrientation).Append("\n");
 #endif
 
-            file.Append("sequentialMode = ").Append(SequentialMode ? 1 : 0).Append("\n");
+            file.Append("sequentialMode = ").Append(isSequentialMode ? 1 : 0).Append("\n");
             file.Append("sequentialSeed = ").Append(CurrentSequentialSeed).Append("\n");
 
             FileStorageManager.SaveSettingsFile(file.ToString());
@@ -103,7 +103,7 @@ namespace TWP_Shared
                     ScreenOrientation = (DisplayOrientation) int.Parse(options["orientation"]);
 #endif
                 if (options.ContainsKey("sequentialMode"))
-                    SequentialMode = options["sequentialMode"] == "1";
+                    isSequentialMode = options["sequentialMode"] == "1";
                 if (options.ContainsKey("sequentialSeed"))
                     CurrentSequentialSeed = int.Parse(options["sequentialSeed"]);
             }
