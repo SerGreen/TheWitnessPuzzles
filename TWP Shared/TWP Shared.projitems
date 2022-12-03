@@ -12,7 +12,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)BloomFX\BloomFilter.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\AboutGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\EnterSeedGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\ConfirmSeedResetGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\HistoryGameScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)GameScreens\ExtraSettingsGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GameScreens\SettingsGameScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\AbstractButton.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)GUI Elements\SliderUpDown.cs" />

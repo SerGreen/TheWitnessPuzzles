@@ -136,9 +136,13 @@ namespace TWP_Shared
                     callback = () =>
                     {
                         int? seed = null;
-                        if (SettingsManager.isSequentialMode)
+                        if (SettingsManager.IsSequentialMode)
                         {
-                            seed = ++SettingsManager.CurrentSequentialSeed;
+                            // Advance sequential seed if the panel wasn't solved, otherwise it was already incremented at the time of solution
+                            if (!panelState.State.HasFlag(PanelStates.Solved))
+                                SettingsManager.CurrentSequentialSeed++;
+                            
+                            seed = SettingsManager.CurrentSequentialSeed;
                             SettingsManager.SaveSettings();
                         }
 
@@ -499,7 +503,7 @@ namespace TWP_Shared
             FileStorageManager.DeleteCurrentPanel();
 
             // In sequential mode advance seed by 1
-            if (SettingsManager.isSequentialMode)
+            if (SettingsManager.IsSequentialMode)
             {
                 SettingsManager.CurrentSequentialSeed++;
                 SettingsManager.SaveSettings();

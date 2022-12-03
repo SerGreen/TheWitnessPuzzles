@@ -13,6 +13,7 @@ namespace TWP_Shared
     {
         private static readonly string SETTINGS_FILE = "settings.cfg";
         private static readonly string CURRENT_PANEL_FILE = "current.panel";
+        private static readonly string CURRENT_PANEL_BACKUP_FILE = "current_backup.panel";
         private static readonly string SOLVED_DIR = "lastSolved";
         private static readonly string DISCARDED_DIR = "lastDiscarded";
         private static readonly string FAVOURITE_DIR = "favourite";
@@ -81,6 +82,12 @@ namespace TWP_Shared
         public static void SaveCurrentPanel(Puzzle currentPanel) => SavePanelToFile(currentPanel, CURRENT_PANEL_FILE);
         public static Puzzle LoadCurrentPanel() => LoadPanelFromFile(CURRENT_PANEL_FILE);
         public static void DeleteCurrentPanel() => DeletePanel(CURRENT_PANEL_FILE);
+        public static void BackupCurrentPanel() => RenamePanel(CURRENT_PANEL_FILE, CURRENT_PANEL_BACKUP_FILE);
+        public static void RestoreCurrentPanel() 
+        {
+            DeletePanel(CURRENT_PANEL_FILE);
+            RenamePanel(CURRENT_PANEL_BACKUP_FILE, CURRENT_PANEL_FILE);
+        }
 
         public static void AddPanelToSolvedList(Puzzle panel)
         {
@@ -434,6 +441,11 @@ namespace TWP_Shared
         {
             if (storage.FileExists(fileName))
                 storage.DeleteFile(fileName);
+        }
+        private static void RenamePanel(string oldFileName, string newFileName)
+        {
+            if (storage.FileExists(oldFileName))
+                storage.MoveFile(oldFileName, newFileName);
         }
 
         /// <summary>

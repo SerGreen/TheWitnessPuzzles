@@ -112,10 +112,9 @@ namespace TWP_Shared
             buttons.Add(btnOrientationLock);
 #endif
 
-            TextButton btnGeneratorSettings = new TextButton(new Rectangle(), font, "Generator settings", texPixel, buttonAlignment: TextButton.ButtonAlignment.Left);
+            TextButton btnGeneratorSettings = new TextButton(new Rectangle(), font, "Extra settings", texPixel, buttonAlignment: TextButton.ButtonAlignment.Left);
             btnGeneratorSettings.Click += () => {
-                // TODO: Open new screen with generator settings
-                SettingsManager.isSequentialMode = !SettingsManager.isSequentialMode;
+                ScreenManager.Instance.AddScreen<ExtraSettingsGameScreen>(false, true);
                 SoundManager.PlayOnce(Sound.MenuEnter);
             };
             btnGeneratorSettings.UpdateButton += () => {
@@ -208,7 +207,7 @@ namespace TWP_Shared
                 buttonsCount++;
 #endif
                 float buttonsAreaWidth = minScreenSize * 0.8f;
-                buttonHeight = (int) (captionSize.Y * 0.4f);
+                buttonHeight = (int)(minScreenSize * 0.075f);
                 float buttonsAreaHeight = ScreenSize.Y - (captionPosition.Y + captionSize.Y + buttonHeight * 2);
                 float buttonsAreaTop = captionPosition.Y + captionSize.Y + (buttonsAreaHeight - buttonHeight * buttonsCount * btnHeightMod) / 2;
                 buttonsArea = new Rectangle((int) (ScreenSize.X - buttonsAreaWidth) / 2, (int) buttonsAreaTop, (int) buttonsAreaWidth, (int) (ScreenSize.Y - buttonsAreaTop));
