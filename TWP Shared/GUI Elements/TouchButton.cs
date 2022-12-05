@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TWP_Shared
 {
-    public class TouchButton
+    public class TouchButton : AbstractButton
     {
         protected Rectangle hitbox;
         protected Texture2D textureUp, textureDown;
@@ -36,7 +36,7 @@ namespace TWP_Shared
 
         public virtual void SetPositionAndSize(Point pos, Point size) => hitbox = new Rectangle(pos, size);
 
-        public void Update(Point? touchPoint = null)
+        public override void Update(Point? touchPoint = null)
         {
             if (touchPoint != null && hitbox.Contains(touchPoint.Value))
             {
@@ -58,7 +58,7 @@ namespace TWP_Shared
         /// </summary>
         public void Press() => Click?.Invoke();
 
-        public virtual void Draw(SpriteBatch sb, float alpha = 1f)
+        public override void Draw(SpriteBatch sb, float alpha = 1f)
         {
             if (textureDown != null)
                 sb.Draw(isPressedDown ? textureDown : textureUp, hitbox, (isPressedDown ? tintDown : tintUp) * alpha);

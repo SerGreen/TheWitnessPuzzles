@@ -32,7 +32,7 @@ namespace TWP_Shared
                 "All rights to The Witness and its sound assets ",
                 "belong to Jonathan Blow and Thekla Inc.",
                 "",
-                "SerGreen  2017-2021",
+                "SerGreen  2017-2022",
                 "v" +
 #if WINDOWS
                 System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3)

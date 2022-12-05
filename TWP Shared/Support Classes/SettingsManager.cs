@@ -28,6 +28,10 @@ namespace TWP_Shared
         public static bool BloomFX { get; set; } = false;
         public static float Sensitivity { get; set; } = 1.0f;
 
+        // Sequential mode settings
+        public static bool IsSequentialMode { get; set; } = false;
+        public static int CurrentSequentialSeed { get; set; } = 0;
+
 #if ANDROID
         public static DisplayOrientation ScreenOrientation { get; set; } = DisplayOrientation.Default;
         public static event Action OrientationLockChanged;
@@ -59,6 +63,9 @@ namespace TWP_Shared
             file.Append("orientationLock = ").Append(IsOrientationLocked ? 1 : 0).Append("\n");
             file.Append("orientation = ").Append((int) ScreenOrientation).Append("\n");
 #endif
+
+            file.Append("sequentialMode = ").Append(IsSequentialMode ? 1 : 0).Append("\n");
+            file.Append("sequentialSeed = ").Append(CurrentSequentialSeed).Append("\n");
 
             FileStorageManager.SaveSettingsFile(file.ToString());
         }
@@ -95,6 +102,10 @@ namespace TWP_Shared
                 if (options.ContainsKey("orientation"))
                     ScreenOrientation = (DisplayOrientation) int.Parse(options["orientation"]);
 #endif
+                if (options.ContainsKey("sequentialMode"))
+                    IsSequentialMode = options["sequentialMode"] == "1";
+                if (options.ContainsKey("sequentialSeed"))
+                    CurrentSequentialSeed = int.Parse(options["sequentialSeed"]);
             }
         }
     }

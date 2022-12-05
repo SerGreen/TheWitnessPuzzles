@@ -10,6 +10,7 @@ namespace TWP_Shared
     public class MenuGameScreen : GameScreen
     {
         SpriteFont font = null;
+        SpriteFont fontSmall = null;
         
         Texture2D texPixel;
         FadeInAnimation fadeIn;
@@ -23,6 +24,7 @@ namespace TWP_Shared
             : base(screenSize, device, TextureProvider, FontProvider, Content, data)
         {
             font = FontProvider["font/fnt_constantia_big"];
+            fontSmall = FontProvider["font/fnt_small"];
             
             texPixel = TextureProvider["img/pixel"];
             
@@ -45,6 +47,12 @@ namespace TWP_Shared
             UpdateButtonsPosition();
         }
 
+        public override void Activate ()
+        {
+            base.Activate();
+            RenderBackgroundToTexture();
+        }
+
         private void UpdateButtonsPosition()
         {
             for (int i = 0; i < buttons.Count; i++)
@@ -59,7 +67,8 @@ namespace TWP_Shared
                 TheWitnessPuzzles.Puzzle currentPanel = FileStorageManager.LoadCurrentPanel();
                 if (currentPanel == null)
                 {
-                    currentPanel = DI.Get<PanelGenerator>().GeneratePanel();
+                    int? seed = SettingsManager.IsSequentialMode ? (int?)SettingsManager.CurrentSequentialSeed : null;
+                    currentPanel = DI.Get<PanelGenerator>().GeneratePanel(seed);
                     FileStorageManager.SaveCurrentPanel(currentPanel);
                 }
 
@@ -124,20 +133,28 @@ namespace TWP_Shared
 
                 string firstLine = "The Witness";
                 string secondLine = "Puzzles";
+                string sequentialModeLine = $"[ {SettingsManager.CurrentSequentialSeed:D9} ]";
 
                 Vector2 firstLineSize = font.MeasureString(firstLine);
                 Vector2 secondLineSize = font.MeasureString(secondLine);
+                Vector2 sequentialModeLineSize = fontSmall.MeasureString(sequentialModeLine);
 
                 int minScreenSize = Math.Min(ScreenSize.X, ScreenSize.Y);
                 float fontScale = (minScreenSize * 0.75f) / firstLineSize.X;
+                float fontScaleSmall = fontScale * 0.6f;
                 firstLineSize = new Vector2(firstLineSize.X * fontScale, firstLineSize.Y * fontScale);
                 secondLineSize = new Vector2(secondLineSize.X * fontScale, secondLineSize.Y * fontScale);
+                sequentialModeLineSize = new Vector2(sequentialModeLineSize.X * fontScaleSmall, sequentialModeLineSize.Y * fontScaleSmall);
 
                 Vector2 firstLinePosition = new Vector2(ScreenSize.X / 2 - firstLineSize.X / 2, ScreenSize.Y * 0.07f);
                 Vector2 secondLinePosition = new Vector2(ScreenSize.X / 2 - secondLineSize.X / 2, firstLinePosition.Y + firstLineSize.Y * 0.85f);
+                Vector2 sequentialModeLinePosition = new Vector2(ScreenSize.X / 2 - sequentialModeLineSize.X / 2, ScreenSize.Y - sequentialModeLineSize.Y - 10);
 
                 spriteBatch.DrawString(font, firstLine, firstLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
                 spriteBatch.DrawString(font, secondLine, secondLinePosition, Color.White, 0, Vector2.Zero, fontScale, SpriteEffects.None, 0);
+                
+                if (SettingsManager.IsSequentialMode)
+                    spriteBatch.DrawString(fontSmall, sequentialModeLine, sequentialModeLinePosition, Color.DarkGray, 0, Vector2.Zero, fontScaleSmall, SpriteEffects.None, 0);
                 
                 if (ScreenSize.X > ScreenSize.Y)
                     menuButtonHeight = (int) (ScreenSize.Y * 0.1f);

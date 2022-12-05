@@ -15,8 +15,11 @@ namespace TWP_Shared
         Texture2D texPixel;
         float scale;
         Vector2 position;
+        ButtonAlignment alignment;
 
-        public TextButton(Rectangle bounds, SpriteFont font, string text, Texture2D texPixel, Color? textColor = null, Color? textColorPressed = null) 
+        public enum ButtonAlignment { Left, Center, Right };
+
+        public TextButton(Rectangle bounds, SpriteFont font, string text, Texture2D texPixel, Color? textColor = null, Color? textColorPressed = null, ButtonAlignment buttonAlignment = ButtonAlignment.Center) 
             : base(bounds, null, null)
         {
             this.font = font;
@@ -24,6 +27,7 @@ namespace TWP_Shared
             this.text = text;
             this.textColor = textColor ?? Color.White;
             this.textColorPressed = textColorPressed ?? Color.DarkGray;
+            this.alignment = buttonAlignment;
 
             CalculateRenderDetails();
         }
@@ -36,7 +40,21 @@ namespace TWP_Shared
             scale = Math.Min(xScale, yScale);
             renderSize.X *= scale;
             renderSize.Y *= scale;
-            position = new Vector2(hitbox.X + (hitbox.Width - renderSize.X) / 2, hitbox.Y + (hitbox.Height - renderSize.Y) / 2);
+
+            switch (alignment)
+            {
+                case ButtonAlignment.Left:
+                    position = new Vector2(hitbox.X, hitbox.Y + (hitbox.Height - renderSize.Y) / 2);
+                    break;
+                case ButtonAlignment.Center:
+                    position = new Vector2(hitbox.X + (hitbox.Width - renderSize.X) / 2, hitbox.Y + (hitbox.Height - renderSize.Y) / 2);
+                    break;
+                case ButtonAlignment.Right:
+                    position = new Vector2(hitbox.X + hitbox.Width - renderSize.X, hitbox.Y + (hitbox.Height - renderSize.Y) / 2);
+                    break;
+                default:
+                    break;
+            }
         }
 
         public override void SetPositionAndSize(Point pos, Point size)

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace TWP_Shared
 {
-    public class SliderUpDown
+    public class SliderUpDown : AbstractButton
     {
         const float vScale = 0.5f;
 
@@ -94,13 +94,13 @@ namespace TWP_Shared
             btnUp.SetPositionAndSize(new Point(area.X + area.Width - buttonSize.X, area.Y), buttonSize);
         }
 
-        public void Update(Point? touchPoint)
+        public override void Update(Point? touchPoint)
         {
             btnDown.Update(touchPoint);
             btnUp.Update(touchPoint);
         }
 
-        public void Draw(SpriteBatch sb)
+        public override void Draw(SpriteBatch sb, float alpha = 1f)
         {
             btnDown.Draw(sb);
             btnUp.Draw(sb);
