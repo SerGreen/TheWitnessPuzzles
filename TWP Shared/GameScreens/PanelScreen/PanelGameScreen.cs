@@ -165,18 +165,22 @@ namespace TWP_Shared
                 };
                 buttons.Add(btnNext);
 
-                TouchButton btnSeed = new TouchButton(new Rectangle(), texSeed, null);
-                btnSeed.Click += () => {
-                    SoundManager.PlayOnce(Sound.ButtonNext);
-                    ScreenManager.Instance.AddScreen<GameScreens.EnterSeedGameScreen>(
-                        replaceCurrent: false, 
-                        doFadeAnimation: true, 
-                        panelState.State == PanelStates.Solved ? null : panel,
-                        panel.WallsColor,
-                        panel.ButtonsColor
-                    );
-                };
-                buttons.Add(btnSeed);
+                // Disable seed button in sequential mode because it interferes with progression and it doesn't have a simple fix
+                if (!SettingsManager.IsSequentialMode)
+                {
+                    TouchButton btnSeed = new TouchButton(new Rectangle(), texSeed, null);
+                    btnSeed.Click += () => {
+                        SoundManager.PlayOnce(Sound.ButtonNext);
+                        ScreenManager.Instance.AddScreen<GameScreens.EnterSeedGameScreen>(
+                            replaceCurrent: false, 
+                            doFadeAnimation: true, 
+                            panelState.State == PanelStates.Solved ? null : panel,
+                            panel.WallsColor,
+                            panel.ButtonsColor
+                        );
+                    };
+                    buttons.Add(btnSeed);
+                }
             }
 
             UpdateButtonsPosition();
@@ -201,13 +205,23 @@ namespace TWP_Shared
 
                 if (!IsStandalonePanel)
                 {
-                    int marginY = ScreenSize.Y / 4 * 3 - buttonSize / 2;
-                    // Like
-                    buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
-                    // Next
-                    buttons[2].SetPositionAndSize(new Point(marginX, ScreenSize.Y - marginY - buttonSize), new Point(buttonSize));
-                    // Seed
-                    buttons[3].SetPositionAndSize(new Point(marginX, ScreenSize.Y / 2 - buttonSize / 2), new Point(buttonSize));
+                    if (!SettingsManager.IsSequentialMode)
+                    {
+                        int marginY = ScreenSize.Y / 4 * 3 - buttonSize / 2;
+                        // Like
+                        buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                        // Next
+                        buttons[2].SetPositionAndSize(new Point(marginX, ScreenSize.Y - marginY - buttonSize), new Point(buttonSize));
+                        // Seed
+                        buttons[3].SetPositionAndSize(new Point(marginX, ScreenSize.Y / 2 - buttonSize / 2), new Point(buttonSize));
+                    }
+                    else
+                    {
+                        // Like
+                        buttons[1].SetPositionAndSize(new Point(marginX, (int)(ScreenSize.Y / 2 + buttonSize * 0.4f)), new Point(buttonSize));
+                        // Next
+                        buttons[2].SetPositionAndSize(new Point(marginX, (int)(ScreenSize.Y / 2 - buttonSize * 1.4f)), new Point(buttonSize));
+                    }
                 }
                 else
                 {
@@ -222,16 +236,27 @@ namespace TWP_Shared
                 int marginY = renderer.PuzzleConfig.Y + renderer.PuzzleConfig.Height;
                 int freeSpaceY = ScreenSize.Y - marginY;
                 marginY += freeSpaceY / 2 - buttonSize / 2;
+                
 
                 if (!IsStandalonePanel)
                 {
-                    int marginX = ScreenSize.X / 4 - buttonSize / 2;
-                    // Like
-                    buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
-                    // Next
-                    buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
-                    // Seed
-                    buttons[3].SetPositionAndSize(new Point(ScreenSize.X / 2 - buttonSize / 2, marginY), new Point(buttonSize));
+                    if (!SettingsManager.IsSequentialMode)
+                    {
+                        int marginX = ScreenSize.X / 4 - buttonSize / 2;
+                        // Like
+                        buttons[1].SetPositionAndSize(new Point(marginX, marginY), new Point(buttonSize));
+                        // Next
+                        buttons[2].SetPositionAndSize(new Point(ScreenSize.X - marginX - buttonSize, marginY), new Point(buttonSize));
+                        // Seed
+                        buttons[3].SetPositionAndSize(new Point(ScreenSize.X / 2 - buttonSize / 2, marginY), new Point(buttonSize));
+                    }
+                    else
+                    {
+                        // Like
+                        buttons[1].SetPositionAndSize(new Point((int)(ScreenSize.X / 2 - buttonSize * 1.4f), marginY), new Point(buttonSize));
+                        // Next
+                        buttons[2].SetPositionAndSize(new Point((int)(ScreenSize.X / 2 + buttonSize * 0.4f), marginY), new Point(buttonSize));
+                    }
                 }
                 else
                 {
@@ -503,7 +528,7 @@ namespace TWP_Shared
             FileStorageManager.DeleteCurrentPanel();
 
             // In sequential mode advance seed by 1
-            if (SettingsManager.IsSequentialMode)
+            if (SettingsManager.IsSequentialMode && !IsStandalonePanel)
             {
                 SettingsManager.CurrentSequentialSeed++;
                 SettingsManager.SaveSettings();
