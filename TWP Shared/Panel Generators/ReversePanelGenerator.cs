@@ -527,34 +527,39 @@ namespace TWP_Shared
             int eliminatorsAmount = num > 0.8 ? (num > 0.97 ? 2 : 1) : 0;
             for (int i = 0; i < eliminatorsAmount; i++)
             {
-                // Get sectors that have 1 or more free blocks
-                var acceptableSectors = sectors.Where(x => x.Blocks.Where(z => z.Rule == null).Count() >= 1).ToList();
+                // Get sectors that have 1 or more free blocks (and if only 1 free block, then make sure that there are free nodes or edges)
+                var acceptableSectors = sectors.Where(s => {
+                    var _freeBlocksCount = s.Blocks.Where(z => z.Rule == null).Count();
+                    var _freeNodesCount = s.Blocks.SelectMany(x => x.Nodes).Where(x => x.State == NodeState.Normal).Distinct().Except(allSolutionNodes).Count();
+                    var _freeEdgesCount = s.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).Count();
+                    // Return true to set this sector as acceptable for generation of an Eliminator
+                    return _freeBlocksCount > 1 || (_freeBlocksCount == 1 && (_freeNodesCount > 0 || _freeEdgesCount > 0));
+                }).ToList();
                 if (acceptableSectors.Count == 0)
                     break;
 
                 Sector sec = acceptableSectors[rnd.Next(acceptableSectors.Count)];
-                int freeBlocksCount = sec.Blocks.Where(z => z.Rule == null).Count();
-                bool isHexagon = freeBlocksCount > 1
-                    ? rnd.NextDouble() > 0.9
-                    : true;
+                var freeBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
+                var freeNodes = sec.Blocks.SelectMany(x => x.Nodes).Where(x => x.State == NodeState.Normal).Distinct().Except(allSolutionNodes).ToList();
+                var freeEdges = sec.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).ToList();
+                bool isHexagon = (freeNodes.Count > 0 || freeEdges.Count > 0) && (freeBlocks.Count == 1 || rnd.NextDouble() > 0.9);
 
                 bool coloredEliminationSpawned = false;
                 // Colored eliminator can spawn alongside the sun block and only if sector has exactly one colored square without suns of the same color
-                // Sun will be colored like the square and eliminator will have different color
-                if (freeBlocksCount >= 3 && colors.Count > 1/* && rnd.NextDouble() > 0.5*/)
+                // Sun will be colored like the square and eliminator will have a different color
+                if (freeBlocks.Count >= 3 && colors.Count > 1/* && rnd.NextDouble() > 0.5*/)
                 {
-                    var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
-                    var squareSecBlocks = secBlocks.Where(x => x.Rule is ColoredSquareRule).ToList();
+                    var squareSecBlocks = freeBlocks.Where(x => x.Rule is ColoredSquareRule).ToList();
                     if (squareSecBlocks.Count == 1)
                     {
                         Color squareCol = (squareSecBlocks[0].Rule as ColoredSquareRule).Color.Value;
-                        if (secBlocks.Where(x => x.Rule is IColorable icol && icol.Color == squareCol).Count() == 1)
+                        if (freeBlocks.Where(x => x.Rule is IColorable icol && icol.Color == squareCol).Count() == 1)
                         {
-                            int indexA = rnd.Next(secBlocks.Count);
+                            int indexA = rnd.Next(freeBlocks.Count);
                             int indexB;
                             do
                             {
-                                indexB = rnd.Next(secBlocks.Count);
+                                indexB = rnd.Next(freeBlocks.Count);
                             }
                             while (indexB == indexA);
 
@@ -565,8 +570,8 @@ namespace TWP_Shared
                             }
                             while (elimCol == squareCol);
 
-                            secBlocks[indexA].Rule = new EliminationRule(elimCol);
-                            secBlocks[indexB].Rule = new SunPairRule(squareCol);
+                            freeBlocks[indexA].Rule = new EliminationRule(elimCol);
+                            freeBlocks[indexB].Rule = new SunPairRule(squareCol);
                             coloredEliminationSpawned = true;
                         }
                     }
@@ -574,39 +579,30 @@ namespace TWP_Shared
 
                 if(!coloredEliminationSpawned)
                 {
-                    var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
-                    int index = rnd.Next(secBlocks.Count);
-                    secBlocks[index].Rule = new EliminationRule();
+                    int index = rnd.Next(freeBlocks.Count);
+                    freeBlocks[index].Rule = new EliminationRule();
                 }
 
                 if (isHexagon)
                 {
-                    bool isNode = rnd.NextDouble() > 0.5;
+                    bool isNode = rnd.NextDouble() > 0.5 && freeNodes.Count > 0;
                     if (isNode)
                     {
-                        var secNodes = sec.Blocks.SelectMany(x => x.Nodes).Where(x => x.State == NodeState.Normal).Distinct().Except(allSolutionNodes).ToList();
-                        if (secNodes.Count > 0)
-                        {
-                            int index = rnd.Next(secNodes.Count);
-                            secNodes[index].SetState(NodeState.Marked);
-                        }
-                        else
-                            isNode = false;
+                        int index = rnd.Next(freeNodes.Count);
+                        freeNodes[index].SetState(NodeState.Marked);
                     }
-                    if(!isNode)
+                    else
                     {
-                        var secEdges = sec.Blocks.SelectMany(x => x.Edges).Where(x => x.State == EdgeState.Normal).Distinct().Except(allSolutionEdges).ToList();
-                        if (secEdges.Count > 0)
-                        {
-                            int index = rnd.Next(secEdges.Count);
-                            secEdges[index].SetState(EdgeState.Marked);
-                        }
+                        System.Diagnostics.Debug.Assert(freeEdges.Count > 0, "No available edges to generate a fake Hexagon rule for the Eliminator rule.");   
+                        int index = rnd.Next(freeEdges.Count);
+                        freeEdges[index].SetState(EdgeState.Marked);
                     }
                 }
                 else
                 {
-                    var secBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
-                    int index = rnd.Next(secBlocks.Count);
+                    freeBlocks = sec.Blocks.Where(x => x.Rule == null).ToList();
+                    System.Diagnostics.Debug.Assert(freeBlocks.Count >= 1, "No available blocks to generate a fake rule for the Eliminator rule.");  
+                    int index = rnd.Next(freeBlocks.Count);
                     int ruleType = rnd.Next(4);
                     
                     Color? squareCol = sec.Blocks.Select(x => x.Rule).OfType<ColoredSquareRule>().FirstOrDefault()?.Color;
@@ -621,7 +617,7 @@ namespace TWP_Shared
                             do
                                 col = colors[rnd.Next(colors.Count)];
                             while (col == squareCol.Value);
-                            secBlocks[index].Rule = new ColoredSquareRule(col);
+                            freeBlocks[index].Rule = new ColoredSquareRule(col);
                         }
                         else
                             ruleType++;
@@ -635,7 +631,7 @@ namespace TWP_Shared
                             do
                                 col = colors[rnd.Next(colors.Count)];
                             while ((squareCol != null && col == squareCol) || (sunCol != null && col == sunCol));
-                            secBlocks[index].Rule = new SunPairRule(col);
+                            freeBlocks[index].Rule = new SunPairRule(col);
                         }
                         else
                             ruleType++;
@@ -644,17 +640,17 @@ namespace TWP_Shared
                     if (ruleType == 2)
                     {
                         int trianglePower = rnd.Next(1, 4);
-                        // Make sure that we are not creating triangle that actually fit to solution line
-                        if (secBlocks[index].Edges.Intersect(allSolutionEdges).Count() == trianglePower)
+                        // Make sure that we are not creating a triangle that actually fits the solution line
+                        if (freeBlocks[index].Edges.Intersect(allSolutionEdges).Count() == trianglePower)
                             trianglePower = (trianglePower % 3) + 1;
-                        secBlocks[index].Rule = new TriangleRule(trianglePower);
+                        freeBlocks[index].Rule = new TriangleRule(trianglePower);
                     }
                     // Create tetris
                     if (ruleType == 3)
                     {
-                        int tetrominoSize = rnd.Next(1, Math.Min(4, secBlocks.Count));
-                        // If there are no tetrominos in sector, make sure that we are not creating tetromino that actually fit into sector
-                        if (secBlocks.Where(x => x.Rule is TetrisRule).Count() == 0 && tetrominoSize == secBlocks.Count)
+                        int tetrominoSize = rnd.Next(1, Math.Min(4, freeBlocks.Count));
+                        // If there are no tetrominos in the sector, make sure that we are not creating a tetromino that actually fits into sector
+                        if (freeBlocks.Where(x => x.Rule is TetrisRule).Count() == 0 && tetrominoSize == freeBlocks.Count)
                             tetrominoSize = tetrominoSize == 1 ? 2 : tetrominoSize - 1;
                         int w = rnd.Next(1, tetrominoSize + 1);
                         int h = (int) Math.Ceiling((double) tetrominoSize / w);
@@ -675,9 +671,9 @@ namespace TWP_Shared
                         bool subtractive = rnd.NextDouble() > 0.93;
 
                         if (rotattable)
-                            secBlocks[index].Rule = new TetrisRotatableRule(shape, subtractive);
+                            freeBlocks[index].Rule = new TetrisRotatableRule(shape, subtractive);
                         else
-                            secBlocks[index].Rule = new TetrisRule(shape, subtractive);
+                            freeBlocks[index].Rule = new TetrisRule(shape, subtractive);
                     }
                 }
             }
