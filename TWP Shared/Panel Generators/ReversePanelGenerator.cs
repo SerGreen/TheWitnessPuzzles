@@ -677,7 +677,22 @@ namespace TWP_Shared
                     }
                 }
             }
-            #endregion 
+            #endregion
+
+            // Check that the generated panel is solvable
+            #region Sanity check
+            if (panel.CheckForErrors().Where(x => x.IsEliminated == false).Count() > 0)
+            {
+                // Uh oh! Somehow an unsolvable puzzle was generated!
+                // Remove all rules and start/end points to make it obvious that something is wrong
+                foreach (var block in panel.Blocks)
+                    block.Rule = null;
+                foreach (var edge in panel.Edges)
+                    edge.SetState(EdgeState.Normal);
+                foreach (var node in panel.Nodes)
+                    node.SetState(NodeState.Normal);
+            }
+            #endregion
 
             return panel;
 

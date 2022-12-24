@@ -66,6 +66,9 @@
     <AndroidSigningKeyStore>
     </AndroidSigningKeyStore>
     <DebugSymbols>true</DebugSymbols>
+    <AndroidSupportedAbis>
+    </AndroidSupportedAbis>
+    <AndroidCreatePackagePerAbi>true</AndroidCreatePackagePerAbi>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Mono.Android" />
