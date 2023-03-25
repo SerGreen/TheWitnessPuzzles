@@ -53,6 +53,10 @@ namespace TWP_Shared
         private void ResizeScreen(object sender, EventArgs e)
         {
 #if ANDROID
+            // When the game launches in the landscape mode it calls ResizeScreen before GraphicsDevice gets initialized
+            if (GraphicsDevice == null || graphics == null)
+                return;
+
             // On my andoird 4.0.3 i have weird behaviour when backbuffer is automatically being resized wrong
             // So i update it manually, TitleSafeArea has the right size of the free screeen area
             graphics.PreferredBackBufferWidth = GraphicsDevice.DisplayMode.TitleSafeArea.Width;
